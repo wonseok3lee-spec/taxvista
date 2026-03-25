@@ -1,0 +1,82 @@
+[
+  {
+    "year": 2021,
+    "summary": {
+      "totalIncome": 125000,
+      "adjustedGrossIncome": 118000,
+      "taxableIncome": 104200,
+      "totalTax": 17426
+    },
+    "income": {
+      "wages": 120000,
+      "capitalGains": 2000,
+      "interest": 1200,
+      "dividends": 800,
+      "additionalIncome": 1000
+    }
+  },
+  {
+    "year": 2022,
+    "summary": {
+      "totalIncome": 108000,
+      "adjustedGrossIncome": 102500,
+      "taxableIncome": 88700,
+      "totalTax": 14548
+    },
+    "income": {
+      "wages": 104000,
+      "capitalGains": 1500,
+      "interest": 900,
+      "dividends": 600,
+      "additionalIncome": 1000
+    }
+  },
+  {
+    "year": 2023,
+    "summary": {
+      "totalIncome": 92000,
+      "adjustedGrossIncome": 87200,
+      "taxableIncome": 73400,
+      "totalTax": 11258
+    },
+    "income": {
+      "wages": 88000,
+      "capitalGains": 1000,
+      "interest": 700,
+      "dividends": 500,
+      "additionalIncome": 1800
+    }
+  },
+  {
+    "year": 2024,
+    "summary": {
+      "totalIncome": 78000,
+      "adjustedGrossIncome": 74500,
+      "taxableIncome": 60700,
+      "totalTax": 8422
+    },
+    "income": {
+      "wages": 74000,
+      "capitalGains": 800,
+      "interest": 500,
+      "dividends": 400,
+      "additionalIncome": 2300
+    }
+  },
+  {
+    "year": 2025,
+    "summary": {
+      "totalIncome": 65000,
+      "adjustedGrossIncome": 62800,
+      "taxableIncome": 49000,
+      "totalTax": 6238
+    },
+    "income": {
+      "wages": 60000,
+      "capitalGains": 500,
+      "interest": 400,
+      "dividends": 300,
+      "additionalIncome": 3800
+    }
+  }
+]

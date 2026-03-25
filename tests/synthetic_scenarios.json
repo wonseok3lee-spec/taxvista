@@ -1,0 +1,108 @@
+{
+  "scenarios": [
+    {
+      "id": "S1",
+      "name": "Early Career Growth",
+      "formType": "1040-NR",
+      "description": "F-1 student → OPT → H1B. Near-zero income in 2021, rapid wage growth through 2025.",
+      "years": [
+        { "year": 2021, "income": 2800, "agi": 2800, "taxable": 2800, "tax": 24, "wages": 2800, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2022, "income": 15000, "agi": 14000, "taxable": 13000, "tax": 1200, "wages": 15000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2023, "income": 40000, "agi": 38000, "taxable": 36000, "tax": 4000, "wages": 40000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2024, "income": 40000, "agi": 38000, "taxable": 36000, "tax": 4000, "wages": 40000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2025, "income": 80000, "agi": 77000, "taxable": 73000, "tax": 11000, "wages": 79700, "capitalGains": 0, "dividends": 250, "interest": 50 }
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "Stable Salaried W-2",
+      "formType": "1040",
+      "description": "Mid-career professional. Consistent W-2 income, modest raises, standard deduction, no investment income.",
+      "years": [
+        { "year": 2021, "income": 70000, "agi": 65000, "taxable": 52050, "tax": 7200, "wages": 70000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2022, "income": 72000, "agi": 67000, "taxable": 54150, "tax": 7500, "wages": 72000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2023, "income": 75000, "agi": 70000, "taxable": 56200, "tax": 8000, "wages": 75000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2024, "income": 78000, "agi": 73000, "taxable": 58300, "tax": 8500, "wages": 78000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2025, "income": 80000, "agi": 75000, "taxable": 60100, "tax": 9000, "wages": 80000, "capitalGains": 0, "dividends": 0, "interest": 0 }
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "High Income Tax Inefficient",
+      "formType": "1040",
+      "description": "High earner with almost no deductions or pre-tax contributions. Maximum tax drag.",
+      "years": [
+        { "year": 2021, "income": 120000, "agi": 118000, "taxable": 115000, "tax": 25000, "wages": 120000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2022, "income": 140000, "agi": 138000, "taxable": 135000, "tax": 32000, "wages": 140000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2023, "income": 160000, "agi": 158000, "taxable": 155000, "tax": 40000, "wages": 160000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2024, "income": 180000, "agi": 178000, "taxable": 175000, "tax": 48000, "wages": 180000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2025, "income": 200000, "agi": 198000, "taxable": 195000, "tax": 60000, "wages": 200000, "capitalGains": 0, "dividends": 0, "interest": 0 }
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "Investment Heavy",
+      "formType": "1040",
+      "description": "Lower W-2 wages, large capital gains and dividends. Tests income composition and tax-efficient structure detection.",
+      "years": [
+        { "year": 2021, "income": 60000, "agi": 58000, "taxable": 45000, "tax": 6000, "wages": 30000, "capitalGains": 20000, "dividends": 10000, "interest": 0 },
+        { "year": 2022, "income": 70000, "agi": 67000, "taxable": 54000, "tax": 7000, "wages": 30000, "capitalGains": 25000, "dividends": 15000, "interest": 0 },
+        { "year": 2023, "income": 85000, "agi": 80000, "taxable": 66000, "tax": 8500, "wages": 35000, "capitalGains": 30000, "dividends": 20000, "interest": 0 },
+        { "year": 2024, "income": 95000, "agi": 90000, "taxable": 76000, "tax": 9500, "wages": 35000, "capitalGains": 35000, "dividends": 25000, "interest": 0 },
+        { "year": 2025, "income": 110000, "agi": 105000, "taxable": 90000, "tax": 11500, "wages": 40000, "capitalGains": 40000, "dividends": 30000, "interest": 0 }
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "Declining Income",
+      "formType": "1040",
+      "description": "Job loss or career pivot. Income declining year over year. Tests negative CAGR and instability signals.",
+      "years": [
+        { "year": 2021, "income": 90000, "agi": 85000, "taxable": 72000, "tax": 12000, "wages": 90000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2022, "income": 80000, "agi": 75000, "taxable": 62000, "tax": 10000, "wages": 80000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2023, "income": 70000, "agi": 65000, "taxable": 52000, "tax": 8000, "wages": 70000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2024, "income": 60000, "agi": 55000, "taxable": 42000, "tax": 6000, "wages": 60000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2025, "income": 50000, "agi": 46000, "taxable": 33000, "tax": 4500, "wages": 50000, "capitalGains": 0, "dividends": 0, "interest": 0 }
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "Dependents + Credits Heavy",
+      "formType": "1040",
+      "description": "Married filer with 3 dependents, Child Tax Credits, EITC eligible. Tests credit offset logic and net tax.",
+      "years": [
+        { "year": 2021, "income": 55000, "agi": 52000, "taxable": 27600, "tax": 1200, "wages": 55000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2022, "income": 58000, "agi": 55000, "taxable": 30150, "tax": 1800, "wages": 58000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2023, "income": 60000, "agi": 57000, "taxable": 32200, "tax": 2100, "wages": 60000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2024, "income": 62000, "agi": 59000, "taxable": 34300, "tax": 2400, "wages": 62000, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2025, "income": 65000, "agi": 62000, "taxable": 37100, "tax": 2700, "wages": 65000, "capitalGains": 0, "dividends": 0, "interest": 0 }
+      ]
+    },
+    {
+      "id": "S7",
+      "name": "Self-Employed Schedule C",
+      "formType": "1040",
+      "description": "Freelancer/contractor. SE income via Schedule C, SE tax deduction, self-employed health insurance.",
+      "years": [
+        { "year": 2021, "income": 50000, "agi": 42000, "taxable": 29800, "tax": 5000, "wages": 0, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2022, "income": 65000, "agi": 55000, "taxable": 41850, "tax": 7000, "wages": 0, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2023, "income": 80000, "agi": 68000, "taxable": 54000, "tax": 9500, "wages": 0, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2024, "income": 95000, "agi": 81000, "taxable": 67300, "tax": 12000, "wages": 0, "capitalGains": 0, "dividends": 0, "interest": 0 },
+        { "year": 2025, "income": 110000, "agi": 94000, "taxable": 79900, "tax": 14500, "wages": 0, "capitalGains": 0, "dividends": 0, "interest": 0 }
+      ]
+    },
+    {
+      "id": "S8",
+      "name": "1040-NR Treaty + NEC Income",
+      "formType": "1040-NR",
+      "description": "Nonresident alien with treaty-exempt scholarship income and NEC investment income (30% withholding).",
+      "years": [
+        { "year": 2021, "income": 28000, "agi": 28000, "taxable": 22000, "tax": 1800, "wages": 20000, "capitalGains": 0, "dividends": 0, "interest": 8000 },
+        { "year": 2022, "income": 32000, "agi": 32000, "taxable": 25000, "tax": 2200, "wages": 24000, "capitalGains": 0, "dividends": 0, "interest": 8000 },
+        { "year": 2023, "income": 45000, "agi": 45000, "taxable": 37000, "tax": 4000, "wages": 37000, "capitalGains": 0, "dividends": 0, "interest": 8000 },
+        { "year": 2024, "income": 50000, "agi": 50000, "taxable": 41000, "tax": 4800, "wages": 42000, "capitalGains": 0, "dividends": 0, "interest": 8000 },
+        { "year": 2025, "income": 58000, "agi": 58000, "taxable": 49000, "tax": 6200, "wages": 50000, "capitalGains": 0, "dividends": 0, "interest": 8000 }
+      ]
+    }
+  ]
+}
