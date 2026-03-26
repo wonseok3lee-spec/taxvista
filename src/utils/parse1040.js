@@ -6,10 +6,94 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
+// ── AcroForm field name → 1040 line mapping ──────────────────────────────────
+// IRS fillable PDFs store values in named form fields (e.g. f1_73[0] = Line 9).
+// Field names vary by year and form variant. This map covers known IRS field IDs.
+// The text-based extractor is used as fallback when form fields are absent.
+const FIELD_LINE_MAP_1040 = {
+  // Page 1
+  "f1_47":  "1a",   // Wages (W-2)
+  "f1_57":  "1z",   // Total wages/salaries
+  "f1_59":  "2b",   // Taxable interest
+  "f1_60":  "3a",   // Qualified dividends
+  "f1_61":  "3b",   // Ordinary dividends
+  "f1_64":  "4b",   // Taxable IRA distributions
+  "f1_66":  "5b",   // Taxable pensions
+  "f1_68":  "6b",   // Social Security benefits (taxable)
+  "f1_70":  "7a",   // Capital gain/loss (2025) / Line 7 on earlier forms
+  "f1_71":  "7",    // Capital gain/loss (pre-2025 field name)
+  "f1_72":  "8",    // Other income (Sched 1)
+  "f1_73":  "9",    // Total income
+  "f1_74":  "10",   // Adjustments to income
+  "f1_75":  "11a",  // AGI (2025) / Line 11 on earlier forms
+  // Page 2
+  "f2_01":  "11b",  // AGI carryforward (same value)
+  "f2_02":  "12e",  // Standard/itemized deductions (2025)
+  "f2_03":  "12",   // Deductions (pre-2025 field name)
+  "f2_04":  "13",   // Qualified business income deduction
+  "f2_05":  "14",   // Total deductions
+  "f2_06":  "15",   // Taxable income
+  "f2_07":  "16",   // Tax
+  "f2_13":  "22",   // Sum of taxes
+  "f2_14":  "23",   // Net premium tax credit
+  "f2_15":  "24",   // Total tax
+  "f2_16":  "25a",  // W-2 withholding
+  "f2_19":  "25d",  // Total withholding
+  "f2_23":  "33",   // Total payments
+  "f2_24":  "34",   // Overpayment
+  "f2_25":  "35a",  // Refund
+  "f2_28":  "37",   // Amount owed
+};
+
+// Reverse lookup: line code → field name(s)
+const LINE_TO_FIELDS = {};
+for (const [field, line] of Object.entries(FIELD_LINE_MAP_1040)) {
+  if (!LINE_TO_FIELDS[line]) LINE_TO_FIELDS[line] = [];
+  LINE_TO_FIELDS[line].push(field);
+}
+
+// Extract numeric value from a form field
+function fieldToNumber(val) {
+  if (val == null) return null;
+  const s = String(val).replace(/[$,\s]/g, "").trim();
+  if (!s || s === "-" || s === "—") return null;
+  // Handle parenthesized negatives: (1234) → -1234
+  const neg = s.match(/^\((.+)\)$/);
+  const n = parseFloat(neg ? neg[1] : s);
+  return isNaN(n) ? null : (neg ? -n : n);
+}
+
 export async function parse1040(file) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
+  // ── Step 1: Try AcroForm field extraction (fillable PDFs) ──────────────
+  const formFields = {};
+  let hasFormData = false;
+  try {
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const annots = await page.getAnnotations();
+      for (const annot of annots) {
+        if (annot.fieldType === "Tx" && annot.fieldName && annot.fieldValue) {
+          // Normalize field name: "f1_73[0]" → "f1_73"
+          const key = annot.fieldName.replace(/\[\d+\]$/, "");
+          const lineCode = FIELD_LINE_MAP_1040[key];
+          if (lineCode) {
+            const num = fieldToNumber(annot.fieldValue);
+            if (num != null) {
+              formFields[lineCode] = num;
+              hasFormData = true;
+            }
+          }
+        }
+      }
+    }
+  } catch (_) {
+    // getAnnotations can fail on some PDFs — fall through to text extraction
+  }
+
+  // ── Step 2: Text extraction (visual text layer — used as fallback) ──────
   const lines = [];
   const pageNums = [];
 
@@ -48,67 +132,72 @@ export async function parse1040(file) {
   const year = yearMatch ? parseInt(yearMatch[1]) : null;
   const isNR = lines.some((l) => /1040-NR|1040NR|nonresident\s+alien/i.test(l));
 
+  // ── Unified field reader: form fields first, text extraction fallback ──
+  const field = (lineCode) =>
+    formFields[lineCode] ?? extractByLineNumber(lines, lineCode);
+
   // ── Summary fields (year-aware) ──────────────────────────────────────────
-  const totalIncome = extractByLineNumber(lines, "9");
+  const totalIncome = field("9");
 
   // AGI: Line 11a on 2025 forms, Line 11 on 2021–2024
   const adjustedGrossIncome =
     year === 2025
-      ? (extractByLineNumber(lines, "11a") ?? extractByLineNumber(lines, "11"))
-      : (extractByLineNumber(lines, "11") ?? extractByLineNumber(lines, "11a"));
+      ? (field("11a") ?? field("11"))
+      : (field("11") ?? field("11a"));
 
-  const taxableIncome = extractByLineNumber(lines, "15");
-  const totalTax      = extractByLineNumber(lines, "24");
+  const taxableIncome = field("15");
+  const totalTax      = field("24");
 
   // ── Income fields (year-aware) ───────────────────────────────────────────
   // Wages: Line 1z (total wages, 2022+) is the correct income-composition numerator.
   // 2021 regular 1040: Line 1. 2021 1040-NR: Line 1a (no 1z available).
   const wages = (() => {
     if (year == null || year >= 2022) {
-      return extractByLineNumber(lines, "1z") ?? extractByLineNumber(lines, "1a");
+      return field("1z") ?? field("1a");
     }
     // year === 2021
     return isNR
-      ? extractByLineNumber(lines, "1a")
-      : (extractByLineNumber(lines, "1") ?? extractByLineNumber(lines, "1a"));
+      ? field("1a")
+      : (field("1") ?? field("1a"));
   })();
 
   // Capital gains: Line 7 on 2021–2024, Line 7a on 2025
   const capitalGains =
     year === 2025
-      ? (extractByLineNumber(lines, "7a") ?? extractByLineNumber(lines, "7"))
-      : (extractByLineNumber(lines, "7") ?? extractByLineNumber(lines, "7a"));
+      ? (field("7a") ?? field("7"))
+      : (field("7") ?? field("7a"));
 
   // Adjustments: 1040-NR 2021–2022 uses Line 10d; all others use Line 10
   const totalAdjustments =
     isNR && year != null && year <= 2022
-      ? (extractByLineNumber(lines, "10d") ?? extractByLineNumber(lines, "10"))
-      : extractByLineNumber(lines, "10");
+      ? (field("10d") ?? field("10"))
+      : field("10");
 
   // Deductions: year/form-specific line numbers
   const itemizedDeduction = (() => {
     if (year === 2025 && !isNR) {
-      return extractByLineNumber(lines, "12e") ?? extractByLineNumber(lines, "12");
+      return field("12e") ?? field("12");
     }
     if (year === 2021) {
-      return extractByLineNumber(lines, "12a") ?? extractByLineNumber(lines, "12");
+      return field("12a") ?? field("12");
     }
-    return extractByLineNumber(lines, "12");
+    return field("12");
   })();
 
   return {
     year,
     isNR,
+    formFieldsUsed: hasFormData,
     income: {
       wages,
-      interest:         extractByLineNumber(lines, "2b"),
-      dividends:        extractByLineNumber(lines, "3b"),
-      socialSecurity:   extractByLineNumber(lines, "6b"),
+      interest:         field("2b"),
+      dividends:        field("3b"),
+      socialSecurity:   field("6b"),
       capitalGains,
-      additionalIncome: extractByLineNumber(lines, "8"),
+      additionalIncome: field("8"),
     },
     adjustments: {
-      studentLoanInterest: extractByLineNumber(lines, "21"),
+      studentLoanInterest: field("21"),
       totalAdjustments,
     },
     deductions: {

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { parse1040 } from "./utils/parse1040";
 import { calculateMetrics } from "./utils/calculateMetrics";
 import {
   LineChart, Line, BarChart, Bar,
@@ -10,16 +9,6 @@ import {
 } from "recharts";
 
 const PIE_COLORS = ["#b8c43a", "#45c986", "#5b9bd4", "#c96888", "#8878c8"];
-
-// Canonical income amounts per year sourced directly from tax return line items.
-// wages=Line1a, capitalGains=Line7/7a, dividends=Line3b+SchedNEC,
-// interest=Line2b+non-taxable1099, other=Sched1Line10.
-// This is the ONLY source for income composition. No parser inference, no fallback.
-const VERIFIED_INCOME = {
-  2023: { wages: 2800,  capitalGains: 0,   dividends: 0,   interest: 0,   other: 0 },
-  2024: { wages: 39895, capitalGains: 186,  dividends: 5,   interest: 0,   other: 0 },
-  2025: { wages: 79652, capitalGains: 0,   dividends: 274, interest: 111, other: 0 },
-};
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const styles = `
@@ -1046,6 +1035,127 @@ const styles = `
     border-color: var(--accent);
   }
 
+  /* ── Wizard ── */
+  .tv-wiz { width: 100%; max-width: 700px; }
+  .tv-wiz-progress {
+    display: flex; gap: 8px; margin-bottom: 28px; justify-content: center;
+  }
+  .tv-wiz-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border); transition: background 0.2s;
+  }
+  .tv-wiz-dot.active { background: var(--accent); }
+  .tv-wiz-dot.done   { background: var(--accent2); }
+  .tv-wiz-step-title {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 6px;
+  }
+  .tv-wiz-step-sub {
+    font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;
+  }
+  .tv-wiz-year-grid {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;
+  }
+  .tv-wiz-year-btn {
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
+    padding: 12px 22px; border-radius: 8px; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--panel); color: var(--text);
+    transition: all 0.15s; user-select: none;
+  }
+  .tv-wiz-year-btn:hover { border-color: var(--accent); background: rgba(200,241,53,0.04); }
+  .tv-wiz-year-btn.on {
+    border-color: var(--accent); background: rgba(200,241,53,0.1); color: var(--accent);
+  }
+  .tv-wiz-form-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .tv-wiz-form-year {
+    font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--accent);
+    width: 60px; flex-shrink: 0;
+  }
+  .tv-wiz-form-pick {
+    display: flex; gap: 8px;
+  }
+  .tv-wiz-form-pick button {
+    font-family: var(--mono); font-size: 11px; padding: 6px 14px;
+    border-radius: 5px; border: 1px solid var(--border); background: none;
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .tv-wiz-form-pick button.on {
+    border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.06);
+  }
+  .tv-wiz-fields { display: flex; flex-direction: column; gap: 0; }
+  .tv-wiz-field-group {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+    padding: 16px 0 8px; border-bottom: 1px solid rgba(200,241,53,0.1);
+  }
+  .tv-wiz-field {
+    display: grid; grid-template-columns: 64px 1fr 140px;
+    align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tv-wiz-line-badge {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--accent); background: rgba(200,241,53,0.08);
+    padding: 3px 7px; border-radius: 4px; text-align: center; white-space: nowrap;
+  }
+  .tv-wiz-field-label {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .tv-wiz-field-name {
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+  }
+  .tv-wiz-field-hint {
+    font-size: 11px; color: var(--muted);
+  }
+  .tv-wiz-field-req::after {
+    content: " *"; color: var(--danger); font-size: 10px;
+  }
+  .tv-wiz-input {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; text-align: right;
+    outline: none; transition: border-color 0.15s;
+  }
+  .tv-wiz-input:focus { border-color: var(--accent); }
+  .tv-wiz-input.invalid { border-color: var(--danger); }
+  .tv-wiz-nav {
+    display: flex; gap: 10px; margin-top: 24px; justify-content: center;
+  }
+  .tv-wiz-nav button {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 11px 28px; border-radius: 7px;
+    cursor: pointer; font-weight: 700; transition: all 0.15s; border: none;
+  }
+  .tv-wiz-back {
+    background: none; border: 1px solid var(--border) !important;
+    color: var(--muted);
+  }
+  .tv-wiz-back:hover { border-color: var(--text) !important; color: var(--text); }
+  .tv-wiz-next {
+    background: var(--accent); color: #0a0c0f;
+  }
+  .tv-wiz-next:hover { background: #d4f54a; }
+  .tv-wiz-next:disabled { opacity: 0.3; cursor: not-allowed; }
+  .tv-wiz-warn {
+    font-family: var(--mono); font-size: 11px; color: var(--danger);
+    background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.15);
+    border-radius: 6px; padding: 8px 12px; margin-top: 12px;
+  }
+  .tv-wiz-year-tab-bar {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+  }
+  .tv-wiz-year-tab {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    padding: 10px 20px; border: none; background: none;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tv-wiz-year-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
   /* ── Print report (hidden on screen, shown exclusively in @media print) ── */
   .tv-print-report { display: none; }
 
@@ -1071,199 +1181,189 @@ const styles = `
       margin-bottom: 22pt;
     }
     .tv-pr-logo {
-      font-size: 10pt;
-      font-weight: 700;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: #555;
+      font-size: 10pt; font-weight: 700; letter-spacing: 0.35em;
+      text-transform: uppercase; color: #555;
     }
     .tv-pr-title {
-      font-size: 21pt;
-      font-weight: 700;
-      font-family: Georgia, serif;
-      color: #111;
-      margin: 6pt 0 4pt;
+      font-size: 21pt; font-weight: 700; font-family: Georgia, serif;
+      color: #111; margin: 6pt 0 4pt;
     }
-    .tv-pr-subtitle {
-      font-size: 9pt;
-      color: #666;
-      letter-spacing: 0.02em;
-    }
+    .tv-pr-subtitle { font-size: 9pt; color: #666; letter-spacing: 0.02em; }
 
-    .tv-pr-section { margin-bottom: 22pt; }
+    .tv-pr-section {
+      margin-bottom: 22pt;
+      break-inside: avoid; page-break-inside: avoid;
+    }
     .tv-pr-section-title {
-      font-size: 8pt;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #555;
-      border-bottom: 1pt solid #ccc;
-      padding-bottom: 4pt;
-      margin-bottom: 13pt;
-      font-family: 'Courier New', monospace;
+      font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: #555;
+      border-bottom: 1pt solid #ccc; padding-bottom: 4pt;
+      margin-bottom: 10pt; font-family: 'Courier New', monospace;
     }
 
-    .tv-pr-kpi-row { display: flex; flex-wrap: nowrap; }
-    .tv-pr-kpi {
-      flex: 1;
-      padding: 0 12pt;
-      border-right: 1pt solid #e0e0e0;
+    /* KPI grid — 2x2 on page 1 */
+    .tv-pr-kpi-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12pt;
+      margin-bottom: 16pt;
     }
-    .tv-pr-kpi:first-child { padding-left: 0; }
-    .tv-pr-kpi:last-child  { border-right: none; }
+    .tv-pr-kpi-box {
+      border: 1pt solid #ccc; border-radius: 4pt;
+      padding: 10pt 14pt;
+    }
     .tv-pr-kpi-label {
-      font-size: 7.5pt;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #777;
-      margin-bottom: 3pt;
-      font-family: 'Courier New', monospace;
+      font-size: 7.5pt; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #777; margin-bottom: 3pt; font-family: 'Courier New', monospace;
     }
     .tv-pr-kpi-value {
-      font-size: 18pt;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      color: #111;
-      line-height: 1;
+      font-size: 20pt; font-weight: 700; font-family: 'Courier New', monospace;
+      color: #111; line-height: 1;
     }
 
-    .tv-pr-table { width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 9.5pt; }
-    .tv-pr-table th {
-      text-align: left;
-      font-size: 7.5pt;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #666;
-      padding: 5pt 8pt;
-      border-bottom: 1pt solid #bbb;
+    /* Phase badge */
+    .tv-pr-phase-badge {
+      display: inline-block; font-family: 'Courier New', monospace;
+      font-size: 11pt; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #111;
+      border: 1.5pt solid #111; border-radius: 4pt;
+      padding: 5pt 14pt; margin: 12pt 0 8pt;
     }
-    .tv-pr-table td { padding: 6pt 8pt; border-bottom: 1pt solid #ebebeb; color: #222; }
+
+    /* Position hero */
+    .tv-pr-position {
+      margin-bottom: 20pt; break-inside: avoid; page-break-inside: avoid;
+    }
+    .tv-pr-position-headline {
+      font-size: 18pt; font-weight: 700; font-family: 'Courier New', monospace;
+      letter-spacing: 0.06em; text-transform: uppercase; color: #111;
+      margin-bottom: 10pt;
+    }
+    .tv-pr-position-explain {
+      font-size: 10.5pt; color: #333; line-height: 1.6; margin-bottom: 3pt;
+    }
+    .tv-pr-position-impact {
+      font-size: 10pt; color: #7a1a1a; font-weight: 600; margin-bottom: 6pt;
+    }
+    .tv-pr-position-action {
+      font-size: 10pt; color: #1a5c35; font-weight: 600;
+    }
+    .tv-pr-tag-row { display: flex; gap: 6pt; flex-wrap: wrap; margin-top: 10pt; }
+    .tv-pr-tag {
+      font-size: 7.5pt; font-weight: 700; font-family: 'Courier New', monospace;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3pt 8pt; border: 1.2pt solid #111; border-radius: 3pt; color: #111;
+    }
+    .tv-pr-tag.pos  { color: #1a5c35; border-color: #1a5c35; }
+    .tv-pr-tag.neg  { color: #7a1a1a; border-color: #7a1a1a; }
+    .tv-pr-tag.warn { color: #5a3e00; border-color: #5a3e00; }
+
+    /* Priority actions — large numbers */
+    .tv-pr-action-num {
+      font-size: 16pt; font-weight: 700; color: #111;
+      font-family: 'Courier New', monospace; margin-right: 6pt;
+      float: left; line-height: 1.4;
+    }
+
+    /* Prose summary */
+    .tv-pr-prose {
+      font-size: 10.5pt; color: #333; line-height: 1.7;
+      margin-bottom: 14pt;
+    }
+
+    /* Page break */
+    .tv-pr-page-break { page-break-after: always; }
+
+    /* Table with alternate row shading */
+    .tv-pr-table {
+      width: 100%; border-collapse: collapse;
+      font-family: 'Courier New', monospace; font-size: 9.5pt;
+    }
+    .tv-pr-table th {
+      text-align: left; font-size: 7.5pt; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #444; font-weight: 700;
+      padding: 5pt 8pt; border-bottom: 1pt solid #bbb;
+    }
+    .tv-pr-table td {
+      padding: 6pt 8pt; border-bottom: 1pt solid #ebebeb; color: #222;
+    }
+    .tv-pr-table tr:nth-child(even) td { background: #f9f9f9; }
     .tv-pr-table td:first-child { font-weight: 700; }
     .tv-pr-table td.pr-pos { color: #1a5c35; font-weight: 700; }
     .tv-pr-table td.pr-neg { color: #7a1a1a; font-weight: 700; }
 
-    .tv-pr-trend-row { display: flex; gap: 20pt; flex-wrap: wrap; margin-top: 10pt; }
+    .tv-pr-trend-row { display: flex; gap: 20pt; flex-wrap: wrap; margin-top: 12pt; }
     .tv-pr-trend-kpi { min-width: 80pt; }
     .tv-pr-trend-label {
-      font-size: 7.5pt;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #666;
-      font-family: 'Courier New', monospace;
+      font-size: 7.5pt; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #666; font-family: 'Courier New', monospace;
     }
     .tv-pr-trend-value {
-      font-size: 14pt;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      color: #111;
+      font-size: 14pt; font-weight: 700; font-family: 'Courier New', monospace; color: #111;
     }
 
-    .tv-pr-insight-block {
-      padding: 10pt 0;
-      border-bottom: 1pt solid #eee;
-      break-inside: avoid;
-      page-break-inside: avoid;
+    /* Labeled trend bullet */
+    .tv-pr-trend-bullet {
+      font-size: 10pt; color: #222; line-height: 1.7; margin-bottom: 6pt;
     }
-    .tv-pr-insight-block:last-child { border-bottom: none; }
-    .tv-pr-year-label {
-      font-size: 8.5pt;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #444;
-      margin-bottom: 4pt;
+    .tv-pr-trend-bullet-label {
+      font-weight: 700; font-family: 'Courier New', monospace;
+      font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #555; margin-right: 4pt;
+    }
+
+    /* Year deep-dive (vertical) */
+    .tv-pr-year-block {
+      padding: 14pt 0; border-bottom: 1pt solid #ddd;
+      break-inside: avoid; page-break-inside: avoid;
+    }
+    .tv-pr-year-block:last-child { border-bottom: none; }
+    .tv-pr-year-header {
+      font-size: 18pt; font-weight: 700; color: #111;
+      font-family: 'Courier New', monospace; margin-bottom: 10pt;
+    }
+    .tv-pr-year-cols {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16pt;
+      margin-bottom: 10pt;
+    }
+    .tv-pr-year-col-title {
+      font-size: 7.5pt; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #555; margin-bottom: 6pt;
       font-family: 'Courier New', monospace;
     }
+    .tv-pr-year-row {
+      display: flex; justify-content: space-between; padding: 3pt 0;
+      font-size: 9.5pt; font-family: 'Courier New', monospace;
+    }
+    .tv-pr-year-row-label { color: #555; }
+    .tv-pr-year-row-val { font-weight: 700; color: #111; }
+
+    /* Callout insight between sections */
+    .tv-pr-callout {
+      font-size: 10pt; color: #333; font-style: italic;
+      border-left: 2pt solid #ccc; padding-left: 8pt;
+      margin: 8pt 0; line-height: 1.6;
+    }
+
     .tv-pr-insight-text { font-size: 10pt; color: #222; line-height: 1.65; }
 
     .tv-pr-signal {
-      display: inline-block;
-      font-size: 7.5pt;
-      padding: 2pt 6pt;
-      border: 1pt solid;
-      border-radius: 3pt;
-      margin-right: 5pt;
-      margin-top: 5pt;
-      font-family: 'Courier New', monospace;
+      display: inline-block; font-size: 7.5pt; padding: 2pt 6pt;
+      border: 1pt solid; border-radius: 3pt; margin-right: 5pt;
+      margin-top: 5pt; font-family: 'Courier New', monospace;
       letter-spacing: 0.04em;
     }
     .tv-pr-signal.high { color: #1a5c35; border-color: #1a5c35; }
     .tv-pr-signal.mid  { color: #5a3e00; border-color: #5a3e00; }
     .tv-pr-signal.low  { color: #7a1a1a; border-color: #7a1a1a; }
 
-    /* ── Financial Position hero ── */
-    .tv-pr-position {
-      margin-bottom: 24pt;
-      padding-bottom: 18pt;
-      border-bottom: 1pt solid #ddd;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .tv-pr-position-headline {
-      font-size: 16pt;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #111;
-      margin-bottom: 8pt;
-    }
-    .tv-pr-position-explain {
-      font-size: 10.5pt;
-      color: #333;
-      line-height: 1.6;
-      margin-bottom: 3pt;
-    }
-    .tv-pr-position-impact {
-      font-size: 10pt;
-      color: #7a1a1a;
-      font-weight: 600;
-      margin-bottom: 6pt;
-    }
-    .tv-pr-position-action {
-      font-size: 10pt;
-      color: #1a5c35;
-      font-weight: 600;
-    }
-    .tv-pr-tag-row {
-      display: flex;
-      gap: 6pt;
-      flex-wrap: wrap;
-      margin-top: 10pt;
-    }
-    .tv-pr-tag {
-      font-size: 7.5pt;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 3pt 8pt;
-      border: 1.2pt solid #111;
-      border-radius: 3pt;
-      color: #111;
-    }
-    .tv-pr-tag.pos  { color: #1a5c35; border-color: #1a5c35; }
-    .tv-pr-tag.neg  { color: #7a1a1a; border-color: #7a1a1a; }
-    .tv-pr-tag.warn { color: #5a3e00; border-color: #5a3e00; }
-
-    /* ── Bullet signals ── */
     .tv-pr-bullet {
-      font-size: 10pt;
-      color: #222;
-      line-height: 1.7;
-      padding-left: 14pt;
-      text-indent: -14pt;
+      font-size: 10pt; color: #222; line-height: 1.7;
+      padding-left: 14pt; text-indent: -14pt;
     }
     .tv-pr-bullet::before { content: "→ "; color: #555; }
 
     .tv-pr-footer {
-      margin-top: 30pt;
-      padding-top: 9pt;
-      border-top: 1pt solid #ccc;
-      font-size: 7.5pt;
-      color: #aaa;
-      text-align: center;
-      letter-spacing: 0.04em;
+      margin-top: 30pt; padding-top: 9pt; border-top: 1pt solid #ccc;
+      font-size: 7.5pt; color: #aaa; text-align: center; letter-spacing: 0.04em;
     }
   }
 `;
@@ -1277,11 +1377,63 @@ const MOST_RECENT_TAX_YEAR = _today >= _march1 ? _curYear - 1 : _curYear - 2;
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => MOST_RECENT_TAX_YEAR - i);
 const MAX_FILES = 5;
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-function fmtBytes(b) {
-  if (b < 1024) return b + " B";
-  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
-  return (b / (1024 * 1024)).toFixed(1) + " MB";
+// ─── WIZARD FIELD DEFINITIONS ────────────────────────────────────────────────
+// Fields in IRS line-number order. Only lines that feed calculateMetrics().
+
+// 1040 core fields (line-number order)
+const FIELDS_1040 = [
+  { key: "wages",        label: "W-2 Wages",                    hint: "Wages, salaries, tips",                lineCode: (y) => y === 2021 ? "1" : "1a" },
+  { key: "interest",     label: "Taxable Interest",             hint: "From savings, CDs, bonds",             lineCode: () => "2b"  },
+  { key: "dividends",    label: "Ordinary Dividends",           hint: "From stocks, mutual funds",            lineCode: () => "3b"  },
+  { key: "capitalGains", label: "Capital Gain/Loss",            hint: "From selling assets",                  lineCode: (y) => y >= 2025 ? "7a" : "7" },
+  { key: "otherIncome",  label: "Other Income",                 hint: "Schedule 1, business, etc.",           lineCode: () => "8"   },
+  { key: "totalIncome",  label: "Total Income",                 hint: "All income before adjustments",        lineCode: () => "9",    required: true },
+  { key: "adjustments",  label: "Adjustments to Income",        hint: "IRA, student loan, etc.",              lineCode: () => "10" },
+  { key: "agi",          label: "Adjusted Gross Income",        hint: "After pre-tax deductions",             lineCode: (y) => y >= 2025 ? "11a" : "11", required: true },
+  { key: "deductions",   label: "Standard/Itemized Deductions", hint: "Standard or itemized amount",         lineCode: (y) => y === 2025 ? "12e" : y === 2021 ? "12a" : "12" },
+  { key: "taxableIncome",label: "Taxable Income",               hint: "Income subject to tax",                lineCode: () => "15",   required: true },
+  { key: "totalTax",     label: "Total Tax",                    hint: "Your total federal tax",               lineCode: () => "24",   required: true },
+];
+
+// 1040-NR core fields (line-number order, includes NR-specific lines inline)
+const FIELDS_1040NR = [
+  { key: "wages",        label: "W-2 Wages",                    hint: "Wages, salaries, tips",                lineCode: () => "1a" },
+  { key: "treatyExempt", label: "Treaty Exempt Income",         hint: "Tax treaty scholarship/wage exemption",lineCode: (y) => y === 2021 ? "1c" : "1k" },
+  { key: "interest",     label: "Taxable Interest",             hint: "From savings, CDs, bonds",             lineCode: () => "2b"  },
+  { key: "dividends",    label: "Ordinary Dividends",           hint: "From stocks, mutual funds",            lineCode: () => "3b"  },
+  { key: "capitalGains", label: "Capital Gain/Loss",            hint: "From selling assets",                  lineCode: (y) => y >= 2025 ? "7a" : "7" },
+  { key: "otherIncome",  label: "Other Income",                 hint: "Schedule 1, business, etc.",           lineCode: () => "8"   },
+  { key: "totalIncome",  label: "Total ECI Income",             hint: "Effectively connected income",         lineCode: () => "9",    required: true },
+  { key: "adjustments",  label: "Adjustments to Income",        hint: "IRA, student loan, etc.",              lineCode: (y) => y <= 2022 ? "10d" : "10" },
+  { key: "agi",          label: "Adjusted Gross Income",        hint: "After pre-tax deductions",             lineCode: (y) => y >= 2025 ? "11a" : "11", required: true },
+  { key: "deductions",   label: "Itemized Deductions",          hint: "From Schedule A (1040-NR)",            lineCode: (y) => y === 2021 ? "12a" : "12" },
+  { key: "taxableIncome",label: "Taxable Income",               hint: "Income subject to tax",                lineCode: () => "15",   required: true },
+  { key: "necTax",       label: "NEC Tax",                      hint: "Tax on non-effectively connected income", lineCode: () => "23a" },
+  { key: "totalTax",     label: "Total Tax",                    hint: "Your total federal tax",               lineCode: () => "24",   required: true },
+];
+
+// Helper: get the right field list for a form type
+function getFieldsForForm(formType) {
+  return formType === "1040-NR" ? FIELDS_1040NR : FIELDS_1040;
+}
+
+function emptyYearData() {
+  const d = {};
+  FIELDS_1040.forEach(f => { d[f.key] = ""; });
+  FIELDS_1040NR.forEach(f => { if (!(f.key in d)) d[f.key] = ""; });
+  return d;
+}
+
+function parseNum(v) {
+  if (v == null || v === "") return null;
+  const n = parseFloat(String(v).replace(/[$,\s]/g, ""));
+  return isNaN(n) ? null : n;
+}
+
+function fmtInput(v) {
+  const n = parseNum(v);
+  if (n == null) return v;
+  return n.toLocaleString("en-US");
 }
 
 // ─── TOOLTIP ─────────────────────────────────────────────────────────────────
@@ -1360,10 +1512,16 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function TaxVista() {
-  const [files, setFiles] = useState([]);
-  const [dragOver, setDragOver] = useState(false);
+  // ── Wizard state ──
+  const [wizStep, setWizStep] = useState(1);
+  const [wizYears, setWizYears] = useState([]);
+  const [wizForms, setWizForms] = useState({});   // { 2025: "1040", 2024: "1040-NR" }
+  const [wizData, setWizData]   = useState({});    // { 2025: { totalIncome: "80000", ... } }
+  const [wizActiveYear, setWizActiveYear] = useState(null);
+  const [wizWarnings, setWizWarnings] = useState([]);
   const [error, setError] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
+
+  // ── Dashboard state ──
   const [results, setResults] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [metrics, setMetrics] = useState([]);
@@ -1372,7 +1530,6 @@ export default function TaxVista() {
   const [activeYear, setActiveYear] = useState(null);
   const [activeMetric, setActiveMetric] = useState(null);
   const [reportName, setReportName] = useState("");
-  const inputRef     = useRef();
   const areaChartRef = useRef(null);
   const lineChartRef = useRef(null);
   const barChartRef  = useRef(null);
@@ -1380,11 +1537,9 @@ export default function TaxVista() {
   const onChartMove  = (e) => { if (e?.activeLabel) setActiveYear(Number(e.activeLabel)); };
   const onChartLeave = ()  => setActiveYear(null);
 
-  // Opacity helper for chart elements based on activeMetric
   const metricOpacity = (metric) => activeMetric == null ? 1 : activeMetric === metric ? 1 : 0.4;
   const metricStroke  = (metric, base) => activeMetric === metric ? base + 1 : base;
 
-  // Load Google Fonts safely inside effect
   useEffect(() => {
     const existing = document.querySelector('link[data-taxvista-font]');
     if (existing) return;
@@ -1396,82 +1551,80 @@ export default function TaxVista() {
     document.head.appendChild(link);
   }, []);
 
-  // ── Add files ──
-  const addFiles = (incoming) => {
-    setError("");
-    const valid = Array.from(incoming).filter(
-      (f) =>
-        f.type === "application/pdf" ||
-        f.type === "image/png" ||
-        f.type === "image/jpeg"
-    );
-    if (valid.length === 0) {
-      setError("Only PDF, PNG, or JPG files are accepted.");
-      return;
-    }
-    setFiles((prev) => {
-      const slots = MAX_FILES - prev.length;
-      if (slots <= 0) {
-        setError("Maximum 5 files reached.");
-        return prev;
+  // ── Wizard helpers ──
+  const toggleYear = (y) => {
+    setWizYears(prev => {
+      const next = prev.includes(y) ? prev.filter(x => x !== y) : [...prev, y].sort((a, b) => a - b);
+      // Initialize form type and data for new years
+      if (!prev.includes(y)) {
+        setWizForms(f => ({ ...f, [y]: f[y] ?? "1040" }));
+        setWizData(d => ({ ...d, [y]: d[y] ?? emptyYearData() }));
       }
-      const toAdd = valid.slice(0, slots).map((f, i) => ({
-        file: f,
-        id: crypto.randomUUID(),
-        year: i <= 4 ? MOST_RECENT_TAX_YEAR - i : MOST_RECENT_TAX_YEAR,
-        status: "idle",
-      }));
-      if (valid.length > slots) {
-        setError(`Only ${slots} slot(s) left. ${valid.length - slots} file(s) skipped.`);
-      }
-      return [...prev, ...toAdd];
+      return next;
     });
-    if (inputRef.current) inputRef.current.value = "";
   };
 
-  const removeFile = (id) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-    setError("");
+  const setFieldVal = (year, key, val) => {
+    setWizData(prev => ({
+      ...prev,
+      [year]: { ...prev[year], [key]: val },
+    }));
   };
 
-  const updateYear = (id, year) => {
-    setFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, year: parseInt(year) } : f))
-    );
+  const handleBlur = (year, key, val) => {
+    const formatted = fmtInput(val);
+    if (formatted !== val) setFieldVal(year, key, formatted);
   };
 
-  const setStatus = (id, status) => {
-    setFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, status } : f))
-    );
-  };
-
-  // ── Drag & drop ──
-  const handleDragOver = (e) => { e.preventDefault(); setDragOver(true); };
-  const handleDragLeave = () => setDragOver(false);
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    addFiles(e.dataTransfer.files);
-  };
-
-  // ── Analyze ──
-  const handleAnalyze = async () => {
-    const snapshot = [...files]; // snapshot to avoid stale closure
-    setAnalyzing(true);
-    const collected = [];
-    for (const item of snapshot) {
-      setStatus(item.id, "parsing");
-      try {
-        const result = await parse1040(item.file);
-        collected.push({ year: item.year, fileName: item.file.name, ...result });
-        setStatus(item.id, result.error ? "error" : "done");
-      } catch (err) {
-        collected.push({ year: item.year, fileName: item.file.name, error: err.message });
-        setStatus(item.id, "error");
+  // ── Cross-validation ──
+  const runValidation = () => {
+    const warns = [];
+    for (const y of wizYears) {
+      const d = wizData[y];
+      if (!d) continue;
+      // AGI ≈ totalIncome - adjustments
+      const ti = parseNum(d.totalIncome);
+      const adj = parseNum(d.adjustments) ?? 0;
+      const agi = parseNum(d.agi);
+      if (ti != null && agi != null && Math.abs(ti - adj - agi) > 1) {
+        warns.push(`${y}: Total Income ($${ti?.toLocaleString()}) - Adjustments ($${adj.toLocaleString()}) ≠ AGI ($${agi?.toLocaleString()}). Check your entries.`);
       }
     }
-    // Sort by year to enable prior-year comparison, then compute metrics with cross-year context
+    setWizWarnings(warns);
+    return warns;
+  };
+
+  // ── Analyze (from wizard data) ──
+  const handleAnalyze = () => {
+    const warns = runValidation();
+    const collected = wizYears.map(y => {
+      const d = wizData[y] ?? {};
+      const isNR = wizForms[y] === "1040-NR";
+      return {
+        year: y,
+        isNR,
+        income: {
+          wages:            parseNum(d.wages),
+          interest:         parseNum(d.interest),
+          dividends:        parseNum(d.dividends),
+          socialSecurity:   parseNum(d.socialSec),
+          capitalGains:     parseNum(d.capitalGains),
+          additionalIncome: parseNum(d.otherIncome),
+        },
+        adjustments: {
+          totalAdjustments: parseNum(d.adjustments),
+        },
+        deductions: {
+          itemized: parseNum(d.deductions),
+        },
+        summary: {
+          totalIncome:          parseNum(d.totalIncome),
+          adjustedGrossIncome:  parseNum(d.agi),
+          taxableIncome:        parseNum(d.taxableIncome),
+          totalTax:             parseNum(d.totalTax),
+        },
+      };
+    });
     collected.sort((a, b) => a.year - b.year);
     const computedMetrics = [];
     for (let i = 0; i < collected.length; i++) {
@@ -1492,17 +1645,22 @@ export default function TaxVista() {
     }
     setResults(collected);
     setMetrics(computedMetrics);
-    const years = collected.map((r) => r.year);
+    const years = collected.map(r => r.year);
     setSelectedYears(years);
-    setVerticalYear(years[0] ?? null);
+    setVerticalYear(years.length > 0 ? Math.max(...years) : null);
     setActiveTab("overview");
-    setAnalyzing(false);
     setTimeout(() => {
       document.querySelector(".tv-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   };
 
-  const isFull = files.length >= MAX_FILES;
+  // Check if required fields are filled for all years
+  const canAnalyze = wizYears.length > 0 && wizYears.every(y => {
+    const d = wizData[y];
+    if (!d) return false;
+    const fields = getFieldsForForm(wizForms[y] ?? "1040");
+    return fields.filter(f => f.required).every(f => parseNum(d[f.key]) != null);
+  });
 
   const trendData = metrics.map((m, i) => ({
     year:            results[i]?.year,
@@ -1617,26 +1775,24 @@ export default function TaxVista() {
     ? _mN.taxToIncome - _m0.taxToIncome : null;
   const _lowBase = _td0?.totalIncome != null && _td0.totalIncome < 10000;
 
-  // Vertical pie data — built exclusively from VERIFIED_INCOME canonical amounts.
-  // Zeros stay zero. No parser inference, no fallback, no redistribution.
+  // Vertical pie data — built from user-entered income components
   const vPieData = (() => {
     if (!vResult) return [];
-    const v = VERIFIED_INCOME[vResult.year] ?? {
-      wages:        vResult.income?.wages ?? 0,
-      capitalGains: vResult.income?.capitalGains ?? 0,
-      dividends:    vResult.income?.dividends ?? 0,
-      interest:     vResult.income?.interest ?? 0,
-      other:        vResult.income?.additionalIncome ?? 0,
-    };
-    const total = v.wages + v.capitalGains + v.dividends + v.interest + v.other;
+    const inc = vResult.income ?? {};
+    const w  = inc.wages ?? 0;
+    const cg = inc.capitalGains ?? 0;
+    const dv = inc.dividends ?? 0;
+    const it = inc.interest ?? 0;
+    const ot = inc.additionalIncome ?? 0;
+    const total = w + cg + dv + it + ot;
     if (total <= 0) return [];
-    const pct = (amt) => (total === 0 ? 0 : +((amt / total) * 100).toFixed(1));
+    const pct = (amt) => +((amt / total) * 100).toFixed(1);
     return [
-      { name: "Wages",     value: pct(v.wages)        },
-      { name: "Cap Gains", value: pct(v.capitalGains) },
-      { name: "Dividends", value: pct(v.dividends)    },
-      { name: "Interest",  value: pct(v.interest)     },
-      { name: "Other",     value: pct(v.other)        },
+      { name: "Wages",     value: pct(w)  },
+      { name: "Cap Gains", value: pct(cg) },
+      { name: "Dividends", value: pct(dv) },
+      { name: "Interest",  value: pct(it) },
+      { name: "Other",     value: pct(ot) },
     ];
   })();
 
@@ -1995,125 +2151,158 @@ export default function TaxVista() {
             <span>Financial Story.</span>
           </h1>
           <p className="tv-subtitle">
-            Upload up to 5 years of Form 1040 &rarr; Get your personal Bloomberg Terminal
+            Enter your 1040 numbers — no uploads, no SSN, numbers only.
             <br />
-            Download your financial story.
+            In under 5 minutes, get a bird's-eye view of your financial story.
+          </p>
+          <p style={{
+            fontFamily: "var(--mono)", fontWeight: 700, fontSize: 15,
+            color: "var(--accent)", marginTop: 10, letterSpacing: "0.02em",
+            textShadow: "0 0 18px rgba(200,241,53,0.35)",
+            textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(200,241,53,0.35)",
+          }}>
+            Download your Financial Story Report.
           </p>
         </div>
 
-        {/* ── Drop Zone ── */}
-        <div className="tv-upload-wrapper">
-          <div
-            className={`tv-drop-zone${dragOver ? " drag-over" : ""}${isFull ? " full" : ""}`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => !isFull && inputRef.current.click()}
-          >
-            <div className="tv-drop-icon">📄</div>
-            <div className="tv-drop-title">Upload your tax returns</div>
-            <div className="tv-drop-sub">
-              Upload Form <em>1040 or 1040NR</em> &middot; PDF only &middot; Up to 5 tax years<br />
-              Include <em>any supporting schedules</em> for deeper insights
+        {/* ── Data Entry Wizard ── */}
+        {results.length === 0 && (
+          <div className="tv-wiz">
+
+            {/* Progress dots */}
+            <div className="tv-wiz-progress">
+              {[1, 2, 3].map(s => (
+                <div key={s} className={`tv-wiz-dot${s === wizStep ? " active" : s < wizStep ? " done" : ""}`} />
+              ))}
             </div>
-            <button
-              className="tv-drop-btn"
-              disabled={isFull}
-              onClick={(e) => { e.stopPropagation(); inputRef.current.click(); }}
-            >
-              + Select Files
-            </button>
-          </div>
 
-          <input
-            ref={inputRef}
-            type="file"
-            className="tv-input-hidden"
-            accept=".pdf,image/png,image/jpeg"
-            multiple
-            onChange={(e) => {
-              if (e.target.files?.length > 0) addFiles(e.target.files);
-            }}
-          />
-
-          {/* Limit bar */}
-          <div className="tv-limit-bar">
-            <span>{files.length}/{MAX_FILES} years</span>
-            <div className="tv-limit-track">
-              <div
-                className="tv-limit-fill"
-                style={{ width: `${(files.length / MAX_FILES) * 100}%` }}
-              />
-            </div>
-            <span>{MAX_FILES - files.length} slot{MAX_FILES - files.length !== 1 ? "s" : ""} left</span>
-          </div>
-
-          <div className="tv-privacy">
-            🔒 <span style={{ color: "var(--accent)", fontWeight: 600 }}>Privacy by design.</span> Your files never leave your browser — we extract only numerical financial data (no SSN or addresses). Nothing is stored or transmitted. Files are processed in memory and discarded immediately after analysis.
-          </div>
-
-          {error && <div className="tv-error">⚠ {error}</div>}
-
-          {/* File list */}
-          {files.length > 0 && (
-            <div className="tv-file-list">
-              {files.map((item) => {
-                const isPdf = item.file.type === "application/pdf";
-                return (
-                  <div className="tv-file-item" key={item.id}>
-                    <div className={`tv-file-icon${!isPdf ? " img" : ""}`}>
-                      {isPdf ? "📑" : "🖼️"}
-                    </div>
-                    <div className="tv-file-info">
-                      <div className="tv-file-name">{item.file.name}</div>
-                      <div className="tv-file-meta">
-                        <span>{fmtBytes(item.file.size)}</span>
-                        <span>·</span>
-                        <span>Tax Year:</span>
-                        <select
-                          className="tv-year-select"
-                          value={item.year}
-                          onChange={(e) => updateYear(item.id, e.target.value)}
-                        >
-                          {YEAR_OPTIONS.map((y) => (
-                            <option key={y} value={y}>{y}</option>
-                          ))}
-                        </select>
-                        {item.status !== "idle" && (
-                          <span className={`tv-parse-status ${item.status}`}>
-                            {item.status === "parsing" && "⟳ reading..."}
-                            {item.status === "done"    && "✓ extracted"}
-                            {item.status === "error"   && "✗ failed"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+            {/* Step 1 — Year selection */}
+            {wizStep === 1 && (
+              <>
+                <div className="tv-wiz-step-title">Step 1 — Select Tax Years</div>
+                <div className="tv-wiz-step-sub">Which years do you want to analyze? Select up to 5.</div>
+                <div className="tv-wiz-year-grid">
+                  {YEAR_OPTIONS.map(y => (
                     <button
-                      className="tv-remove-btn"
-                      onClick={() => removeFile(item.id)}
-                      title="Remove"
+                      key={y}
+                      className={`tv-wiz-year-btn${wizYears.includes(y) ? " on" : ""}`}
+                      onClick={() => toggleYear(y)}
+                      disabled={!wizYears.includes(y) && wizYears.length >= 5}
                     >
-                      ✕
+                      {y}
+                    </button>
+                  ))}
+                </div>
+                <div className="tv-wiz-nav">
+                  <button className="tv-wiz-next" disabled={wizYears.length === 0} onClick={() => { setWizStep(2); setWizActiveYear(wizYears[wizYears.length - 1]); }}>
+                    Next &rarr;
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Step 2 — Form type per year */}
+            {wizStep === 2 && (
+              <>
+                <div className="tv-wiz-step-title">Step 2 — Form Type</div>
+                <div className="tv-wiz-step-sub">For each year, which form did you file?</div>
+                {[...wizYears].sort((a, b) => b - a).map(y => (
+                  <div key={y} className="tv-wiz-form-row">
+                    <div className="tv-wiz-form-year">{y}</div>
+                    <div className="tv-wiz-form-pick">
+                      {["1040", "1040-NR"].map(ft => (
+                        <button key={ft} className={(wizForms[y] ?? "1040") === ft ? "on" : ""}
+                          onClick={() => setWizForms(prev => ({ ...prev, [y]: ft }))}
+                        >
+                          {ft}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className="tv-wiz-nav">
+                  <button className="tv-wiz-back" onClick={() => setWizStep(1)}>&larr; Back</button>
+                  <button className="tv-wiz-next" onClick={() => setWizStep(3)}>Next &rarr;</button>
+                </div>
+              </>
+            )}
+
+            {/* Step 3 — Core field entry */}
+            {wizStep === 3 && (() => {
+              const y = wizActiveYear ?? wizYears[wizYears.length - 1];
+              const formType = wizForms[y] ?? "1040";
+              const d = wizData[y] ?? emptyYearData();
+              const fields = getFieldsForForm(formType);
+              return (
+                <>
+                  <div className="tv-wiz-step-title">Step 3 — Enter Your Numbers</div>
+                  <div className="tv-wiz-step-sub">Type the dollar amounts from your {formType}. Fields marked * are required.</div>
+
+                  {/* Year tabs */}
+                  <div className="tv-wiz-year-tab-bar">
+                    {[...wizYears].sort((a, b) => b - a).map(yr => (
+                      <button key={yr} className={`tv-wiz-year-tab${yr === y ? " active" : ""}`}
+                        onClick={() => setWizActiveYear(yr)}>
+                        {yr} <span style={{ fontSize: 9, color: "var(--muted)", marginLeft: 4 }}>{wizForms[yr] ?? "1040"}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="tv-wiz-fields">
+                    <div className="tv-wiz-field-group">{formType} — {y}</div>
+                    {fields.map(f => (
+                      <div key={f.key} className="tv-wiz-field">
+                        <div className="tv-wiz-line-badge">Line {f.lineCode(y)}</div>
+                        <div className="tv-wiz-field-label">
+                          <span className={`tv-wiz-field-name${f.required ? " tv-wiz-field-req" : ""}`}>{f.label}</span>
+                          <span className="tv-wiz-field-hint">{typeof f.hint === "function" ? f.hint(y) : f.hint}</span>
+                        </div>
+                        <input
+                          className="tv-wiz-input"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0"
+                          value={d[f.key] ?? ""}
+                          onChange={e => setFieldVal(y, f.key, e.target.value)}
+                          onBlur={e => handleBlur(y, f.key, e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Cross-validation warnings */}
+                  {wizWarnings.length > 0 && (
+                    <div className="tv-wiz-warn">
+                      {wizWarnings.map((w, i) => <div key={i}>{w}</div>)}
+                    </div>
+                  )}
+
+                  <div className="tv-wiz-nav">
+                    <button className="tv-wiz-back" onClick={() => setWizStep(2)}>&larr; Back</button>
+                    <button className="tv-wiz-next" disabled={!canAnalyze} onClick={() => { runValidation(); handleAnalyze(); }}>
+                      Analyze My Returns &rarr;
                     </button>
                   </div>
-                );
-              })}
+                </>
+              );
+            })()}
+
+            <div className="tv-privacy" style={{ marginTop: 20 }}>
+              🔒 <span style={{ color: "var(--accent)", fontWeight: 600 }}>Zero data risk.</span> You type only numbers — no SSN, no names, no addresses. Nothing is stored or transmitted. Everything runs in your browser.
             </div>
-          )}
-        </div>
 
-        {/* ── CTA ── */}
-        <div className="tv-cta">
-          <button
-            className={`tv-cta-btn${analyzing ? " loading" : ""}`}
-            disabled={files.length === 0 || analyzing}
-            onClick={handleAnalyze}
-          >
-            {analyzing ? "Analyzing..." : "Analyze My Returns →"}
-          </button>
-        </div>
+            {error && <div className="tv-error">{error}</div>}
+          </div>
+        )}
 
-        {/* placeholder removed — tabs moved into sidebar */}
+        {/* Edit data button (when dashboard is showing) */}
+        {results.length > 0 && (
+          <div style={{ width: "100%", maxWidth: 700, display: "flex", justifyContent: "flex-end", marginBottom: -20 }}>
+            <button className="tv-export-btn" onClick={() => { setResults([]); setMetrics([]); }}>
+              Edit Data
+            </button>
+          </div>
+        )}
 
         {/* ── Dashboard ── */}
         {results.length > 0 && (
@@ -2434,8 +2623,8 @@ export default function TaxVista() {
                             </BarChart>
                           </ResponsiveContainer>
                           <div style={{ display: "flex", gap: 16, fontFamily: "var(--mono)", fontSize: 10, color: "var(--muted)", marginTop: 8, justifyContent: "center" }}>
-                            <Tip tip="Tax ÷ taxable income. Lower = more efficient.">Effective Tax Rate ?</Tip>
-                            <Tip tip="Tax ÷ everything you earned. Always lower than ETR.">Tax / Gross Income ?</Tip>
+                            <Tip tip="Total tax ÷ taxable income. Your true tax rate on income subject to tax.">Effective Tax Rate ?</Tip>
+                            <Tip tip="Total tax ÷ total income (before deductions). Always lower than Effective Tax Rate.">Tax / Gross Income ?</Tip>
                           </div>
                         </div>
                       </div>
@@ -2653,639 +2842,330 @@ export default function TaxVista() {
           </div>
         )}
 
-        {/* ── Print Report — direct child of tv-root; @media print hides all siblings ── */}
-        {results.length > 0 && (
+        {/* ── Print Report — 4-page restructured layout ── */}
+        {results.length > 0 && (() => {
+          // Pre-compute deep analysis data (shared across pages)
+          const _sorted = [...results].sort((a, b) => a.year - b.year);
+          const _multi = _sorted.length > 1;
+          const _first = _sorted[0];
+          const _last  = _sorted[_sorted.length - 1];
+          const _mFirst = metricMap[_first.year];
+          const _mLast  = metricMap[_last.year];
+          const _fmtD = (v) => v != null ? "$" + Math.round(v).toLocaleString() : "—";
+          const _fmtP = (v) => v != null ? (v * 100).toFixed(1) + "%" : "—";
+          const _lb = _first.summary?.totalIncome != null && _first.summary.totalIncome < 10000;
+
+          // Signal tags
+          const _latestM = _tdN ? metricMap[_tdN.year] : null;
+          const _latestR = _tdN ? results.find(r => r.year === _tdN.year) : null;
+          const _tags = [];
+          if (incomeCagr != null && incomeCagr > 0.12) _tags.push({ text: "High Growth", cls: "pos" });
+          else if (incomeCagr != null && incomeCagr < -0.05) _tags.push({ text: "Income Declining", cls: "neg" });
+          if (taxRateDelta != null && taxRateDelta > 0.02) _tags.push({ text: "Rising Tax", cls: "neg" });
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _tags.push({ text: "Low Efficiency", cls: "warn" });
+          else if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency > 0.2) _tags.push({ text: "Strong Deductions", cls: "pos" });
+          if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) _tags.push({ text: "Strong Take-Home", cls: "pos" });
+
+          const _headline = _tags.length > 0 ? _tags.slice(0, 2).map(t => t.text.toUpperCase()).join(" · ") : "FINANCIAL OVERVIEW";
+
+          const _explain = (() => {
+            if (incomeCagr != null && incomeCagr > 0.12 && taxRateDelta != null && taxRateDelta > 0.02) return "Income rising fast, but tax efficiency is not keeping pace.";
+            if (incomeCagr != null && incomeCagr > 0.12) return "Income growing rapidly — early optimization has the highest lifetime impact.";
+            if (taxRateDelta != null && taxRateDelta > 0.02) return "Tax burden increasing — more income is being lost to taxes.";
+            if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) return "Deductions underutilized — taxable income is close to gross income.";
+            if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) return "Strong income retention — most of gross income preserved after tax.";
+            return "Review your income structure and tax efficiency below.";
+          })();
+
+          const _impact = (() => {
+            if (taxRateDelta != null && taxRateDelta > 0.02 && incomeCagr != null && incomeCagr > 0.1) return "Without adjustment, taxes will scale faster than income growth.";
+            if (_latestM?.effectiveTaxRate != null && _latestM.effectiveTaxRate > 0.2) return "High tax burden — over 20% of income going to federal tax.";
+            if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.08) return "Almost no taxable income reduced through deductions.";
+            return null;
+          })();
+
+          // Priority actions
+          const _actions = [];
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) _actions.push({ action: "Maximize pre-tax contributions (401k, IRA, HSA)", reason: _latestM.deductionEfficiency < 0.08 ? `Deduction efficiency is ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — nearly all income reaches taxable income without offsets. Each dollar contributed pre-tax reduces taxable income dollar-for-dollar.` : "Pre-tax contributions are below optimal levels. Increasing 401k and IRA is the highest-ROI tax action." });
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _actions.push({ action: "Reduce taxable income exposure", reason: `Beyond retirement, evaluate HSA eligibility, student loan interest deduction, and above-the-line adjustments.` });
+          if (taxRateDelta != null && taxRateDelta > 0.02) _actions.push({ action: "Review tax withholding accuracy", reason: `Effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points. Verify W-4 reflects current income.` });
+          if (incomeCagr != null && incomeCagr > 0.08) _actions.push({ action: "Shift income mix toward tax-advantaged sources", reason: "Capital gains and qualified dividends are taxed at 0–20% vs ordinary rates of 22–37%." });
+          if (_actions.length === 0) _actions.push({ action: "Conduct annual deduction and contribution audit", reason: "Ensure all eligible deductions are claimed and pre-tax contributions are near annual limits." });
+
+          // Prose summary for page 1
+          const _proseParts = [];
+          if (_latestR && _latestM) {
+            _proseParts.push(`In ${_latestR.year}, you earned ${_fmtD(_latestR.summary?.totalIncome)} in gross income and kept ${_fmtD(_latestM.afterTaxIncome)} after federal taxes — an effective tax rate of ${_fmtP(_latestM.effectiveTaxRate)}.`);
+            if (_multi && taxRateDelta != null && Math.abs(taxRateDelta) > 0.01) {
+              _proseParts.push(`Over ${_first.year}–${_last.year}, your effective tax rate ${taxRateDelta > 0 ? "increased" : "decreased"} by ${Math.abs(taxRateDelta * 100).toFixed(1)} percentage points${_lb ? " as income moved from a near-zero base into taxable brackets" : ""}.`);
+            }
+            if (_latestM.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) {
+              _proseParts.push(`Deduction efficiency is low at ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — the primary lever for improving after-tax income is increasing pre-tax contributions.`);
+            }
+          }
+
+          // Income helper
+          const _incOf = (r) => { const inc = r.income ?? {}; return { wages: inc.wages ?? 0, capitalGains: inc.capitalGains ?? 0, dividends: inc.dividends ?? 0, interest: inc.interest ?? 0, other: inc.additionalIncome ?? 0 }; };
+
+          // Deep analysis bullet arrays (same logic as before, computed once)
+          const _incomeBullets = [], _taxBullets = [], _dragBullets = [], _afterTaxBullets = [], _compBullets = [], _dedBullets = [], _summaryBullets = [];
+
+          // Income trend
+          if (_multi) {
+            const fi = _first.summary?.totalIncome, li = _last.summary?.totalIncome;
+            if (fi && li) { if (_lb) { _incomeBullets.push(`Income expanded from ${_fmtD(fi)} (${_first.year}) to ${_fmtD(li)} (${_last.year}). The starting base was below $10,000, which distorts percentage-based metrics.`); } else { const g = ((li - fi) / fi * 100).toFixed(0); _incomeBullets.push(`Gross income: ${_fmtD(fi)} (${_first.year}) → ${_fmtD(li)} (${_last.year}) — ${g}% total change.`); } }
+            if (incomeCagr != null && !_lb) _incomeBullets.push(`Annualized growth rate: ${(incomeCagr * 100).toFixed(1)}%. ${incomeCagr > 0.2 ? "Exceptionally fast — sustainability should be monitored." : incomeCagr > 0.08 ? "Above-average growth creating compounding value." : incomeCagr > 0 ? "Modest growth near inflation levels." : "Income contracting in real terms."}`);
+            else if (_lb) _incomeBullets.push(`Low-base distortion: ${_first.year} income of ${_fmtD(_first.summary?.totalIncome)} suppresses percentage-based metrics.`);
+            const incs = _sorted.map(r => r.summary?.totalIncome).filter(v => v != null);
+            if (incs.length >= 3) { const yoy = incs.slice(1).map((v, i) => `${_sorted[i].year}→${_sorted[i+1].year}: ${((v - incs[i]) / incs[i] * 100).toFixed(0)}%`).join("; "); _incomeBullets.push(`Year-over-year: ${yoy}.`); }
+          } else if (_first.summary?.totalIncome) _incomeBullets.push(`Single-year gross income: ${_fmtD(_first.summary.totalIncome)}.`);
+
+          // Tax trend
+          if (_multi) { _sorted.forEach(r => { const m = metricMap[r.year]; if (m?.effectiveTaxRate != null) { const e = m.effectiveTaxRate; _taxBullets.push(`${r.year}: Effective tax rate ${_fmtP(e)}. ${e > 0.25 ? "High burden — wage-heavy in upper brackets." : e > 0.15 ? "Moderate burden." : e > 0.05 ? "Low effective rate." : "Near-zero rate."}`); } }); if (taxRateDelta != null) { if (taxRateDelta > 0.02) _taxBullets.push(`Rate increased ${(taxRateDelta * 100).toFixed(1)}pp${_lb ? " — driven by income entering taxable brackets from near-zero base." : " — income outpacing deduction scaling."}`); else if (taxRateDelta < -0.02) _taxBullets.push(`Rate decreased ${Math.abs(taxRateDelta * 100).toFixed(1)}pp — favorable shift.`); else _taxBullets.push(`Rate stable (${(taxRateDelta * 100).toFixed(1)}pp change).`); } }
+          else if (_mFirst?.effectiveTaxRate != null) _taxBullets.push(`Effective tax rate: ${_fmtP(_mFirst.effectiveTaxRate)}.`);
+
+          // Tax drag
+          if (_multi) { const fa = _mFirst?.afterTaxIncome, la = _mLast?.afterTaxIncome, fi2 = _first.summary?.totalIncome, li2 = _last.summary?.totalIncome; if (fa && la && fi2 && li2 && fi2 > 0 && fa > 0) { const id = li2 - fi2, ad = la - fa; if (id > 0) { const mr = (id - ad) / id; _dragBullets.push(`Over ${_first.year}–${_last.year}: income +${_fmtD(id)}, after-tax +${_fmtD(ad)}. Taxes absorbed ${_fmtD(id - ad)}.`); _dragBullets.push(`Per $1.00 earned: $${mr.toFixed(2)} to taxes, $${(1 - mr).toFixed(2)} retained (${(mr * 100).toFixed(0)}% absorption rate).`); } } const ms = _sorted.map(r => ({ y: r.year, m: metricMap[r.year]?.afterTaxMargin })).filter(x => x.m != null); if (ms.length >= 2) { const d = ms[ms.length-1].m - ms[0].m; if (Math.abs(d) > 0.02) _dragBullets.push(`After-tax margin ${d > 0 ? "improved" : "declined"} from ${_fmtP(ms[0].m)} to ${_fmtP(ms[ms.length-1].m)}.`); } }
+
+          // After-tax
+          if (_multi) { if (_mFirst?.afterTaxIncome && _mLast?.afterTaxIncome) _afterTaxBullets.push(`After-tax: ${_fmtD(_mFirst.afterTaxIncome)} (${_first.year}) → ${_fmtD(_mLast.afterTaxIncome)} (${_last.year}).`); _sorted.forEach(r => { const m = metricMap[r.year]; if (m?.afterTaxMargin != null) _afterTaxBullets.push(`${r.year}: Retained ${_fmtP(m.afterTaxMargin)} (${_fmtD(m.afterTaxIncome)} of ${_fmtD(r.summary?.totalIncome)}).`); }); }
+          else if (_mFirst?.afterTaxIncome != null) _afterTaxBullets.push(`After-tax income: ${_fmtD(_mFirst.afterTaxIncome)}, margin: ${_fmtP(_mFirst.afterTaxMargin)}.`);
+
+          // Composition
+          _sorted.forEach(r => { const v = _incOf(r); const t = v.wages + v.capitalGains + v.dividends + v.interest + v.other; if (t <= 0) return; const w = v.wages / t; if (w >= 0.95) _compBullets.push(`${r.year}: Entirely W-2 wages — ordinary rates apply.`); else if (w >= 0.8) _compBullets.push(`${r.year}: ${(w*100).toFixed(0)}% wages, ${((1-w)*100).toFixed(0)}% investment.`); else _compBullets.push(`${r.year}: Mixed — ${(w*100).toFixed(0)}% wages, ${((1-w)*100).toFixed(0)}% investment/other.`); });
+
+          // Deductions
+          _sorted.forEach(r => { const m = metricMap[r.year]; if (m?.deductionEfficiency != null) { const d = m.deductionEfficiency; _dedBullets.push(`${r.year}: ${_fmtP(d)} — ${d > 0.2 ? "strong sheltering" : d > 0.1 ? "moderate, room to increase" : "low, pre-tax accounts are primary lever"}.`); } });
+          if (_multi && _mFirst?.deductionEfficiency != null && _mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency - _mFirst.deductionEfficiency; if (Math.abs(d) > 0.03) _dedBullets.push(`Efficiency ${d > 0 ? "improved" : "declined"} by ${Math.abs(d * 100).toFixed(1)}pp.`); }
+
+          // Summary
+          if (_multi) { if (_lb && incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) _summaryBullets.push("Income transitioned from minimal base into taxable territory. Window for establishing tax-efficient habits is now."); else if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) _summaryBullets.push("Income growing aggressively but tax burden growing disproportionately."); else if (incomeCagr != null && incomeCagr < 0) _summaryBullets.push("Income contracting — shift to defensive optimization."); if (_mLast?.deductionEfficiency != null && _mLast.deductionEfficiency < 0.08) _summaryBullets.push(`Deduction efficiency of ${_fmtP(_mLast.deductionEfficiency)} is the single largest optimization opportunity.`); if (_mLast?.afterTaxMargin != null) _summaryBullets.push(`Retention: ${_fmtP(_mLast.afterTaxMargin)} — $${(_mLast.afterTaxMargin).toFixed(2)} kept per $1.00 earned.`); }
+
+          // What This Means
+          const _wtmBullets = [];
+          if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.01) _wtmBullets.push(`Effective tax rate rising ${(taxRateDelta * 100).toFixed(1)}pp while income grows — entering higher tax exposure phase.`);
+          else if (incomeCagr != null && incomeCagr > 0.1) _wtmBullets.push(`Income at ${_latestR ? _fmtD(_latestR.summary?.totalIncome) : "current level"} — tax drag will compound without deduction scaling.`);
+          if (taxRateDelta != null && taxRateDelta > 0.02) _wtmBullets.push(`The ${(taxRateDelta * 100).toFixed(1)}pp rate increase means take-home margin will continue to compress without structural changes.`);
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _wtmBullets.push(`At ${(_latestM.deductionEfficiency * 100).toFixed(1)}% deduction efficiency, early optimization has the highest lifetime impact.`);
+          if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.85) _wtmBullets.push(`${(_latestM.afterTaxMargin * 100).toFixed(1)}% retention is strong — priority is protecting this margin as income scales.`);
+          if (_wtmBullets.length === 0 && _latestM?.effectiveTaxRate != null) _wtmBullets.push(`Current rate ${_fmtP(_latestM.effectiveTaxRate)} — review deduction strategy annually.`);
+
+          const _deepSections = [
+            { title: "Income Trend Analysis", items: _incomeBullets },
+            { title: "Tax Burden Analysis", items: _taxBullets },
+            { title: "Tax Drag & Lost Efficiency", items: _dragBullets },
+            { title: "After-Tax Performance", items: _afterTaxBullets },
+            { title: "Income Structure & Composition", items: _compBullets },
+            { title: "Deduction Efficiency Analysis", items: _dedBullets },
+            { title: "Financial Trajectory — Summary", items: _summaryBullets },
+          ].filter(s => s.items.length > 0);
+
+          return (
           <div className="tv-print-report">
 
+            {/* ════════════ PAGE 1 — EXECUTIVE SUMMARY ════════════ */}
             <div className="tv-pr-header">
               <div className="tv-pr-logo">TaxVista</div>
               <div className="tv-pr-title">Financial Intelligence Report</div>
-              {reportName && (
-                <div style={{ fontSize: "11pt", color: "#333", marginTop: "4pt", letterSpacing: "0.02em" }}>
-                  Prepared for: <strong>{reportName}</strong>
-                </div>
-              )}
+              {reportName && <div style={{ fontSize: "11pt", color: "#333", marginTop: "4pt" }}>Prepared for: <strong>{reportName}</strong></div>}
               <div className="tv-pr-subtitle">
                 {trendData.length > 0 && `Tax years ${trendData[0].year}–${trendData[trendData.length - 1].year}`}
                 {" · "}Generated {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
               </div>
             </div>
 
-            {/* ── Section 1: Your Financial Position (hero) ── */}
-            {(() => {
-              const latestR = _tdN ? results.find(r => r.year === _tdN.year) : null;
-              const latestM = _tdN ? metricMap[_tdN.year] : null;
-              if (!latestR || !latestM) return null;
+            {/* Position headline */}
+            <div className="tv-pr-position">
+              <div className="tv-pr-section-title">Your Financial Position</div>
+              <div className="tv-pr-position-headline">{_headline}</div>
+              <div className="tv-pr-position-explain">{_explain}</div>
+              {_impact && <div className="tv-pr-position-impact">{_impact}</div>}
+              {_tags.length > 0 && <div className="tv-pr-tag-row">{_tags.map(t => <span key={t.text} className={`tv-pr-tag ${t.cls}`}>{t.text}</span>)}</div>}
+            </div>
 
-              // Build 1–2 signal words for headline
-              const tags = [];
-              if (incomeCagr != null && incomeCagr > 0.12) tags.push({ text: "High Growth", cls: "pos" });
-              else if (incomeCagr != null && incomeCagr < -0.05) tags.push({ text: "Income Declining", cls: "neg" });
-              if (taxRateDelta != null && taxRateDelta > 0.02) tags.push({ text: "Rising Tax", cls: "neg" });
-              if (latestM.deductionEfficiency != null && latestM.deductionEfficiency < 0.1) tags.push({ text: "Low Efficiency", cls: "warn" });
-              else if (latestM.deductionEfficiency != null && latestM.deductionEfficiency > 0.2) tags.push({ text: "Strong Deductions", cls: "pos" });
-              if (latestM.afterTaxMargin != null && latestM.afterTaxMargin > 0.8) tags.push({ text: "Strong Take-Home", cls: "pos" });
-              const headline = tags.length > 0
-                ? tags.slice(0, 2).map(t => t.text.toUpperCase()).join(" · ")
-                : "FINANCIAL OVERVIEW";
-
-              // Explanation line
-              const explain = (() => {
-                if (incomeCagr != null && incomeCagr > 0.12 && taxRateDelta != null && taxRateDelta > 0.02)
-                  return "Income rising fast, but tax efficiency is not keeping pace";
-                if (incomeCagr != null && incomeCagr > 0.12)
-                  return "Income growing rapidly — early optimization has the highest lifetime impact";
-                if (taxRateDelta != null && taxRateDelta > 0.02)
-                  return "Tax burden increasing — more income is being lost to taxes";
-                if (latestM.deductionEfficiency != null && latestM.deductionEfficiency < 0.1)
-                  return "Deductions underutilized — taxable income is close to gross income";
-                if (latestM.afterTaxMargin != null && latestM.afterTaxMargin > 0.8)
-                  return "Strong income retention — most of gross income preserved after tax";
-                return "Review your income structure and tax efficiency below";
-              })();
-
-              // Impact line
-              const impact = (() => {
-                if (taxRateDelta != null && taxRateDelta > 0.02 && incomeCagr != null && incomeCagr > 0.1)
-                  return "Without adjustment, taxes will scale faster than income growth";
-                if (latestM.effectiveTaxRate != null && latestM.effectiveTaxRate > 0.2)
-                  return "High tax burden — over 20% of income going to federal tax";
-                if (latestM.deductionEfficiency != null && latestM.deductionEfficiency < 0.08)
-                  return "Almost no taxable income reduced through deductions";
-                return null;
-              })();
-
-              // Action line
-              const action = (() => {
-                if (latestM.deductionEfficiency != null && latestM.deductionEfficiency < 0.1)
-                  return "Priority: Max 401k / IRA / HSA — direct taxable income reduction";
-                if (taxRateDelta != null && taxRateDelta > 0.02)
-                  return "Priority: Increase pre-tax contributions and review tax strategy";
-                if (latestM.afterTaxMargin != null && latestM.afterTaxMargin > 0.8)
-                  return "Maintain: Route future growth through tax-advantaged accounts";
-                return "Review: Deduction audit + pre-tax contribution check";
-              })();
-
-              return (
-                <div className="tv-pr-position">
-                  <div className="tv-pr-section-title">Your Financial Position</div>
-                  <div className="tv-pr-position-headline">{headline}</div>
-                  <div className="tv-pr-position-explain">{explain}</div>
-                  {impact && <div className="tv-pr-position-impact">{impact}</div>}
-                  <div className="tv-pr-position-action">{action}</div>
-                  {tags.length > 0 && (
-                    <div className="tv-pr-tag-row">
-                      {tags.map(t => (
-                        <span key={t.text} className={`tv-pr-tag ${t.cls}`}>{t.text}</span>
-                      ))}
+            {/* 2x2 KPI grid */}
+            {_latestR && _latestM && (
+              <div className="tv-pr-section">
+                <div className="tv-pr-kpi-grid">
+                  {[
+                    { label: "Gross Income", value: $v(_latestR.summary?.totalIncome) },
+                    { label: "After-Tax Income", value: $v(_latestM.afterTaxIncome) },
+                    { label: "Effective Tax Rate", value: pf(_latestM.effectiveTaxRate) },
+                    { label: "After-Tax Margin", value: pf(_latestM.afterTaxMargin) },
+                  ].map(k => (
+                    <div className="tv-pr-kpi-box" key={k.label}>
+                      <div className="tv-pr-kpi-label">{k.label}</div>
+                      <div className="tv-pr-kpi-value">{k.value}</div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              );
-            })()}
+              </div>
+            )}
 
-            {/* ── Section 2: Financial Snapshot (KPIs) ── */}
-            {_tdN && metricMap[_tdN.year] && (() => {
-              const rN = results.find(r => r.year === _tdN.year);
-              const mN = metricMap[_tdN.year];
-              return (
-                <div className="tv-pr-section">
-                  <div className="tv-pr-section-title">Financial Snapshot — {_tdN.year}</div>
-                  <div className="tv-pr-kpi-row">
-                    {[
-                      { label: "Gross Income",      value: $v(rN.summary?.totalIncome)  },
-                      { label: "After-Tax Income",  value: $v(mN.afterTaxIncome)        },
-                      { label: "Effective Tax Rate", value: pf(mN.effectiveTaxRate)      },
-                      { label: "After-Tax Margin",  value: pf(mN.afterTaxMargin)        },
-                    ].map(k => (
-                      <div className="tv-pr-kpi" key={k.label}>
-                        <div className="tv-pr-kpi-label">{k.label}</div>
-                        <div className="tv-pr-kpi-value">{k.value}</div>
-                      </div>
-                    ))}
+            {/* Phase badge */}
+            {strategyPhase && <div className="tv-pr-phase-badge">{strategyPhase.phase}</div>}
+
+            {/* Prose summary */}
+            {_proseParts.length > 0 && <div className="tv-pr-prose">{_proseParts.join(" ")}</div>}
+
+            {/* Priority Actions on page 1 */}
+            <div className="tv-pr-section">
+              <div className="tv-pr-section-title">Priority Actions</div>
+              {_actions.map((a, i) => (
+                <div key={i} style={{ marginBottom: "10pt", overflow: "hidden" }}>
+                  <span className="tv-pr-action-num">{i + 1}.</span>
+                  <div style={{ overflow: "hidden" }}>
+                    <div className="tv-pr-insight-text" style={{ fontWeight: 700 }}>{a.action}</div>
+                    <div className="tv-pr-insight-text" style={{ color: "#444", paddingLeft: "2pt" }}>{a.reason}</div>
                   </div>
                 </div>
-              );
-            })()}
+              ))}
+            </div>
 
-            {/* ── Section 3: Multi-Year Summary ── */}
-            {results.length > 1 && (
+            {_lb && <div style={{ fontSize: "8pt", color: "#888", paddingTop: "6pt", borderTop: "1pt solid #ddd", lineHeight: 1.5, marginBottom: "8pt" }}>* Low base: {trendData[0]?.year} income ${Math.round(trendData[0]?.totalIncome ?? 0).toLocaleString()} is below $10,000 — percentage growth rates suppressed.</div>}
+
+            <div className="tv-pr-page-break" />
+
+            {/* ════════════ PAGE 2 — HORIZONTAL ANALYSIS ════════════ */}
+            <div className="tv-pr-section-title" style={{ fontSize: "10pt", marginBottom: "16pt" }}>How Your Numbers Have Changed Over Time</div>
+
+            {/* Multi-Year Table */}
+            {_multi && (
               <div className="tv-pr-section">
                 <div className="tv-pr-section-title">Multi-Year Summary</div>
                 <table className="tv-pr-table">
-                  <thead>
-                    <tr>
-                      {["Year", "Gross Income", "After-Tax", "Tax / Income", "Effective Tax Rate", "Deduction Efficiency"].map(h => (
-                        <th key={h}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
+                  <thead><tr>{["Year", "Gross Income", "After-Tax", "Tax / Income", "Eff. Tax Rate", "Deduction Eff."].map(h => <th key={h}>{h}</th>)}</tr></thead>
                   <tbody>
-                    {[...results].sort((a, b) => b.year - a.year).map(r => {
-                      const m = metricMap[r.year];
-                      return (
-                        <tr key={r.year}>
-                          <td>{r.year}</td>
-                          <td>{$v(r.summary?.totalIncome)}</td>
-                          <td className="pr-pos">{$v(m?.afterTaxIncome)}</td>
-                          <td className={m?.taxToIncome > 0.2 ? "pr-neg" : ""}>{pf(m?.taxToIncome)}</td>
-                          <td className={m?.effectiveTaxRate > 0.2 ? "pr-neg" : ""}>{pf(m?.effectiveTaxRate)}</td>
-                          <td className={m?.deductionEfficiency > 0.2 ? "pr-pos" : m?.deductionEfficiency != null && m.deductionEfficiency < 0.1 ? "pr-neg" : ""}>{pf(m?.deductionEfficiency)}</td>
-                        </tr>
-                      );
-                    })}
+                    {[...results].sort((a, b) => b.year - a.year).map(r => { const m = metricMap[r.year]; return (
+                      <tr key={r.year}>
+                        <td>{r.year}</td>
+                        <td>{$v(r.summary?.totalIncome)}</td>
+                        <td className="pr-pos">{$v(m?.afterTaxIncome)}</td>
+                        <td className={m?.taxToIncome > 0.2 ? "pr-neg" : ""}>{pf(m?.taxToIncome)}</td>
+                        <td className={m?.effectiveTaxRate > 0.2 ? "pr-neg" : ""}>{pf(m?.effectiveTaxRate)}</td>
+                        <td className={m?.deductionEfficiency > 0.2 ? "pr-pos" : m?.deductionEfficiency != null && m.deductionEfficiency < 0.1 ? "pr-neg" : ""}>{pf(m?.deductionEfficiency)}</td>
+                      </tr>); })}
                   </tbody>
                 </table>
                 {(incomeCagr != null || afterTaxCagr != null || taxRateDelta != null) && (
                   <div className="tv-pr-trend-row">
-                    {incomeCagr != null && (
-                      <div className="tv-pr-trend-kpi">
-                        <div className="tv-pr-trend-label">Income Growth Rate</div>
-                        <div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (incomeCagr >= 0 ? "+" : "") + pf(incomeCagr)}</div>
-                      </div>
-                    )}
-                    {afterTaxCagr != null && (
-                      <div className="tv-pr-trend-kpi">
-                        <div className="tv-pr-trend-label">Take-Home Growth</div>
-                        <div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (afterTaxCagr >= 0 ? "+" : "") + pf(afterTaxCagr)}</div>
-                      </div>
-                    )}
-                    {taxRateDelta != null && (
-                      <div className="tv-pr-trend-kpi">
-                        <div className="tv-pr-trend-label">Tax Rate Shift</div>
-                        <div className="tv-pr-trend-value">{taxRateDelta > 0 ? "+" : ""}{(taxRateDelta * 100).toFixed(1)} percentage points</div>
-                      </div>
-                    )}
+                    {incomeCagr != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Income Growth Rate</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (incomeCagr >= 0 ? "+" : "") + pf(incomeCagr)}</div></div>}
+                    {afterTaxCagr != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Take-Home Growth</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (afterTaxCagr >= 0 ? "+" : "") + pf(afterTaxCagr)}</div></div>}
+                    {taxRateDelta != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Tax Rate Shift</div><div className="tv-pr-trend-value">{taxRateDelta > 0 ? "+" : ""}{(taxRateDelta * 100).toFixed(1)}pp</div></div>}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ── Section 4: Year-by-Year Analysis ── */}
-            <div className="tv-pr-section">
-              <div className="tv-pr-section-title">Year-by-Year Analysis</div>
-              {[...results].sort((a, b) => b.year - a.year).map(r => {
-                const m = metricMap[r.year];
-                if (!m?.insights) return null;
-                return (
-                  <div className="tv-pr-insight-block" key={r.year}>
-                    <div className="tv-pr-year-label">{r.year}</div>
-                    {m.insights.summary?.map((s, i) => (
-                      <div className="tv-pr-insight-text" key={i}>{s.text}</div>
-                    ))}
+            {/* Labeled trend narrative */}
+            {trendInsights.length > 0 && (
+              <div className="tv-pr-section">
+                <div className="tv-pr-section-title">Trend Narrative</div>
+                {trendInsights.map((t, i) => {
+                  const labelMap = { income: "Income:", afterTax: "After-Tax:", tax: "Tax Efficiency:" };
+                  return (
+                    <div className="tv-pr-trend-bullet" key={i}>
+                      <span className="tv-pr-trend-bullet-label">{labelMap[t.metric] ?? "Insight:"}</span>
+                      {t.text}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="tv-pr-page-break" />
+
+            {/* ════════════ PAGE 3 — VERTICAL ANALYSIS ════════════ */}
+            <div className="tv-pr-section-title" style={{ fontSize: "10pt", marginBottom: "16pt" }}>Year-by-Year Deep Dive</div>
+
+            {[...results].sort((a, b) => b.year - a.year).map(r => {
+              const m = metricMap[r.year];
+              if (!m) return null;
+              const inc = _incOf(r);
+              const incTotal = inc.wages + inc.capitalGains + inc.dividends + inc.interest + inc.other;
+              const pctOf = (v) => incTotal > 0 ? ((v / incTotal) * 100).toFixed(1) + "%" : "—";
+
+              return (
+                <div className="tv-pr-year-block" key={r.year}>
+                  <div className="tv-pr-year-header">{r.year}</div>
+                  <div className="tv-pr-year-cols">
+                    {/* Left: Income composition */}
                     <div>
+                      <div className="tv-pr-year-col-title">Income Composition</div>
+                      {[
+                        { l: "Wages", v: pctOf(inc.wages) },
+                        { l: "Capital Gains", v: pctOf(inc.capitalGains) },
+                        { l: "Dividends", v: pctOf(inc.dividends) },
+                        { l: "Interest", v: pctOf(inc.interest) },
+                        { l: "Other", v: pctOf(inc.other) },
+                      ].map(row => (
+                        <div className="tv-pr-year-row" key={row.l}>
+                          <span className="tv-pr-year-row-label">{row.l}</span>
+                          <span className="tv-pr-year-row-val">{row.v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Right: Key ratios */}
+                    <div>
+                      <div className="tv-pr-year-col-title">Key Ratios</div>
+                      {[
+                        { l: "AGI / Total Income", v: pf(m.agiRatio) },
+                        { l: "Taxable / AGI", v: pf(m.taxableRatio) },
+                        { l: "Eff. Tax Rate", v: pf(m.effectiveTaxRate) },
+                        { l: "After-Tax Margin", v: pf(m.afterTaxMargin) },
+                        { l: "Deduction Eff.", v: pf(m.deductionEfficiency) },
+                      ].map(row => (
+                        <div className="tv-pr-year-row" key={row.l}>
+                          <span className="tv-pr-year-row-label">{row.l}</span>
+                          <span className="tv-pr-year-row-val">{row.v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Insights for this year */}
+                  {m.insights?.summary?.map((s, i) => (
+                    <div className="tv-pr-callout" key={i}>{s.text}</div>
+                  ))}
+                  {m.insights && (
+                    <div style={{ marginTop: "6pt" }}>
                       {Object.entries(m.insights.signals).map(([key, sig]) =>
                         sig ? <span key={key} className={`tv-pr-signal ${sig.level}`}>{sig.label}</span> : null
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* ── Section 5: Deep Analysis (expanded insights for report) ── */}
-            {(() => {
-              const sorted = [...results].sort((a, b) => a.year - b.year);
-              const multi = sorted.length > 1;
-              const first = sorted[0];
-              const last  = sorted[sorted.length - 1];
-              const mFirst = metricMap[first.year];
-              const mLast  = metricMap[last.year];
-              const fmtD = (v) => v != null ? "$" + Math.round(v).toLocaleString() : "—";
-              const fmtP = (v) => v != null ? (v * 100).toFixed(1) + "%" : "—";
-              const lowBase = first.summary?.totalIncome != null && first.summary.totalIncome < 10000;
-
-              // ── Income Trend ──
-              const incomeBullets = [];
-              if (multi) {
-                const firstInc = first.summary?.totalIncome;
-                const lastInc  = last.summary?.totalIncome;
-                if (firstInc && lastInc) {
-                  if (lowBase) {
-                    incomeBullets.push(`Income expanded from ${fmtD(firstInc)} (${first.year}) to ${fmtD(lastInc)} (${last.year}). The starting base was below $10,000, which distorts percentage-based growth metrics. The trajectory is meaningful — the raw percentage is not.`);
-                  } else {
-                    const rawGrowth = ((lastInc - firstInc) / firstInc * 100).toFixed(0);
-                    incomeBullets.push(`Gross income moved from ${fmtD(firstInc)} (${first.year}) to ${fmtD(lastInc)} (${last.year}) — a ${rawGrowth}% total change. ${
-                      Number(rawGrowth) > 100 ? "This scale of increase reflects either a career transition, business scaling, or a structural shift in income sources."
-                      : Number(rawGrowth) > 30 ? "This represents meaningful above-average growth, likely driven by compensation increases or new income streams."
-                      : "Growth is within normal career progression ranges."
-                    }`);
-                  }
-                }
-                if (incomeCagr != null && !lowBase) {
-                  const cagrPct = (incomeCagr * 100).toFixed(1);
-                  incomeBullets.push(`Annualized growth rate: ${cagrPct}%. ${
-                    incomeCagr > 0.2 ? "This is exceptionally fast — typical of early-career acceleration or a significant role change. Sustainability should be monitored."
-                    : incomeCagr > 0.08 ? "Above-average growth that is creating real compounding value if after-tax income is keeping pace."
-                    : incomeCagr > 0 ? "Modest growth near inflation levels — real income purchasing power is roughly stable."
-                    : "Income is contracting in real terms. This may reflect career transition, industry downturn, or reduced hours."
-                  }`);
-                } else if (lowBase) {
-                  incomeBullets.push(`Low-base distortion detected — annualized growth rates are suppressed from this report because the ${first.year} income of ${fmtD(first.summary?.totalIncome)} produces misleadingly large percentages that do not reflect true financial trajectory.`);
-                }
-                // Volatility
-                const incomes = sorted.map(r => r.summary?.totalIncome).filter(v => v != null);
-                if (incomes.length >= 3) {
-                  const yoyChanges = incomes.slice(1).map((v, i) => ((v - incomes[i]) / incomes[i] * 100).toFixed(0));
-                  const yoyText = yoyChanges.map((c, i) => `${sorted[i].year}→${sorted[i+1].year}: ${Number(c) > 0 ? "+" : ""}${c}%`).join("; ");
-                  incomeBullets.push(`Year-over-year progression: ${yoyText}. ${
-                    yoyChanges.some(c => Math.abs(Number(c)) > 50) ? "Significant volatility detected — income trajectory is not linear, which affects tax planning predictability."
-                    : "Progression is relatively stable — a favorable pattern for tax planning."
-                  }`);
-                }
-              } else {
-                const inc = first.summary?.totalIncome;
-                if (inc) incomeBullets.push(`Single-year gross income: ${fmtD(inc)}. Without prior-year data, trend analysis is unavailable. The analysis below focuses on structural efficiency — how effectively this income was retained after tax.`);
-              }
-
-              // ── Tax Trend (with WHY explanations) ──
-              const taxBullets = [];
-              if (multi) {
-                sorted.forEach(r => {
-                  const m = metricMap[r.year];
-                  if (m?.effectiveTaxRate != null) {
-                    const etr = m.effectiveTaxRate;
-                    taxBullets.push(`${r.year}: Effective tax rate ${fmtP(etr)}. ${
-                      etr > 0.25 ? "This is a high burden relative to income — it typically indicates wage-heavy income in upper brackets without sufficient deduction offsets."
-                      : etr > 0.15 ? "Moderate tax burden — within expected range for this income level, though optimization opportunities may exist."
-                      : etr > 0.05 ? "Relatively low effective rate — either income is modest, deductions are strong, or income includes preferentially-taxed components."
-                      : "Near-zero effective rate — income is likely below standard deduction thresholds or offset by credits."
-                    }`);
-                  }
-                });
-                if (taxRateDelta != null) {
-                  if (lowBase && taxRateDelta > 0.02) {
-                    taxBullets.push(`The effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points over the period. This was primarily driven by income transitioning from a near-zero base into taxable brackets. At the starting income level, most or all earnings fell below the standard deduction — as income grew, it entered progressively higher marginal rate tiers while deduction activity did not expand proportionally.`);
-                  } else if (taxRateDelta > 0.05) {
-                    taxBullets.push(`The effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points — a significant shift indicating that income growth outpaced deduction scaling. As earnings moved into higher marginal brackets, the absence of proportional pre-tax contributions or itemized deductions allowed more income to be taxed at elevated rates. This suggests current growth is not being converted efficiently into after-tax income.`);
-                  } else if (taxRateDelta > 0.02) {
-                    taxBullets.push(`Effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points. Moderate upward pressure — likely from income pushing into a higher marginal bracket without corresponding deduction increases.`);
-                  } else if (taxRateDelta < -0.02) {
-                    taxBullets.push(`Effective tax rate decreased by ${Math.abs(taxRateDelta * 100).toFixed(1)} percentage points — a favorable shift. This may reflect improved deduction utilization, income diversification into lower-taxed categories, or effective pre-tax contribution strategy.`);
-                  } else {
-                    taxBullets.push(`Effective tax rate remained essentially stable (${(taxRateDelta * 100).toFixed(1)} percentage points change). Tax burden is tracking proportionally with income — no structural compression or improvement detected.`);
-                  }
-                }
-              } else if (mFirst?.effectiveTaxRate != null) {
-                taxBullets.push(`Effective tax rate: ${fmtP(mFirst.effectiveTaxRate)}. ${
-                  mFirst.effectiveTaxRate > 0.2 ? "This rate is above typical thresholds for this income level, suggesting deductions and pre-tax contributions may be underutilized. A withholding and deduction review is recommended."
-                  : mFirst.effectiveTaxRate > 0.1 ? "Within normal range for this income profile. Upload additional years to track whether this rate is trending upward as income grows."
-                  : "Low effective rate — this is favorable, potentially reflecting strong deduction usage or income below higher bracket thresholds."
-                }`);
-              }
-
-              // ── Tax Drag / Lost Efficiency ──
-              const dragBullets = [];
-              if (multi) {
-                const firstAT = mFirst?.afterTaxIncome;
-                const lastAT  = mLast?.afterTaxIncome;
-                const firstInc = first.summary?.totalIncome;
-                const lastInc  = last.summary?.totalIncome;
-                if (firstAT && lastAT && firstInc && lastInc && firstInc > 0 && firstAT > 0) {
-                  const incDelta = lastInc - firstInc;
-                  const atDelta  = lastAT - firstAT;
-
-                  // Core metric: marginal tax rate on incremental income
-                  if (incDelta > 0) {
-                    const taxOnIncremental = incDelta - atDelta;
-                    const marginalRate = taxOnIncremental / incDelta;
-                    const lostPerDollar = marginalRate.toFixed(2);
-                    const keptPerDollar = (1 - marginalRate).toFixed(2);
-                    const pctAbsorbed = (marginalRate * 100).toFixed(0);
-
-                    dragBullets.push(`Over ${first.year}–${last.year}, gross income increased by ${fmtD(incDelta)} while after-tax income increased by ${fmtD(atDelta)}. The difference — ${fmtD(taxOnIncremental)} — was absorbed by taxes.`);
-                    dragBullets.push(`For every $1.00 of additional income earned, $${lostPerDollar} was lost to taxes and $${keptPerDollar} was retained. This means ${pctAbsorbed}% of all incremental income went to federal tax rather than take-home pay.`);
-
-                    if (marginalRate > 0.25) {
-                      dragBullets.push(`An incremental tax absorption rate of ${pctAbsorbed}% is significant. It indicates that income growth is being taxed at a higher effective marginal rate than the overall effective rate — a direct consequence of progressive bracket exposure without proportional deduction scaling.`);
-                    } else if (marginalRate > 0.15) {
-                      dragBullets.push(`A ${pctAbsorbed}% absorption rate on incremental income is moderate. Tax drag exists but is within manageable range — increasing pre-tax contributions would directly reduce this rate.`);
-                    } else {
-                      dragBullets.push(`At ${pctAbsorbed}% absorption, incremental income is being taxed efficiently. The current structure is preserving most of each additional dollar earned.`);
-                    }
-                  } else if (incDelta < 0) {
-                    dragBullets.push(`Income declined by ${fmtD(Math.abs(incDelta))} while after-tax income declined by ${fmtD(Math.abs(atDelta))}. When income falls, the relevant question is whether tax withholding adjusted proportionally.`);
-                  }
-
-                  // Year-over-year incremental tax rates
-                  const yoyDrag = [];
-                  for (let i = 1; i < sorted.length; i++) {
-                    const prevInc = sorted[i-1].summary?.totalIncome;
-                    const currInc = sorted[i].summary?.totalIncome;
-                    const prevAT  = metricMap[sorted[i-1].year]?.afterTaxIncome;
-                    const currAT  = metricMap[sorted[i].year]?.afterTaxIncome;
-                    if (prevInc && currInc && prevAT && currAT && currInc > prevInc) {
-                      const dInc = currInc - prevInc;
-                      const dAT  = currAT - prevAT;
-                      const rate = ((dInc - dAT) / dInc * 100).toFixed(0);
-                      yoyDrag.push(`${sorted[i-1].year}→${sorted[i].year}: ${rate}% of incremental income taxed`);
-                    }
-                  }
-                  if (yoyDrag.length > 1) {
-                    dragBullets.push(`Year-over-year marginal absorption: ${yoyDrag.join("; ")}. ${
-                      yoyDrag.length >= 2 ? "Tracking this rate over time reveals whether tax drag is accelerating, stable, or improving." : ""
-                    }`);
-                  }
-                }
-                // Per-year margin comparison
-                if (sorted.length >= 2) {
-                  const margins = sorted.map(r => ({ year: r.year, m: metricMap[r.year]?.afterTaxMargin })).filter(x => x.m != null);
-                  if (margins.length >= 2) {
-                    const mDelta = margins[margins.length - 1].m - margins[0].m;
-                    if (Math.abs(mDelta) > 0.02) {
-                      dragBullets.push(`After-tax margin ${mDelta > 0 ? "improved" : "declined"} from ${fmtP(margins[0].m)} to ${fmtP(margins[margins.length-1].m)}. ${
-                        mDelta < -0.02 ? "Each dollar of income is retaining less after tax than it was previously — a clear sign that tax efficiency is not scaling with income." : "The share of income retained after tax has increased — tax efficiency is improving."
-                      }`);
-                    }
-                  }
-                }
-              }
-
-              // ── After-Tax Performance ──
-              const afterTaxBullets = [];
-              if (multi) {
-                const firstAT = mFirst?.afterTaxIncome;
-                const lastAT  = mLast?.afterTaxIncome;
-                if (firstAT && lastAT) {
-                  afterTaxBullets.push(`After-tax income: ${fmtD(firstAT)} (${first.year}) → ${fmtD(lastAT)} (${last.year}). This is the amount actually available for savings, investment, and spending after federal tax.`);
-                }
-                sorted.forEach(r => {
-                  const m = metricMap[r.year];
-                  if (m?.afterTaxMargin != null) {
-                    afterTaxBullets.push(`${r.year}: Retained ${fmtP(m.afterTaxMargin)} of gross income after tax (${fmtD(m.afterTaxIncome)} of ${fmtD(r.summary?.totalIncome)}) — ${
-                      m.afterTaxMargin > 0.85 ? "strong retention, indicating efficient tax structure"
-                      : m.afterTaxMargin > 0.7 ? "moderate retention with room for deduction improvement"
-                      : "significant portion lost to tax — structural optimization recommended"
-                    }.`);
-                  }
-                });
-              } else if (mFirst?.afterTaxIncome != null) {
-                afterTaxBullets.push(`After-tax income: ${fmtD(mFirst.afterTaxIncome)} — after-tax margin: ${fmtP(mFirst.afterTaxMargin)}. This means ${fmtP(mFirst.afterTaxMargin)} of every dollar earned was retained after federal tax obligation.`);
-              }
-
-              // ── Income Composition (interpretive) ──
-              const compBullets = [];
-              sorted.forEach(r => {
-                const v = VERIFIED_INCOME[r.year];
-                if (!v) return;
-                const total = v.wages + v.capitalGains + v.dividends + v.interest + v.other;
-                if (total <= 0) return;
-                const wPct = v.wages / total;
-                const invTotal = v.capitalGains + v.dividends + v.interest;
-                const invPct = invTotal / total;
-
-                if (wPct >= 0.95) {
-                  compBullets.push(`${r.year}: Income is entirely derived from earned wages (${fmtD(v.wages)}). This structure provides no access to preferential capital gains or qualified dividend rates, exposing all earnings to ordinary income tax brackets.`);
-                } else if (wPct >= 0.8) {
-                  compBullets.push(`${r.year}: Predominantly wage-based income (${(wPct*100).toFixed(0)}%) with modest investment income (${fmtD(invTotal)}). While investment income is small in absolute terms, it signals the beginning of income diversification.`);
-                } else {
-                  compBullets.push(`${r.year}: Mixed income structure — wages ${(wPct*100).toFixed(0)}%, investment and other ${(invPct*100).toFixed(0)}%. Diversified income sources provide access to preferential tax rates and reduce dependency on ordinary income brackets.`);
-                }
-              });
-              if (multi && sorted.length >= 2) {
-                const vFirst = VERIFIED_INCOME[first.year];
-                const vLast  = VERIFIED_INCOME[last.year];
-                if (vFirst && vLast) {
-                  const tFirst = vFirst.wages + vFirst.capitalGains + vFirst.dividends + vFirst.interest + vFirst.other;
-                  const tLast  = vLast.wages + vLast.capitalGains + vLast.dividends + vLast.interest + vLast.other;
-                  if (tFirst > 0 && tLast > 0) {
-                    const wFirst = vFirst.wages / tFirst;
-                    const wLast  = vLast.wages / tLast;
-                    if (wLast >= 0.95 && wFirst >= 0.95) {
-                      compBullets.push("Income remains fully concentrated in W-2 wages across all years. This limits tax flexibility and exposes all earnings to ordinary income tax rates. Introducing capital gains or qualified dividend income — even modestly — would create structural tax advantage.");
-                    } else if (Math.abs(wLast - wFirst) > 0.05) {
-                      compBullets.push(`Wage concentration ${wLast > wFirst ? "increased" : "decreased"} from ${(wFirst*100).toFixed(0)}% to ${(wLast*100).toFixed(0)}%. ${
-                        wLast < wFirst ? "This diversification is structurally favorable — investment income is taxed at lower rates than wages." : "Greater wage concentration increases ordinary rate exposure and reduces access to preferential tax treatment."
-                      }`);
-                    }
-                  }
-                }
-              }
-
-              // ── Deduction Efficiency Trend ──
-              const dedBullets = [];
-              sorted.forEach(r => {
-                const m = metricMap[r.year];
-                if (m?.deductionEfficiency != null) {
-                  const de = m.deductionEfficiency;
-                  dedBullets.push(`${r.year}: ${fmtP(de)} of gross income was offset by deductions. ${
-                    de > 0.2 ? "This is strong — a meaningful portion of income is being sheltered from taxation through deductions and pre-tax contributions."
-                    : de > 0.1 ? "Moderate deduction activity — some income is being sheltered, but there is likely room to increase pre-tax contributions."
-                    : "Low deduction efficiency — nearly all gross income is flowing through to taxable income with minimal offsets. Pre-tax accounts (401k, IRA, HSA) are the primary lever available."
-                  }`);
-                }
-              });
-              if (multi && mFirst?.deductionEfficiency != null && mLast?.deductionEfficiency != null) {
-                const delta = mLast.deductionEfficiency - mFirst.deductionEfficiency;
-                if (delta < -0.03) {
-                  dedBullets.push(`Deduction efficiency declined by ${Math.abs(delta * 100).toFixed(1)} percentage points. As income grew, deductions did not scale proportionally — a shrinking share of each dollar is being sheltered. This is the most common driver of rising effective tax rates during income growth phases.`);
-                } else if (delta > 0.03) {
-                  dedBullets.push(`Deduction efficiency improved by ${(delta * 100).toFixed(1)} percentage points. More income is being sheltered from taxation, which is directly improving after-tax retention. This suggests increased pre-tax contribution activity or access to additional deduction categories.`);
-                } else {
-                  dedBullets.push("Deduction efficiency is roughly stable across the period. While there is no deterioration, a lack of improvement during income growth means the tax base is expanding in absolute terms.");
-                }
-              }
-
-              // ── Financial Trajectory — Summary ──
-              const summaryBullets = [];
-              if (multi) {
-                if (lowBase && incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) {
-                  summaryBullets.push("Income has transitioned from a minimal base into meaningful taxable territory. The increase in effective tax rate is a natural consequence of this transition — but the window for establishing tax-efficient habits is now, before the income trajectory compounds further without structural optimization.");
-                } else if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) {
-                  summaryBullets.push("Income is growing aggressively, but tax burden is growing disproportionately. Without intervention, the gap between gross and after-tax income will continue to widen. Each year of delay compounds the cumulative tax leakage.");
-                } else if (incomeCagr != null && incomeCagr > 0.1 && (taxRateDelta == null || taxRateDelta <= 0.01)) {
-                  summaryBullets.push("Strong income growth paired with stable tax efficiency — this is a favorable trajectory. Current tax structure is keeping pace with income growth, preserving after-tax margin.");
-                } else if (incomeCagr != null && incomeCagr < 0) {
-                  summaryBullets.push("Income is contracting. Priority should shift to defensive optimization: verify withholding accuracy, claim all eligible deductions, and evaluate whether income sources can be restructured to improve after-tax retention.");
-                }
-                if (mLast?.deductionEfficiency != null && mLast.deductionEfficiency < 0.08) {
-                  summaryBullets.push(`Deduction efficiency of ${fmtP(mLast.deductionEfficiency)} in ${last.year} represents the single largest optimization opportunity. Nearly all gross income is reaching taxable income without meaningful offsets. Maximizing pre-tax contributions (401k, IRA, HSA) would have direct, dollar-for-dollar impact on reducing tax liability.`);
-                }
-                if (mLast?.afterTaxMargin != null) {
-                  summaryBullets.push(`Current after-tax retention: ${fmtP(mLast.afterTaxMargin)} — for every $1.00 earned, $${(mLast.afterTaxMargin).toFixed(2)} is retained after federal tax. ${
-                    mLast.afterTaxMargin > 0.85 ? "This is strong retention — the priority is protecting this margin as income scales."
-                    : mLast.afterTaxMargin > 0.7 ? "Moderate retention with room for improvement through increased deduction activity."
-                    : "Significant tax drag — more than 30 cents of every dollar is going to federal tax. Structural intervention is recommended."
-                  }`);
-                }
-              } else {
-                if (mFirst?.afterTaxMargin != null) {
-                  summaryBullets.push(`Single-year after-tax margin: ${fmtP(mFirst.afterTaxMargin)}. ${
-                    mFirst.afterTaxMargin > 0.85 ? "Strong retention — current structure is efficient." : mFirst.afterTaxMargin > 0.7 ? "Moderate retention — optimization opportunities likely exist." : "Significant tax burden relative to income."
-                  } Upload additional years to enable trend analysis, tax drag detection, and trajectory forecasting.`);
-                }
-              }
-
-              const sections = [
-                { title: "Income Trend Analysis", items: incomeBullets },
-                { title: "Tax Burden Analysis", items: taxBullets },
-                { title: "Tax Drag & Lost Efficiency", items: dragBullets },
-                { title: "After-Tax Performance", items: afterTaxBullets },
-                { title: "Income Structure & Composition", items: compBullets },
-                { title: "Deduction Efficiency Analysis", items: dedBullets },
-                { title: "Financial Trajectory — Summary", items: summaryBullets },
-              ].filter(s => s.items.length > 0);
-
-              return sections.map(s => (
-                <div className="tv-pr-section" key={s.title}>
-                  <div className="tv-pr-section-title">{s.title}</div>
-                  {s.items.map((b, i) => (
-                    <div className="tv-pr-bullet" key={i}>{b}</div>
-                  ))}
+                  )}
                 </div>
-              ));
-            })()}
+              );
+            })}
 
-            {/* ── Section 6: Strategic Assessment (restructured) ── */}
-            {(strategyPhase || trendInsights.length > 0) && (
+            <div className="tv-pr-page-break" />
+
+            {/* ════════════ PAGE 4 — STRATEGIC ASSESSMENT + DEEP ANALYSIS ════════════ */}
+            {/* Strategic Assessment */}
+            {strategyPhase && (
               <div className="tv-pr-section">
                 <div className="tv-pr-section-title">Strategic Assessment</div>
-
-                {strategyPhase && (
-                  <>
-                    <div className="tv-pr-kpi-row" style={{ marginBottom: "10pt" }}>
-                      <div className="tv-pr-kpi">
-                        <div className="tv-pr-kpi-label">Financial Phase</div>
-                        <div className="tv-pr-kpi-value" style={{ fontSize: "13pt" }}>{strategyPhase.phase}</div>
-                      </div>
-                      <div className="tv-pr-kpi">
-                        <div className="tv-pr-kpi-label">Income Growth Rate</div>
-                        <div className="tv-pr-kpi-value" style={{ fontSize: "13pt" }}>{_lowBase ? "Low base*" : (strategyPhase.cagr * 100).toFixed(1) + "%"}</div>
-                      </div>
-                    </div>
-
-                    {/* Characteristics */}
-                    {strategyPhase.characteristics && (
-                      <div style={{ marginBottom: "8pt" }}>
-                        <div style={{ fontSize: "8pt", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#555", marginBottom: "4pt", fontFamily: "Courier New, monospace" }}>Characteristics</div>
-                        {strategyPhase.characteristics.map((c, i) => (
-                          <div className="tv-pr-bullet" key={i}>{c}</div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Implication */}
-                    {strategyPhase.implication && (
-                      <div className="tv-pr-insight-text" style={{ fontWeight: 600, marginBottom: "10pt" }}>
-                        {strategyPhase.implication}
-                      </div>
-                    )}
-
-                    {/* Trend bullets */}
-                    {trendInsights.map((t, i) => (
-                      <div className="tv-pr-bullet" key={i}>{t.text}</div>
-                    ))}
-                  </>
-                )}
+                <div className="tv-pr-trend-row" style={{ marginTop: 0, marginBottom: "10pt" }}>
+                  <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Financial Phase</div><div className="tv-pr-trend-value">{strategyPhase.phase}</div></div>
+                  <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Growth Rate</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (strategyPhase.cagr * 100).toFixed(1) + "%"}</div></div>
+                </div>
+                {strategyPhase.characteristics && strategyPhase.characteristics.map((c, i) => <div className="tv-pr-bullet" key={i}>{c}</div>)}
+                {strategyPhase.implication && <div className="tv-pr-callout" style={{ marginTop: "8pt" }}>{strategyPhase.implication}</div>}
               </div>
             )}
 
-            {/* ── Section 6: What This Means ── */}
-            {strategyPhase && (() => {
-              const bullets = [];
-              const latestM = _tdN ? metricMap[_tdN.year] : null;
-              const latestR = _tdN ? results.find(r => r.year === _tdN.year) : null;
-              if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.01) {
-                const etrShift = (taxRateDelta * 100).toFixed(1);
-                bullets.push(`With effective tax rate rising by ${etrShift} percentage points while income is growing, you are entering a higher tax exposure phase — each additional dollar of income faces a higher marginal rate than the last`);
-              } else if (incomeCagr != null && incomeCagr > 0.1) {
-                const lastInc = latestR?.summary?.totalIncome;
-                bullets.push(`Income reached ${lastInc ? "$" + Math.round(lastInc).toLocaleString() : "its current level"} — at this growth pace, tax drag will compound unless deduction strategy scales proportionally`);
-              }
-              if (taxRateDelta != null && taxRateDelta > 0.02) {
-                const etrShift = (taxRateDelta * 100).toFixed(1);
-                bullets.push(`The ${etrShift} percentage point increase in effective tax rate means a growing share of each additional dollar is being taxed — without structural changes, take-home margin will continue to compress`);
-              }
-              if (latestM?.deductionEfficiency != null && latestM.deductionEfficiency < 0.1) {
-                const dePct = (latestM.deductionEfficiency * 100).toFixed(1);
-                bullets.push(`At ${dePct}% deduction efficiency, pre-tax accounts are not offsetting income meaningfully — early optimization at this income level has the highest lifetime impact because the base is compounding`);
-              }
-              if (latestM?.afterTaxMargin != null && latestM.afterTaxMargin > 0.85) {
-                const atmPct = (latestM.afterTaxMargin * 100).toFixed(1);
-                bullets.push(`${atmPct}% after-tax retention is strong — the priority is protecting this margin as income grows, because higher brackets will erode it without active management`);
-              }
-              if (bullets.length === 0 && latestM?.effectiveTaxRate != null) {
-                const etrPct = (latestM.effectiveTaxRate * 100).toFixed(1);
-                bullets.push(`Current effective tax rate of ${etrPct}% — review deduction strategy and pre-tax contributions annually to prevent passive rate increases`);
-              }
-              return (
-                <div className="tv-pr-section">
-                  <div className="tv-pr-section-title">What This Means</div>
-                  {bullets.map((b, i) => (
-                    <div className="tv-pr-bullet" key={i}>{b}</div>
-                  ))}
-                </div>
-              );
-            })()}
+            {/* Deep analysis sections */}
+            {_deepSections.map(s => (
+              <div className="tv-pr-section" key={s.title}>
+                <div className="tv-pr-section-title">{s.title}</div>
+                {s.items.map((b, i) => <div className="tv-pr-bullet" key={i}>{b}</div>)}
+              </div>
+            ))}
 
-            {/* ── Section 8: Priority Actions (Ranked) ── */}
-            {(() => {
-              const latestM = _tdN ? metricMap[_tdN.year] : null;
-              const actions = [];
-
-              // Priority 1: Pre-tax contributions (highest impact for low deduction efficiency)
-              if (latestM?.deductionEfficiency != null && latestM.deductionEfficiency < 0.15) {
-                actions.push({
-                  action: "Maximize pre-tax contributions immediately (401k, IRA, HSA)",
-                  reason: latestM.deductionEfficiency < 0.08
-                    ? `Current deduction efficiency is ${(latestM.deductionEfficiency * 100).toFixed(1)}% — nearly all income is reaching taxable income without offsets. Each dollar contributed pre-tax reduces taxable income dollar-for-dollar at your current marginal rate.`
-                    : "Pre-tax account contributions are below optimal levels. Increasing 401k and IRA contributions is the single highest-ROI tax action available.",
-                });
-              }
-
-              // Priority 2: Reduce taxable income exposure
-              if (latestM?.deductionEfficiency != null && latestM.deductionEfficiency < 0.1) {
-                const dePct = (latestM.deductionEfficiency * 100).toFixed(1);
-                actions.push({
-                  action: "Reduce taxable income exposure",
-                  reason: `Deduction efficiency is ${dePct}% — meaning ${(100 - Number(dePct)).toFixed(1)}% of gross income reaches taxable income without offsets. Beyond retirement contributions, evaluate HSA eligibility (triple tax benefit), student loan interest deduction, and above-the-line adjustments that reduce adjusted gross income directly.`,
-                });
-              }
-
-              // Priority 3: Review withholding (rising tax)
-              if (taxRateDelta != null && taxRateDelta > 0.02) {
-                actions.push({
-                  action: "Review tax withholding accuracy",
-                  reason: `Effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points over the analysis period. Verify that W-4 withholding reflects current income level — over-withholding creates an interest-free loan to the IRS, while under-withholding triggers penalties.`,
-                });
-              }
-
-              // Priority 4: Income mix diversification (growth phase)
-              if (incomeCagr != null && incomeCagr > 0.08) {
-                actions.push({
-                  action: "Begin shifting income mix toward tax-advantaged sources",
-                  reason: "As income scales, introducing capital gains and qualified dividend income — even modestly through index fund investing — creates structural tax advantage. These income types are taxed at 0–20% vs ordinary rates of 22–37%.",
-                });
-              }
-
-              // Fallback
-              if (actions.length === 0) {
-                actions.push({
-                  action: "Conduct annual deduction and contribution audit",
-                  reason: "Ensure all eligible deductions are being claimed and pre-tax contributions are at or near annual limits. Even stable financial situations benefit from annual review to prevent tax creep.",
-                });
-              }
-
-              return (
-                <div className="tv-pr-section">
-                  <div className="tv-pr-section-title">Priority Actions (Ranked)</div>
-                  {actions.map((a, i) => (
-                    <div key={i} style={{ marginBottom: "10pt" }}>
-                      <div className="tv-pr-insight-text" style={{ fontWeight: 700 }}>
-                        {i + 1}. {a.action}
-                      </div>
-                      <div className="tv-pr-insight-text" style={{ color: "#444", paddingLeft: "14pt" }}>
-                        {a.reason}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-
-            {_lowBase && (
-              <div style={{ fontSize: "8pt", color: "#888", marginTop: "16pt", paddingTop: "8pt", borderTop: "1pt solid #ddd", lineHeight: 1.6 }}>
-                * Low base note: Base year income ({trendData[0]?.year}: ${Math.round(trendData[0]?.totalIncome ?? 0).toLocaleString()}) is below $10,000. Percentage-based growth rates are suppressed throughout this report because they produce misleadingly large figures that do not reflect true financial trajectory. All dollar-amount comparisons and structural analysis remain valid.
+            {/* What This Means */}
+            {_wtmBullets.length > 0 && (
+              <div className="tv-pr-section">
+                <div className="tv-pr-section-title">What This Means</div>
+                {_wtmBullets.map((b, i) => <div className="tv-pr-bullet" key={i}>{b}</div>)}
               </div>
             )}
 
@@ -3296,7 +3176,8 @@ export default function TaxVista() {
             </div>
 
           </div>
-        )}
+          );
+        })()}
 
       </div>
     </>
