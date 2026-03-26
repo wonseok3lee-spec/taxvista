@@ -2436,12 +2436,13 @@ export default function TaxVista() {
             <div className="tv-canvas">
 
               {/* Export */}
-              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-                <Tip tip="In the print dialog, set 'Headers and Footers' to None for best results.">
-                  <button className="tv-export-btn" onClick={handleExport}>
-                    ↓ Download Full Report
-                  </button>
-                </Tip>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, marginBottom: 4 }}>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.02em" }}>
+                  Tip: In print dialog → Headers and Footers → set to None
+                </span>
+                <button className="tv-export-btn" onClick={handleExport}>
+                  ↓ Download Full Report
+                </button>
               </div>
 
               {/* Overview */}

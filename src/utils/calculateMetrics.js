@@ -144,7 +144,12 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
   if (deduction?.level === "low" && deductionEfficiency != null && afterTaxMargin != null) {
     const dePct = (deductionEfficiency * 100).toFixed(1);
     const atmPct = (afterTaxMargin * 100).toFixed(1);
-    items.push({ text: `At ${dePct}% deduction efficiency vs ${atmPct}% after-tax retention — max 401k / IRA / HSA to close the gap between gross and taxable income`, metric: "deduction" });
+    const deAction = deductionEfficiency < 0.06
+      ? "401k / IRA contributions have near-zero competition for tax reduction — this is the highest-leverage action"
+      : deductionEfficiency <= 0.10
+      ? "pre-tax contributions are the primary lever — 401k and IRA reduce taxable income dollar-for-dollar"
+      : "deductions are active — continue scaling pre-tax contributions as income grows";
+    items.push({ text: `At ${dePct}% deduction efficiency vs ${atmPct}% after-tax retention — ${deAction}`, metric: "deduction" });
   } else if (effectiveTaxRate != null && afterTaxMargin != null) {
     const etrPct = (effectiveTaxRate * 100).toFixed(1);
     const atmPct = (afterTaxMargin * 100).toFixed(1);
