@@ -204,8 +204,10 @@ const styles = `
   /* ── Tooltips ── */
   .tv-tip {
     display: inline;
+    position: relative;
     cursor: default;
     border-bottom: 1px dotted rgba(255,255,255,0.35);
+    vertical-align: baseline;
   }
   .tv-tip-box {
     position: fixed;
