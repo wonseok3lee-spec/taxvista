@@ -1792,8 +1792,8 @@ export default function TaxVista() {
     ? Math.pow(_tdN.afterTaxIncome / _td0.afterTaxIncome, 1 / _tdYrs) - 1 : null;
   const _m0 = _td0 ? metricMap[_td0.year] : null;
   const _mN = _tdN ? metricMap[_tdN.year] : null;
-  const taxRateDelta = _m0?.taxToIncome != null && _mN?.taxToIncome != null
-    ? _mN.taxToIncome - _m0.taxToIncome : null;
+  const taxRateDelta = _m0?.effectiveTaxRate != null && _mN?.effectiveTaxRate != null
+    ? _mN.effectiveTaxRate - _m0.effectiveTaxRate : null;
   const _lowBase = _td0?.totalIncome != null && _td0.totalIncome < 10000;
 
   // Vertical pie data — built from user-entered income components
