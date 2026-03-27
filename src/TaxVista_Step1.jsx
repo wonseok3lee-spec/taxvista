@@ -2565,6 +2565,7 @@ export default function TaxVista() {
                   { id: "horizontal", icon: "↔", label: "Horizontal" },
                   { id: "vertical",   icon: "↕", label: "Vertical"   },
                   { id: "insights",   icon: "◉", label: "Insights"   },
+                  { id: "caveats",    icon: "⚠", label: "Caveats"    },
                 ].map(t => (
                   <button
                     key={t.id}
@@ -3046,29 +3047,37 @@ export default function TaxVista() {
                         </div>
                       );
                     })}
+                  </div>
+                </>
+              )}
 
-                    {/* Caveats */}
-                    <div className="tv-iblock" style={{ marginTop: 12, borderColor: "var(--border)" }}>
-                      <div className="tv-iblock-title">Caveats</div>
-                      <p style={{ color: "var(--muted)", fontSize: 12, marginBottom: 14, lineHeight: 1.7 }}>
-                        Your 1040 captures what was taxed — not your complete financial picture. Here are five areas this report does not reflect:
-                      </p>
-                      {[
-                        { title: "Unrealized Investment Gains or Losses", text: "If your portfolio dropped but you didn't sell, that loss isn't on your tax return. Your actual financial position may be better or worse than this report suggests." },
-                        { title: "Asset Value Changes", text: "Home appreciation, business value, or other assets growing in value don't appear here until sold. Your net worth may have changed significantly without affecting your tax return." },
-                        { title: "Future or Deferred Income", text: "Pending bonuses, stock vesting, or deferred compensation aren't captured. Next year's tax picture could look very different." },
-                        { title: "Tax Strategies Not Yet Applied", text: "This report shows what you paid — not what you could have paid with optimized contributions, tax-loss harvesting, or timing strategies." },
-                        { title: "One-Time Events", text: "An unusual year (large capital gain, job change, inheritance) can distort multi-year trends. Check if any single event is skewing your trajectory." },
-                      ].map((item, i) => (
-                        <div key={i} style={{ marginBottom: 10 }}>
-                          <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", marginBottom: 2 }}>{i + 1}. {item.title}</p>
-                          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, paddingLeft: 16 }}>{item.text}</p>
-                        </div>
-                      ))}
-                      <p style={{ fontSize: 10, color: "var(--muted)", textAlign: "center", marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 10, lineHeight: 1.6 }}>
-                        This report is based solely on filed tax return data.<br />It is not financial or tax advice.
-                      </p>
-                    </div>
+              {/* Caveats */}
+              {activeTab === "caveats" && (
+                <>
+                  <div className="tv-canvas-title">
+                    Caveats
+                    <span style={{ color: "var(--muted)", fontSize: 10 }}>what this report does not capture</span>
+                  </div>
+                  <div className="tv-iblock" style={{ borderColor: "var(--border)" }}>
+                    <div className="tv-iblock-title">Caveats</div>
+                    <p style={{ color: "var(--muted)", fontSize: 12, marginBottom: 14, lineHeight: 1.7 }}>
+                      Your 1040 captures what was taxed — not your complete financial picture. Here are five areas this report does not reflect:
+                    </p>
+                    {[
+                      { title: "Unrealized Investment Gains or Losses", text: "If your portfolio dropped but you didn't sell, that loss isn't on your tax return. Your actual financial position may be better or worse than this report suggests." },
+                      { title: "Asset Value Changes", text: "Home appreciation, business value, or other assets growing in value don't appear here until sold. Your net worth may have changed significantly without affecting your tax return." },
+                      { title: "Future or Deferred Income", text: "Pending bonuses, stock vesting, or deferred compensation aren't captured. Next year's tax picture could look very different." },
+                      { title: "Tax Strategies Not Yet Applied", text: "This report shows what you paid — not what you could have paid with optimized contributions, tax-loss harvesting, or timing strategies." },
+                      { title: "One-Time Events", text: "An unusual year (large capital gain, job change, inheritance) can distort multi-year trends. Check if any single event is skewing your trajectory." },
+                    ].map((item, i) => (
+                      <div key={i} style={{ marginBottom: 10 }}>
+                        <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", marginBottom: 2 }}>{i + 1}. {item.title}</p>
+                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, paddingLeft: 16 }}>{item.text}</p>
+                      </div>
+                    ))}
+                    <p style={{ fontSize: 10, color: "var(--muted)", textAlign: "center", marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 10, lineHeight: 1.6 }}>
+                      This report is based solely on filed tax return data.<br />It is not financial or tax advice.
+                    </p>
                   </div>
                 </>
               )}
