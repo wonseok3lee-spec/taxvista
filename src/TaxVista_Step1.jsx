@@ -1977,7 +1977,7 @@ export default function TaxVista() {
       const latestATM = _mN?.afterTaxMargin;
       characteristics = [
         `${cagrPct}% annualized growth — consistent, positive trajectory`,
-        latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "strong retention" : "moderate retention"}` : "After-tax margin data unavailable",
+        latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "strong after-tax performance" : "moderate after-tax performance"}` : "After-tax margin data unavailable",
         latestDE != null ? `Deduction efficiency at ${(latestDE * 100).toFixed(1)}% — ${latestDE < 0.1 ? "optimization opportunity available" : "maintained at current level"}` : "Deduction data unavailable",
       ];
       implication = `At ${cagrPct}% annualized growth, income is expanding steadily. This is a reliable environment for systematic tax planning — incremental deduction improvements compound predictably at this pace.`;
@@ -1988,7 +1988,7 @@ export default function TaxVista() {
       const latestATM = _mN?.afterTaxMargin;
       characteristics = [
         `${cagrPct}% annualized growth — effectively flat or below inflation`,
-        latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "retention is stable but not improving" : "tax drag is compressing take-home income"}` : "After-tax margin data unavailable",
+        latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "after-tax income stable but not improving" : "tax drag is compressing take-home income"}` : "After-tax margin data unavailable",
         latestDE != null ? `Deduction efficiency at ${(latestDE * 100).toFixed(1)}% — ${latestDE < 0.1 ? "optimization here is the primary lever for after-tax growth" : "maintained at current level"}` : "Deduction data unavailable",
       ];
       implication = `With income growing at only ${cagrPct}% annualized, after-tax growth must come from efficiency gains — reducing taxable income through deductions and income mix optimization.`;
@@ -1999,7 +1999,7 @@ export default function TaxVista() {
       const latestATM = _mN?.afterTaxMargin;
       characteristics = [
         `${cagrPct}% annualized — income declining year-over-year`,
-        latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "retention stable despite declining income" : "tax burden not adjusting proportionally to lower income"}` : "After-tax margin data unavailable",
+        latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "after-tax income stable despite declining income" : "tax burden not adjusting proportionally to lower income"}` : "After-tax margin data unavailable",
         taxRateDelta != null ? `Effective tax rate shifted by ${(taxRateDelta * 100).toFixed(1)} percentage points — ${taxRateDelta > 0 ? "rate rising on a shrinking base, compounding after-tax erosion" : "rate adjusting downward with income"}` : "Effective tax rate trend data unavailable",
       ];
       implication = `At ${cagrPct}% annualized decline, verify that tax withholding and expense structure have adjusted proportionally. Over-withholding on a shrinking base accelerates after-tax erosion.`;
@@ -2938,7 +2938,11 @@ export default function TaxVista() {
 
           // Priority actions
           const _actions = [];
-          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) _actions.push({ action: "Maximize pre-tax contributions (401k, IRA, HSA)", reason: `Your deduction efficiency is ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — below the 20% threshold for optimized pre-tax contributions. ${_latestM.deductionEfficiency < 0.08 ? "Nearly all income reaches taxable income without offsets. Each dollar contributed pre-tax reduces taxable income dollar-for-dollar at your current marginal rate." : "Increasing 401k/IRA/HSA contributions is the highest-leverage action available to close the gap between total and taxable income."}` });
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15 && _latestR?.summary?.totalIncome) {
+            const _deGap = 0.20 - _latestM.deductionEfficiency;
+            const _shelterAmt = Math.round(_deGap * _latestR.summary.totalIncome);
+            _actions.push({ action: "Maximize pre-tax contributions (401k, IRA, HSA)", reason: `Your deduction efficiency is ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — a gap of ${(_deGap * 100).toFixed(1)}pp from the 20% optimization threshold. This represents approximately $${_shelterAmt.toLocaleString()} of additional income that could be sheltered through pre-tax contributions. ${_latestM.deductionEfficiency < 0.08 ? "Each dollar contributed pre-tax reduces taxable income dollar-for-dollar at your current marginal rate." : "Increasing 401k/IRA/HSA contributions is the highest-leverage action to close this gap."}` });
+          }
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _actions.push({ action: "Reduce taxable income exposure", reason: `Beyond retirement, evaluate HSA eligibility, student loan interest deduction, and above-the-line adjustments.` });
           if (taxRateDelta != null && taxRateDelta > 0.02) _actions.push({ action: "Review tax withholding accuracy", reason: `Effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points. Verify W-4 reflects current income.` });
           if (incomeCagr != null && incomeCagr > 0.08) _actions.push({ action: "Shift income mix toward tax-advantaged sources", reason: "Capital gains and qualified dividends are taxed at 0–20% vs ordinary rates of 22–37%." });
@@ -3012,9 +3016,11 @@ export default function TaxVista() {
           if (_wtmBullets.length === 0 && _latestM?.effectiveTaxRate != null) _wtmBullets.push(`Current rate ${_fmtP(_latestM.effectiveTaxRate)} — review deduction strategy annually.`);
           // Closing directive — always present
           if (taxRateDelta != null && taxRateDelta > 0.01) {
-            _wtmBullets.push("Without increasing pre-tax contributions or shifting income composition, a growing portion of income will be taxed at progressively higher marginal rates. Action priority: (1) increase pre-tax contributions immediately, (2) rebalance toward tax-advantaged income sources.");
+            _wtmBullets.push("You are entering a higher tax exposure phase. Without changes, a growing share of your income will be taxed at higher marginal rates.");
+            _wtmBullets.push("What to do next: (1) Increase pre-tax contributions immediately. (2) Review withholding and deduction strategy. (3) Shift future income toward tax-advantaged sources.");
           } else if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) {
-            _wtmBullets.push("Pre-tax contribution capacity remains underused. Action priority: (1) increase pre-tax contributions immediately, (2) evaluate HSA and above-the-line adjustments to reduce taxable income.");
+            _wtmBullets.push("Pre-tax contribution capacity remains underused — this is the single largest optimization lever available.");
+            _wtmBullets.push("What to do next: (1) Increase pre-tax contributions immediately. (2) Evaluate HSA and above-the-line adjustments. (3) Review deduction strategy annually as income scales.");
           }
 
           const _deepSections = [
@@ -3034,7 +3040,7 @@ export default function TaxVista() {
             <div className="tv-pr-header">
               <div className="tv-pr-logo">TaxVista</div>
               <div className="tv-pr-title">Financial Intelligence Report</div>
-              {reportName && <div style={{ fontSize: "11pt", color: "#333", marginTop: "4pt" }}>Prepared for: <strong>{reportName}</strong></div>}
+              {reportName && <div style={{ fontSize: "11pt", color: "#333", marginTop: "4pt" }}>Prepared for: <strong style={{ fontFamily: "'Arial Unicode MS', 'Noto Sans', sans-serif", unicodeBidi: "normal" }}>{reportName}</strong></div>}
               <div className="tv-pr-subtitle">
                 {trendData.length > 0 && `Tax years ${trendData[0].year}–${trendData[trendData.length - 1].year}`}
                 {" · "}Generated {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
@@ -3066,6 +3072,15 @@ export default function TaxVista() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Dual tax rate clarification */}
+            {_latestM?.effectiveTaxRate != null && _latestM?.taxToIncome != null && (
+              <div className="tv-pr-insight-text" style={{ fontSize: "9pt", color: "#555", marginBottom: "10pt", lineHeight: 1.6 }}>
+                Effective Tax Rate ({(_latestM.effectiveTaxRate * 100).toFixed(1)}%) is based on taxable income after deductions.
+                Tax / Total Income ({(_latestM.taxToIncome * 100).toFixed(1)}%) is based on total income before deductions.
+                Both figures are shown for complete transparency.
               </div>
             )}
 
@@ -3159,7 +3174,7 @@ export default function TaxVista() {
                       <div className="tv-pr-year-col-title">Income Composition</div>
                       {[
                         { l: "Wages", v: pctOf(inc.wages) },
-                        { l: "Capital Gains", v: pctOf(inc.capitalGains) },
+                        { l: "Capital Gains", v: inc.capitalGains < 0 ? pctOf(inc.capitalGains) + " (net loss)" : pctOf(inc.capitalGains) },
                         { l: "Dividends", v: pctOf(inc.dividends) },
                         { l: "Interest", v: pctOf(inc.interest) },
                         { l: "Other", v: pctOf(inc.other) },
