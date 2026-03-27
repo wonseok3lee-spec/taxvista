@@ -1725,8 +1725,9 @@ export default function TaxVista() {
 
     // Sentence 2: tax efficiency vs income (with WHY explanation)
     if (taxGrowth != null && incomeGrowth != null && taxGrowth > incomeGrowth + 0.05 && !lowBase) {
-      const delta = ((taxGrowth - incomeGrowth) * 100).toFixed(0);
-      items.push({ text: `Tax obligation grew ${delta} percentage points faster than income. As earnings entered higher marginal brackets, deduction activity did not scale proportionally — resulting in a shrinking share of each additional dollar retained after tax.`, metric: "tax" });
+      const incPct = (incomeGrowth * 100).toFixed(0);
+      const taxPct = (taxGrowth * 100).toFixed(0);
+      items.push({ text: `Over ${first.year}–${last.year}, income grew ${incPct}% while taxes grew ${taxPct}%, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`, metric: "tax" });
     } else if (afterTaxGrowth != null && incomeGrowth != null && afterTaxGrowth < incomeGrowth - 0.05 && !lowBase) {
       items.push({ text: `After-tax income is growing slower than gross income, indicating rising tax drag. A portion of income growth is being absorbed by higher marginal rates without corresponding tax optimization.`, metric: "afterTax" });
     } else if (lowBase && taxGrowth != null && taxGrowth > 1) {
@@ -1801,14 +1802,15 @@ export default function TaxVista() {
   const _lowBase = _td0?.totalIncome != null && _td0.totalIncome < 10000;
 
   // Vertical pie data — built from user-entered income components
+  // Negative components (capital losses) are treated as 0 for the donut; noted separately.
   const vPieData = (() => {
     if (!vResult) return [];
     const inc = vResult.income ?? {};
-    const w  = inc.wages ?? 0;
-    const cg = inc.capitalGains ?? 0;
-    const dv = inc.dividends ?? 0;
-    const it = inc.interest ?? 0;
-    const ot = inc.additionalIncome ?? 0;
+    const w  = Math.max(inc.wages ?? 0, 0);
+    const cg = Math.max(inc.capitalGains ?? 0, 0);
+    const dv = Math.max(inc.dividends ?? 0, 0);
+    const it = Math.max(inc.interest ?? 0, 0);
+    const ot = Math.max(inc.additionalIncome ?? 0, 0);
     const total = w + cg + dv + it + ot;
     if (total <= 0) return [];
     const pct = (amt) => +((amt / total) * 100).toFixed(1);
@@ -1820,6 +1822,9 @@ export default function TaxVista() {
       { name: "Other",     value: pct(ot) },
     ];
   })();
+  // Capital loss note for display below the donut
+  const vCapLoss = vResult?.income?.capitalGains != null && vResult.income.capitalGains < 0
+    ? Math.abs(vResult.income.capitalGains) : null;
 
   // ── Vertical insight sentences ──
   const vInsights = (() => {
@@ -1884,7 +1889,13 @@ export default function TaxVista() {
       + (vMetric.incomeBreakdown?.dividendsPct ?? 0);
     if (vMetric.incomeBreakdown) {
       const investStr = (investPct * 100).toFixed(1) + "%";
-      if (investPct < 0.05) {
+      if (investPct < -0.01) {
+        ins.push([
+          { text: "Investment income: " },
+          { text: `net loss (${investStr})`, accent: true },
+          { text: " — capital losses exceeded investment gains this year; this reduces taxable income but reflects portfolio decline" },
+        ]);
+      } else if (investPct < 0.05) {
         ins.push([
           { text: "Investment income: " },
           { text: investStr, accent: true },
@@ -1922,10 +1933,13 @@ export default function TaxVista() {
           { text: " — moderate; retirement account contributions not yet maxed — additional pre-tax funding would improve this further" },
         ]);
       } else {
+        const lowIncomeCaveat = (vResult?.summary?.totalIncome ?? 0) < 50000 && de > 0.25
+          ? " (note: this high efficiency partly reflects the lower income base — it may not persist as income scales)"
+          : "";
         ins.push([
           { text: "Deduction efficiency: " },
           { text: dePct, accent: true },
-          { text: " — strong tax base reduction; structure is working — maintain as income scales" },
+          { text: ` — strong tax base reduction; structure is working — maintain as income scales${lowIncomeCaveat}` },
         ]);
       }
     }
@@ -1953,6 +1967,22 @@ export default function TaxVista() {
       implication = "This phase offers the highest leverage for tax optimization decisions. Habits formed now compound over the entire career arc.";
       note = "Income is transitioning from a near-zero base into meaningful taxable territory. The growth rate itself is distorted by the low starting point, but the structural pattern is clear: earnings are scaling while tax strategy has not yet been established.";
     } else if (cagr > 0.12) {
+      // Check for peak-then-correction: recent year dropped >15% from peak
+      const peakIncome = Math.max(...trendData.map(t => t.totalIncome ?? 0));
+      const peakYear = trendData.find(t => t.totalIncome === peakIncome)?.year;
+      const latestIncome = _tdN?.totalIncome ?? 0;
+      const hasCorrection = peakYear && peakYear !== _tdN?.year && latestIncome < peakIncome * 0.85;
+
+      if (hasCorrection) {
+        phase = "High Growth with Recent Correction";
+        characteristics = [
+          "Strong long-term income growth above 12% annualized",
+          `Peak income in ${peakYear} ($${Math.round(peakIncome).toLocaleString()}) followed by a pullback in ${_tdN?.year}`,
+          latestDE != null && latestDE < 0.1 ? "Deduction efficiency remains low — optimization headroom available" : "Deduction strategy is operational",
+        ];
+        implication = "Your multi-year trend shows strong growth, but the most recent year reflects a significant correction. Tax planning should account for volatility, not just the long-term trajectory.";
+        note = `Your ${years}-year trend shows strong long-term growth, but ${_tdN?.year} reflects a significant correction${_mN?.insights?.hasCapitalLoss ? " driven by investment losses" : ""}. This is a growth-with-volatility story, not a linear acceleration.`;
+      } else {
       phase = "Accelerated Growth";
       characteristics = [
         "Sustained high income growth above 12% annualized",
@@ -1961,6 +1991,7 @@ export default function TaxVista() {
       ];
       implication = "Rapid growth creates urgency: tax optimization decisions made now will protect a compounding income base. Delay increases cumulative tax leakage.";
       note = "Income is expanding at an accelerated pace. Without proportional deduction scaling, a growing share of each incremental dollar will be taxed at progressively higher marginal rates.";
+      }
     } else if (cagr > 0.04) {
       phase = "Steady Accumulation";
       const cagrPct = (cagr * 100).toFixed(1);
@@ -2168,6 +2199,29 @@ export default function TaxVista() {
     }
 
     return bullets.slice(0, 3);
+  })();
+
+  // Peak-risk year: highest income + highest ETR + lowest deduction efficiency
+  const peakRiskYear = (() => {
+    if (results.length < 3) return null;
+    const peakIncYear = results.reduce((a, b) => (b.summary?.totalIncome ?? 0) > (a.summary?.totalIncome ?? 0) ? b : a).year;
+    const etrVals = results.map(r => ({ y: r.year, e: metricMap[r.year]?.effectiveTaxRate })).filter(v => v.e != null);
+    const deVals  = results.map(r => ({ y: r.year, d: metricMap[r.year]?.deductionEfficiency })).filter(v => v.d != null);
+    if (etrVals.length < 2 || deVals.length < 2) return null;
+    const highETRYear = etrVals.reduce((a, b) => b.e > a.e ? b : a).y;
+    const lowDEYear   = deVals.reduce((a, b) => b.d < a.d ? b : a).y;
+    if (peakIncYear === highETRYear && highETRYear === lowDEYear) return peakIncYear;
+    return null;
+  })();
+
+  // NR→1040 transition detection
+  const nrTransitionYear = (() => {
+    if (results.length < 2) return null;
+    const sorted = [...results].sort((a, b) => a.year - b.year);
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i - 1].isNR && !sorted[i].isNR) return sorted[i].year;
+    }
+    return null;
   })();
 
   return (
@@ -2592,6 +2646,17 @@ export default function TaxVista() {
                           <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>
                             {trendData[0]?.year} → {trendData[trendData.length - 1]?.year}
                           </div>
+                          {(() => {
+                            if (!_lowBase || trendData.length < 3) return null;
+                            const peakTd = trendData.reduce((a, b) => (b.totalIncome ?? 0) > (a.totalIncome ?? 0) ? b : a);
+                            const lastTd = trendData[trendData.length - 1];
+                            if (peakTd.year !== lastTd.year && (peakTd.totalIncome ?? 0) > (lastTd.totalIncome ?? 0) * 1.15) {
+                              return <div style={{ fontSize: 9, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 3, lineHeight: 1.4 }}>
+                                Growth concentrated early, peak in {peakTd.year} then pullback.
+                              </div>;
+                            }
+                            return null;
+                          })()}
                         </div>
                         <div className="tv-metric-card">
                           <div className="tv-metric-label"><Tip tip={_lowBase ? "Growth rate suppressed — base year income below $10K distorts percentages." : "Your average annual growth rate for take-home income after taxes."}>Take-Home Growth Rate</Tip></div>
@@ -2743,10 +2808,15 @@ export default function TaxVista() {
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", justifyContent: "center", marginTop: 6 }}>
                                     {vPieData.map((d, idx) => (
                                       <span key={d.name} style={{ fontFamily: "Space Mono, monospace", fontSize: 10, color: d.value > 0 ? PIE_COLORS[idx % PIE_COLORS.length] : "#3a4250" }}>
-                                        ■ {d.name} {d.value.toFixed(1)}%
+                                        ■ {d.name} {d.name === "Cap Gains" && vCapLoss ? "net loss" : d.value.toFixed(1) + "%"}
                                       </span>
                                     ))}
                                   </div>
+                                  {vCapLoss != null && (
+                                    <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--danger)", textAlign: "center", marginTop: 6, opacity: 0.8 }}>
+                                      Capital losses of ${vCapLoss.toLocaleString()} offset total income this year and are not shown in composition above.
+                                    </div>
+                                  )}
                                 </>
                               ) : (
                                 <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 11, textAlign: "center", padding: 24 }}>
@@ -2852,6 +2922,11 @@ export default function TaxVista() {
                             onMouseLeave={() => setActiveMetric(null)}
                           >{t.text}</p>
                         ))}
+                        {nrTransitionYear && (
+                          <p style={{ color: "var(--accent)" }}>
+                            Your tax profile changed materially in {nrTransitionYear} as you transitioned from non-resident (1040-NR) to U.S. resident filing. This expanded your taxable base and increased exposure to ordinary income tax rates.
+                          </p>
+                        )}
                       </div>
                     )}
                     {filteredResults.length === 0 ? (
@@ -2874,6 +2949,16 @@ export default function TaxVista() {
                               onMouseLeave={() => setActiveMetric(null)}
                             >{s.text}</p>
                           ))}
+                          {peakRiskYear === r.year && (
+                            <p style={{ color: "var(--danger)", fontSize: 12 }}>
+                              {r.year} was your most tax-exposed year: peak income, highest effective tax rate, and lowest deduction efficiency across all years analyzed. This is the highest-leverage year for retroactive optimization review.
+                            </p>
+                          )}
+                          {nrTransitionYear === r.year && (
+                            <p style={{ color: "var(--accent)", fontSize: 12 }}>
+                              Your tax profile changed materially in {r.year} as you transitioned from non-resident (1040-NR) to U.S. resident filing. This expanded your taxable base and increased exposure to ordinary income tax rates.
+                            </p>
+                          )}
                           <div className="tv-signal-row">
                             {Object.entries(m.insights.signals).map(([key, sig]) =>
                               sig ? <span key={key} className={`tv-signal ${sig.level}`}>{sig.label}</span> : null
@@ -2911,7 +2996,10 @@ export default function TaxVista() {
           const _latestM = _tdN ? metricMap[_tdN.year] : null;
           const _latestR = _tdN ? results.find(r => r.year === _tdN.year) : null;
           const _tags = [];
-          if (incomeCagr != null && incomeCagr > 0.12) _tags.push({ text: "High Growth", cls: "pos" });
+          if (incomeCagr != null && incomeCagr > 0.12) {
+            _tags.push({ text: "High Growth", cls: "pos" });
+            if (strategyPhase?.phase === "High Growth with Recent Correction") _tags.push({ text: "Recent Correction", cls: "warn" });
+          }
           else if (incomeCagr != null && incomeCagr < -0.05) _tags.push({ text: "Income Declining", cls: "neg" });
           if (taxRateDelta != null && taxRateDelta > 0.02) _tags.push({ text: "Rising Tax", cls: "neg" });
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _tags.push({ text: "Low Efficiency", cls: "warn" });
@@ -3150,6 +3238,12 @@ export default function TaxVista() {
                     </div>
                   );
                 })}
+                {nrTransitionYear && (
+                  <div className="tv-pr-trend-bullet">
+                    <span className="tv-pr-trend-bullet-label">Filing Status:</span>
+                    Your tax profile changed materially in {nrTransitionYear} as you transitioned from non-resident (1040-NR) to U.S. resident filing. This expanded your taxable base and increased exposure to ordinary income tax rates.
+                  </div>
+                )}
               </div>
             )}
 

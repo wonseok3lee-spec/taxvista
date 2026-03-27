@@ -30,7 +30,8 @@ export function calculateMetrics(data, compare) {
   const deductionEfficiency = totalIncome && agi != null && taxableIncome != null ? (agi - taxableIncome) / totalIncome : null;
   const afterTaxMargin    = totalIncome  && afterTaxIncome != null ? afterTaxIncome / totalIncome : null;
 
-  const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin }, compare);
+  const hasCapitalLoss = (income.capitalGains ?? 0) < 0;
+  const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare);
 
   return {
     incomeBreakdown: {
@@ -52,7 +53,7 @@ export function calculateMetrics(data, compare) {
   };
 }
 
-function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin }, compare) {
+function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare) {
   const signals = { agi: null, tax: null, deduction: null, margin: null };
 
   if (agiRatio != null) {
@@ -79,13 +80,13 @@ function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, aft
     else                            signals.margin = { label: "High tax drag",       level: "low"  };
   }
 
-  const summary = buildSummary({ ...signals, effectiveTaxRate, deductionEfficiency, afterTaxMargin }, compare);
+  const summary = buildSummary({ ...signals, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare);
 
   return { signals, summary };
 }
 
 // compare: optional { priorETR, avgETR, priorDE, avgDE, priorATM } for cross-year context
-function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deductionEfficiency, afterTaxMargin }, compare) {
+function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare) {
   const items = [];
   const c = compare || {};
 
@@ -97,8 +98,9 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
       const delta = effectiveTaxRate - c.priorETR;
       const priorPct = (c.priorETR * 100).toFixed(1);
       const absDelta = Math.abs(delta);
+      const capLossCaveat = delta < -0.005 && hasCapitalLoss ? " (partly driven by capital losses reducing taxable income, not solely structural optimization)" : "";
       compText = absDelta > 0.01
-        ? `, ${delta > 0 ? "up" : "down"} ${(absDelta * 100).toFixed(1)} percentage points from ${priorPct}% prior year — ${delta > 0 ? "rising tax burden" : "improving efficiency"}`
+        ? `, ${delta > 0 ? "up" : "down"} ${(absDelta * 100).toFixed(1)} percentage points from ${priorPct}% prior year — ${delta > 0 ? "rising tax burden" : "improving efficiency"}${capLossCaveat}`
         : absDelta > 0.002
         ? `, slightly ${delta > 0 ? "increased" : "decreased"} from ${priorPct}% prior year`
         : `, essentially unchanged from ${priorPct}% prior year — stable tax burden`;
