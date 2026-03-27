@@ -28,6 +28,10 @@ const styles = `
     --sans: 'DM Sans', sans-serif;
   }
 
+  * { user-select: none; -webkit-user-select: none; cursor: default; }
+  input, button, select, textarea, .tv-drop-zone { cursor: pointer; }
+  input, textarea { user-select: text; -webkit-user-select: text; cursor: text; }
+
   html, body, #root {
     margin: 0 !important;
     padding: 0 !important;
@@ -803,17 +807,6 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-  /* ── No text selection on dashboard chrome ── */
-  .tv-strategy-bar,
-  .tv-strategy-text,
-  .tv-iblock,
-  .tv-iblock p,
-  .tv-insight-sentence,
-  .tv-canvas-title {
-    user-select: none;
-    -webkit-user-select: none;
-    cursor: default;
   }
   /* ── Metric grid (Overview) ── */
   .tv-metric-grid {
