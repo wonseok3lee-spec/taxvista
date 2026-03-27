@@ -1294,7 +1294,7 @@ const styles = `
     }
 
     /* Page break */
-    .tv-pr-page-break { page-break-after: always; }
+    .tv-pr-page-break { display: none; }
 
     /* Table with alternate row shading */
     .tv-pr-table {
@@ -3259,8 +3259,6 @@ export default function TaxVista() {
               </div>
             )}
 
-            <div className="tv-pr-page-break" />
-
             {/* ════════════ PAGE 3 — VERTICAL ANALYSIS ════════════ */}
             <div className="tv-pr-section-title" style={{ fontSize: "10pt", marginBottom: "16pt" }}>Year-by-Year Deep Dive</div>
 
@@ -3322,8 +3320,6 @@ export default function TaxVista() {
                 </div>
               );
             })}
-
-            <div className="tv-pr-page-break" />
 
             {/* ════════════ PAGE 4 — STRATEGIC ASSESSMENT + DEEP ANALYSIS ════════════ */}
             {/* Strategic Assessment */}
