@@ -2924,8 +2924,8 @@ export default function TaxVista() {
             if (incomeCagr != null && incomeCagr > 0.12 && taxRateDelta != null && taxRateDelta > 0.02) return "Income rising fast, but tax efficiency is not keeping pace.";
             if (incomeCagr != null && incomeCagr > 0.12) return "Income growing rapidly — early optimization has the highest lifetime impact.";
             if (taxRateDelta != null && taxRateDelta > 0.02) return "Tax burden increasing — more income is being lost to taxes.";
-            if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) return "Deductions underutilized — taxable income is close to gross income.";
-            if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) return "Strong income retention — most of total income preserved after tax.";
+            if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) return "Deductions underutilized — taxable income is close to total income.";
+            if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) return "Strong after-tax performance — most of total income preserved after tax.";
             return "Review your income structure and tax efficiency below.";
           })();
 
@@ -2938,7 +2938,7 @@ export default function TaxVista() {
 
           // Priority actions
           const _actions = [];
-          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) _actions.push({ action: "Maximize pre-tax contributions (401k, IRA, HSA)", reason: _latestM.deductionEfficiency < 0.08 ? `Deduction efficiency is ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — nearly all income reaches taxable income without offsets. Each dollar contributed pre-tax reduces taxable income dollar-for-dollar.` : "Pre-tax contributions are below optimal levels. Increasing 401k and IRA is the highest-ROI tax action." });
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) _actions.push({ action: "Maximize pre-tax contributions (401k, IRA, HSA)", reason: `Your deduction efficiency is ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — below the 20% threshold for optimized pre-tax contributions. ${_latestM.deductionEfficiency < 0.08 ? "Nearly all income reaches taxable income without offsets. Each dollar contributed pre-tax reduces taxable income dollar-for-dollar at your current marginal rate." : "Increasing 401k/IRA/HSA contributions is the highest-leverage action available to close the gap between total and taxable income."}` });
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _actions.push({ action: "Reduce taxable income exposure", reason: `Beyond retirement, evaluate HSA eligibility, student loan interest deduction, and above-the-line adjustments.` });
           if (taxRateDelta != null && taxRateDelta > 0.02) _actions.push({ action: "Review tax withholding accuracy", reason: `Effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points. Verify W-4 reflects current income.` });
           if (incomeCagr != null && incomeCagr > 0.08) _actions.push({ action: "Shift income mix toward tax-advantaged sources", reason: "Capital gains and qualified dividends are taxed at 0–20% vs ordinary rates of 22–37%." });
@@ -2947,7 +2947,7 @@ export default function TaxVista() {
           // Prose summary for page 1
           const _proseParts = [];
           if (_latestR && _latestM) {
-            _proseParts.push(`In ${_latestR.year}, you earned ${_fmtD(_latestR.summary?.totalIncome)} in gross income and kept ${_fmtD(_latestM.afterTaxIncome)} after federal taxes — an effective tax rate of ${_fmtP(_latestM.effectiveTaxRate)}.`);
+            _proseParts.push(`In ${_latestR.year}, you earned ${_fmtD(_latestR.summary?.totalIncome)} in total income and kept ${_fmtD(_latestM.afterTaxIncome)} after federal taxes — an effective tax rate of ${_fmtP(_latestM.effectiveTaxRate)} (based on taxable income)${_latestM.afterTaxMargin != null ? `, with an after-tax margin (share of total income kept after tax) of ${_fmtP(_latestM.afterTaxMargin)}` : ""}.`);
             if (_multi && taxRateDelta != null && Math.abs(taxRateDelta) > 0.01) {
               _proseParts.push(`Over ${_first.year}–${_last.year}, your effective tax rate ${taxRateDelta > 0 ? "increased" : "decreased"} by ${Math.abs(taxRateDelta * 100).toFixed(1)} percentage points${_lb ? " as income moved from a near-zero base into taxable brackets" : ""}.`);
             }
@@ -2965,12 +2965,12 @@ export default function TaxVista() {
           // Income trend
           if (_multi) {
             const fi = _first.summary?.totalIncome, li = _last.summary?.totalIncome;
-            if (fi && li) { if (_lb) { _incomeBullets.push(`Income expanded from ${_fmtD(fi)} (${_first.year}) to ${_fmtD(li)} (${_last.year}). The starting base was below $10,000, which distorts percentage-based metrics.`); } else { const g = ((li - fi) / fi * 100).toFixed(0); _incomeBullets.push(`Gross income: ${_fmtD(fi)} (${_first.year}) → ${_fmtD(li)} (${_last.year}) — ${g}% total change.`); } }
+            if (fi && li) { if (_lb) { _incomeBullets.push(`Income expanded from ${_fmtD(fi)} (${_first.year}) to ${_fmtD(li)} (${_last.year}). The starting base was below $10,000, which distorts percentage-based metrics.`); } else { const g = ((li - fi) / fi * 100).toFixed(0); _incomeBullets.push(`Total income: ${_fmtD(fi)} (${_first.year}) → ${_fmtD(li)} (${_last.year}) — ${g}% total change.`); } }
             if (incomeCagr != null && !_lb) _incomeBullets.push(`Annualized growth rate: ${(incomeCagr * 100).toFixed(1)}%. ${incomeCagr > 0.2 ? "Exceptionally fast — sustainability should be monitored." : incomeCagr > 0.08 ? "Above-average growth creating compounding value." : incomeCagr > 0 ? "Modest growth near inflation levels." : "Income contracting in real terms."}`);
             else if (_lb) _incomeBullets.push(`Low-base distortion: ${_first.year} income of ${_fmtD(_first.summary?.totalIncome)} suppresses percentage-based metrics.`);
             const incs = _sorted.map(r => r.summary?.totalIncome).filter(v => v != null);
             if (incs.length >= 3) { const yoy = incs.slice(1).map((v, i) => `${_sorted[i].year}→${_sorted[i+1].year}: ${((v - incs[i]) / incs[i] * 100).toFixed(0)}%`).join("; "); _incomeBullets.push(`Year-over-year: ${yoy}.`); }
-          } else if (_first.summary?.totalIncome) _incomeBullets.push(`Single-year gross income: ${_fmtD(_first.summary.totalIncome)}.`);
+          } else if (_first.summary?.totalIncome) _incomeBullets.push(`Single-year total income: ${_fmtD(_first.summary.totalIncome)}.`);
 
           // Tax trend (condensed: range + delta, not per-year)
           if (_multi) {
@@ -2980,12 +2980,12 @@ export default function TaxVista() {
           } else if (_mFirst?.effectiveTaxRate != null) _taxBullets.push(`Effective tax rate: ${_fmtP(_mFirst.effectiveTaxRate)}.`);
 
           // Tax drag
-          if (_multi) { const fa = _mFirst?.afterTaxIncome, la = _mLast?.afterTaxIncome, fi2 = _first.summary?.totalIncome, li2 = _last.summary?.totalIncome; if (fa && la && fi2 && li2 && fi2 > 0 && fa > 0) { const id = li2 - fi2, ad = la - fa; if (id > 0) { const mr = (id - ad) / id; _dragBullets.push(`Over ${_first.year}–${_last.year}: income +${_fmtD(id)}, after-tax +${_fmtD(ad)}. Taxes absorbed ${_fmtD(id - ad)}.`); _dragBullets.push(`Per $1.00 earned: $${mr.toFixed(2)} to taxes, $${(1 - mr).toFixed(2)} retained (${(mr * 100).toFixed(0)}% absorption rate).`); } } const ms = _sorted.map(r => ({ y: r.year, m: metricMap[r.year]?.afterTaxMargin })).filter(x => x.m != null); if (ms.length >= 2) { const d = ms[ms.length-1].m - ms[0].m; if (Math.abs(d) > 0.02) _dragBullets.push(`After-tax margin ${d > 0 ? "improved" : "declined"} from ${_fmtP(ms[0].m)} to ${_fmtP(ms[ms.length-1].m)}.`); } }
+          if (_multi) { const fa = _mFirst?.afterTaxIncome, la = _mLast?.afterTaxIncome, fi2 = _first.summary?.totalIncome, li2 = _last.summary?.totalIncome; if (fa && la && fi2 && li2 && fi2 > 0 && fa > 0) { const id = li2 - fi2, ad = la - fa; if (id > 0) { const mr = (id - ad) / id; _dragBullets.push(`Over ${_first.year}–${_last.year}: income +${_fmtD(id)}, after-tax +${_fmtD(ad)}. Taxes absorbed ${_fmtD(id - ad)} of income growth (${(mr * 100).toFixed(0)}%). Without optimization, this leakage will compound as income rises.`); _dragBullets.push(`Per $1.00 earned: $${mr.toFixed(2)} to taxes, $${(1 - mr).toFixed(2)} retained (${(mr * 100).toFixed(0)}% absorption rate).`); } } const ms = _sorted.map(r => ({ y: r.year, m: metricMap[r.year]?.afterTaxMargin })).filter(x => x.m != null); if (ms.length >= 2) { const d = ms[ms.length-1].m - ms[0].m; if (Math.abs(d) > 0.02) _dragBullets.push(`After-tax margin ${d > 0 ? "improved" : "declined"} from ${_fmtP(ms[0].m)} to ${_fmtP(ms[ms.length-1].m)}.`); } }
 
           // After-tax (condensed: first→last + latest margin only)
           if (_multi) {
             if (_mFirst?.afterTaxIncome && _mLast?.afterTaxIncome) _afterTaxBullets.push(`After-tax income: ${_fmtD(_mFirst.afterTaxIncome)} (${_first.year}) → ${_fmtD(_mLast.afterTaxIncome)} (${_last.year}).`);
-            if (_mLast?.afterTaxMargin != null) _afterTaxBullets.push(`${_last.year} retention: ${_fmtP(_mLast.afterTaxMargin)} of total income kept after tax — ${_mLast.afterTaxMargin > 0.85 ? "strong" : _mLast.afterTaxMargin > 0.7 ? "moderate" : "significant tax drag"}.`);
+            if (_mLast?.afterTaxMargin != null) _afterTaxBullets.push(`${_last.year} after-tax margin: ${_fmtP(_mLast.afterTaxMargin)} of total income kept after tax — ${_mLast.afterTaxMargin > 0.85 ? "strong" : _mLast.afterTaxMargin > 0.7 ? "moderate" : "significant tax drag"}.`);
           } else if (_mFirst?.afterTaxIncome != null) _afterTaxBullets.push(`After-tax income: ${_fmtD(_mFirst.afterTaxIncome)}, margin: ${_fmtP(_mFirst.afterTaxMargin)}.`);
 
           // Composition (condensed: latest year only + trend note if multi)
@@ -3008,8 +3008,14 @@ export default function TaxVista() {
           else if (incomeCagr != null && incomeCagr > 0.1) _wtmBullets.push(`Income at ${_latestR ? _fmtD(_latestR.summary?.totalIncome) : "current level"} — tax drag will compound without deduction scaling.`);
           if (taxRateDelta != null && taxRateDelta > 0.02) _wtmBullets.push(`The ${(taxRateDelta * 100).toFixed(1)}pp rate increase means take-home margin will continue to compress without structural changes.`);
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _wtmBullets.push(`At ${(_latestM.deductionEfficiency * 100).toFixed(1)}% deduction efficiency, early optimization has the highest lifetime impact.`);
-          if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.85) _wtmBullets.push(`${(_latestM.afterTaxMargin * 100).toFixed(1)}% retention is strong — priority is protecting this margin as income scales.`);
+          if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.85) _wtmBullets.push(`${(_latestM.afterTaxMargin * 100).toFixed(1)}% after-tax margin is strong — priority is protecting this margin as income scales.`);
           if (_wtmBullets.length === 0 && _latestM?.effectiveTaxRate != null) _wtmBullets.push(`Current rate ${_fmtP(_latestM.effectiveTaxRate)} — review deduction strategy annually.`);
+          // Closing directive — always present
+          if (taxRateDelta != null && taxRateDelta > 0.01) {
+            _wtmBullets.push("Without increasing pre-tax contributions or shifting income composition, a growing portion of income will be taxed at progressively higher marginal rates. Action priority: (1) increase pre-tax contributions immediately, (2) rebalance toward tax-advantaged income sources.");
+          } else if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) {
+            _wtmBullets.push("Pre-tax contribution capacity remains underused. Action priority: (1) increase pre-tax contributions immediately, (2) evaluate HSA and above-the-line adjustments to reduce taxable income.");
+          }
 
           const _deepSections = [
             { title: "Income Trend Analysis", items: _incomeBullets },
