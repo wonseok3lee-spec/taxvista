@@ -1749,7 +1749,12 @@ export default function TaxVista() {
     } else if (lowBase && taxGrowth != null && taxGrowth > 1) {
       items.push({ text: `Tax burden increased sharply as income moved from near-zero into taxable brackets. This is a natural transition, not a structural inefficiency — but it creates the highest-leverage window for tax optimization.`, metric: "tax" });
     } else if (incomeGrowth != null && !lowBase) {
-      items.push({ text: `Tax obligation is growing in line with income — no compression of take-home margin detected. Current deduction structure is keeping pace with income growth.`, metric: "tax" });
+      const lastMetric = metrics[metrics.length - 1];
+      if (lastMetric?.isLossDriven) {
+        items.push({ text: `Tax burden decreased primarily due to capital losses, not improved deduction structure. This reduction is not expected to repeat without similar losses.`, metric: "tax" });
+      } else {
+        items.push({ text: `Tax obligation is growing in line with income — no compression of take-home margin detected. Current deduction structure is keeping pace with income growth.`, metric: "tax" });
+      }
     }
 
     // Sentence 3: income mix shift
@@ -1911,6 +1916,11 @@ export default function TaxVista() {
           { text: `net loss (${investStr})`, accent: true },
           { text: " — capital losses exceeded investment gains this year; this reduces taxable income but reflects portfolio decline" },
         ]);
+        if (vMetric.isLossDriven) {
+          ins.push([
+            { text: "This improvement in tax efficiency is not sustainable and does not reflect underlying financial strength — it is driven by portfolio losses, not tax optimization." },
+          ]);
+        }
       } else if (investPct < 0.05) {
         ins.push([
           { text: "Investment income: " },
@@ -2125,7 +2135,9 @@ export default function TaxVista() {
     const etrPrior  = mPrior?.effectiveTaxRate ?? null;
     const etrDelta  = etr != null && etrPrior != null ? etr - etrPrior : null;
     const etrRising = etrDelta != null && etrDelta > 0.015;
+    const _isLD = m.isLossDriven;
     const etrLabel  = etr == null ? null
+      : _isLD ? "low tax burden (loss-driven, not structural optimization)"
       : etr > 0.25 ? "high tax burden relative to income"
       : etr > 0.15 ? "moderate burden, optimization possible"
       : etr > 0.05 ? "low burden, favorable structure"
@@ -2430,7 +2442,7 @@ export default function TaxVista() {
             {/* ── Strategy Detected bar ── */}
             {strategyPhase && (
               <div className="tv-strategy-bar">
-                <span className="tv-strategy-badge">Strategy Detected</span>
+                <span className="tv-strategy-badge">{resolvedActiveYear && metricMap[resolvedActiveYear]?.isLossDriven ? "Event Detected" : "Strategy Detected"}</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
 
                   {/* Dynamic — updates on chart hover */}

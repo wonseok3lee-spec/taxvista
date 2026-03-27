@@ -30,8 +30,10 @@ export function calculateMetrics(data, compare) {
   const deductionEfficiency = totalIncome && agi != null && taxableIncome != null ? (agi - taxableIncome) / totalIncome : null;
   const afterTaxMargin    = totalIncome  && afterTaxIncome != null ? afterTaxIncome / totalIncome : null;
 
-  const hasCapitalLoss = (income.capitalGains ?? 0) < 0;
-  const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare);
+  const cg = income.capitalGains ?? 0;
+  const hasCapitalLoss = cg < 0;
+  const isLossDriven = cg < 0 && totalIncome > 0 && Math.abs(cg) > totalIncome * 0.10;
+  const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven }, compare);
 
   return {
     incomeBreakdown: {
@@ -49,11 +51,12 @@ export function calculateMetrics(data, compare) {
     taxToIncome,
     deductionEfficiency,
     afterTaxMargin,
+    isLossDriven,
     insights,
   };
 }
 
-function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare) {
+function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven }, compare) {
   const signals = { agi: null, tax: null, deduction: null, margin: null };
 
   if (agiRatio != null) {
@@ -80,15 +83,20 @@ function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, aft
     else                            signals.margin = { label: "High tax drag",       level: "low"  };
   }
 
-  const summary = buildSummary({ ...signals, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare);
+  const summary = buildSummary({ ...signals, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven }, compare);
 
   return { signals, summary };
 }
 
 // compare: optional { priorETR, avgETR, priorDE, avgDE, priorATM } for cross-year context
-function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss }, compare) {
+function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven }, compare) {
   const items = [];
   const c = compare || {};
+
+  // Loss-driven caveat — must appear first when applicable
+  if (isLossDriven && effectiveTaxRate != null && afterTaxMargin != null) {
+    items.push({ text: `Tax reduction was primarily driven by capital losses — not by structural optimization. Effective tax rate: ${(effectiveTaxRate * 100).toFixed(1)}%, retaining ${(afterTaxMargin * 100).toFixed(1)}% of total income after tax.`, metric: "etr" });
+  }
 
   // Line 1: effective tax rate — must include comparison
   if (effectiveTaxRate != null) {
