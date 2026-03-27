@@ -1996,7 +1996,7 @@ export default function TaxVista() {
       characteristics = [
         `${cagrPct}% annualized — income declining year-over-year`,
         latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "retention stable despite declining income" : "tax burden not adjusting proportionally to lower income"}` : "After-tax margin data unavailable",
-        taxRateDelta != null ? `Effective tax rate shifted by ${(taxRateDelta * 100).toFixed(1)} percentage points — ${taxRateDelta > 0 ? "rate rising on a shrinking base, compounding after-tax erosion" : "rate adjusting downward with income"}` : "Tax rate trend data unavailable",
+        taxRateDelta != null ? `Effective tax rate shifted by ${(taxRateDelta * 100).toFixed(1)} percentage points — ${taxRateDelta > 0 ? "rate rising on a shrinking base, compounding after-tax erosion" : "rate adjusting downward with income"}` : "Effective tax rate trend data unavailable",
       ];
       implication = `At ${cagrPct}% annualized decline, verify that tax withholding and expense structure have adjusted proportionally. Over-withholding on a shrinking base accelerates after-tax erosion.`;
       note = `Income is trending downward at ${cagrPct}% annualized. Priority shifts to preserving current after-tax income: verify withholding is accurate, claim all eligible deductions, and evaluate whether income sources can be restructured.`;
@@ -2599,7 +2599,7 @@ export default function TaxVista() {
                           </div>
                         </div>
                         <div className="tv-metric-card">
-                          <div className="tv-metric-label"><Tip tip="How your effective tax rate changed from your first to your most recent year.">Effective Tax Rate Change</Tip></div>
+                          <div className="tv-metric-label"><Tip tip="Change in effective tax rate (tax ÷ taxable income) from first to most recent year.">Effective Tax Rate Change</Tip></div>
                           <div className="tv-metric-value" style={{ fontSize: 20, color: taxRateDelta == null ? "var(--muted)" : taxRateDelta > 0 ? "var(--danger)" : "var(--success)" }}>
                             {taxRateDelta != null ? (taxRateDelta > 0 ? "+" : "") + (taxRateDelta * 100).toFixed(1) + " percentage points" : "—"}
                           </div>
@@ -2636,9 +2636,9 @@ export default function TaxVista() {
                         </div>
                       </div>
 
-                      {/* Tax Rate by Year (bar) */}
+                      {/* Tax Burden Comparison (bar) */}
                       <div className="tv-chart-block">
-                        <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year.">Tax Rate by Year</Tip></div>
+                        <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year.">Tax Burden Comparison</Tip></div>
                         <div ref={barChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={180}>
                             <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
