@@ -1743,8 +1743,12 @@ export default function TaxVista() {
         items.push({ text: `Income mix is diversifying into capital gains, which are taxed at lower rates. This structural shift improves long-term tax efficiency if sustained.`, metric: "income" });
       else if (gainsDelta > 0.05)
         items.push({ text: `Investment income share is growing. Capital gains and qualified dividends receive preferential tax rates — this diversification will reduce effective tax burden over time.`, metric: "income" });
-      else if (gainsDelta < -0.05)
-        items.push({ text: `Investment income share is declining, concentrating earnings in ordinary income. This narrows tax flexibility and increases marginal rate exposure.`, metric: "income" });
+      else if (gainsDelta < -0.05) {
+        const lastCapGains = results.find(r => r.year === last.year)?.income?.capitalGains;
+        items.push({ text: lastCapGains != null && lastCapGains < 0
+          ? `Capital gains turned negative (loss position), reducing investment income share. This concentrates earnings in ordinary income and narrows tax flexibility.`
+          : `Investment income share is declining, concentrating earnings in ordinary income. This narrows tax flexibility and increases marginal rate exposure.`, metric: "income" });
+      }
     }
 
     return items;
@@ -2160,7 +2164,7 @@ export default function TaxVista() {
 
     // Positive: strong after-tax retention (filler for low-tax years)
     if (etr != null && etr < 0.1 && atm != null && atm > 0.85 && bullets.length < 2) {
-      bullets.push(`${(atm * 100).toFixed(0)}% of gross income retained after tax`);
+      bullets.push(`${(atm * 100).toFixed(0)}% of total income retained after tax`);
     }
 
     return bullets.slice(0, 3);
@@ -2654,14 +2658,14 @@ export default function TaxVista() {
                                 cursor={{ fill: "rgba(255,255,255,0.03)" }}
                               />
                               <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "#6b7280" }} />
-                              <Bar dataKey="taxRate"          fill="#b85c5c" name="Tax / Gross Income"      radius={[3,3,0,0]} isAnimationActive={false}>
+                              <Bar dataKey="taxRate"          fill="#b85c5c" name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
                                   <Cell key={entry.year} fill="#b85c5c" fillOpacity={
                                     (activeYear && entry.year !== String(activeYear) ? 0.3 : 1) * metricOpacity("tax")
                                   } />
                                 ))}
                               </Bar>
-                              <Bar dataKey="effectiveTaxRate" fill="#c47a3a" name="Effective Tax Rate" radius={[3,3,0,0]} isAnimationActive={false}>
+                              <Bar dataKey="effectiveTaxRate" fill="#c47a3a" name="Effective Tax Rate (taxable income)" radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
                                   <Cell key={entry.year} fill="#c47a3a" fillOpacity={
                                     (activeYear && entry.year !== String(activeYear) ? 0.3 : 1) * metricOpacity("etr")
@@ -2671,8 +2675,8 @@ export default function TaxVista() {
                             </BarChart>
                           </ResponsiveContainer>
                           <div style={{ display: "flex", gap: 16, fontFamily: "var(--mono)", fontSize: 10, color: "var(--muted)", marginTop: 8, justifyContent: "center" }}>
-                            <Tip tip="Total tax ÷ taxable income. Your true tax rate on income subject to tax.">Effective Tax Rate ?</Tip>
-                            <Tip tip="Total tax ÷ total income (before deductions). Always lower than Effective Tax Rate.">Tax / Gross Income ?</Tip>
+                            <Tip tip="Total tax ÷ taxable income. Your true tax rate on income subject to tax.">Effective Tax Rate (taxable income) ?</Tip>
+                            <Tip tip="Total tax ÷ total income (before deductions). Always lower than Effective Tax Rate.">Tax / Income (total income) ?</Tip>
                           </div>
                         </div>
                       </div>
@@ -2921,7 +2925,7 @@ export default function TaxVista() {
             if (incomeCagr != null && incomeCagr > 0.12) return "Income growing rapidly — early optimization has the highest lifetime impact.";
             if (taxRateDelta != null && taxRateDelta > 0.02) return "Tax burden increasing — more income is being lost to taxes.";
             if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) return "Deductions underutilized — taxable income is close to gross income.";
-            if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) return "Strong income retention — most of gross income preserved after tax.";
+            if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) return "Strong income retention — most of total income preserved after tax.";
             return "Review your income structure and tax efficiency below.";
           })();
 
@@ -2981,7 +2985,7 @@ export default function TaxVista() {
           // After-tax (condensed: first→last + latest margin only)
           if (_multi) {
             if (_mFirst?.afterTaxIncome && _mLast?.afterTaxIncome) _afterTaxBullets.push(`After-tax income: ${_fmtD(_mFirst.afterTaxIncome)} (${_first.year}) → ${_fmtD(_mLast.afterTaxIncome)} (${_last.year}).`);
-            if (_mLast?.afterTaxMargin != null) _afterTaxBullets.push(`${_last.year} retention: ${_fmtP(_mLast.afterTaxMargin)} of gross income kept after tax — ${_mLast.afterTaxMargin > 0.85 ? "strong" : _mLast.afterTaxMargin > 0.7 ? "moderate" : "significant tax drag"}.`);
+            if (_mLast?.afterTaxMargin != null) _afterTaxBullets.push(`${_last.year} retention: ${_fmtP(_mLast.afterTaxMargin)} of total income kept after tax — ${_mLast.afterTaxMargin > 0.85 ? "strong" : _mLast.afterTaxMargin > 0.7 ? "moderate" : "significant tax drag"}.`);
           } else if (_mFirst?.afterTaxIncome != null) _afterTaxBullets.push(`After-tax income: ${_fmtD(_mFirst.afterTaxIncome)}, margin: ${_fmtP(_mFirst.afterTaxMargin)}.`);
 
           // Composition (condensed: latest year only + trend note if multi)
@@ -2992,7 +2996,7 @@ export default function TaxVista() {
           }
 
           // Deductions (condensed: latest + trend delta only)
-          if (_mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency; _dedBullets.push(`${_last.year}: ${_fmtP(d)} of gross income offset by deductions — ${d > 0.2 ? "strong sheltering" : d > 0.1 ? "moderate, room to increase" : "low, pre-tax accounts are primary lever"}.`); }
+          if (_mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency; _dedBullets.push(`${_last.year}: ${_fmtP(d)} of total income offset by deductions — ${d > 0.2 ? "strong sheltering" : d > 0.1 ? "moderate, room to increase" : "low, pre-tax accounts are primary lever"}.`); }
           if (_multi && _mFirst?.deductionEfficiency != null && _mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency - _mFirst.deductionEfficiency; if (Math.abs(d) > 0.03) _dedBullets.push(`Efficiency ${d > 0 ? "improved" : "declined"} by ${Math.abs(d * 100).toFixed(1)}pp over ${_first.year}–${_last.year}.`); }
 
           // Summary

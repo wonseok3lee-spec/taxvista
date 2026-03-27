@@ -96,11 +96,12 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
     if (c.priorETR != null) {
       const delta = effectiveTaxRate - c.priorETR;
       const priorPct = (c.priorETR * 100).toFixed(1);
-      compText = delta > 0.005
-        ? `, up ${(delta * 100).toFixed(1)} percentage points from ${priorPct}% prior year — rising tax burden`
-        : delta < -0.005
-        ? `, down ${Math.abs(delta * 100).toFixed(1)} percentage points from ${priorPct}% prior year — improving efficiency`
-        : `, unchanged from ${priorPct}% prior year — stable tax burden`;
+      const absDelta = Math.abs(delta);
+      compText = absDelta > 0.01
+        ? `, ${delta > 0 ? "up" : "down"} ${(absDelta * 100).toFixed(1)} percentage points from ${priorPct}% prior year — ${delta > 0 ? "rising tax burden" : "improving efficiency"}`
+        : absDelta > 0.002
+        ? `, slightly ${delta > 0 ? "increased" : "decreased"} from ${priorPct}% prior year`
+        : `, essentially unchanged from ${priorPct}% prior year — stable tax burden`;
     } else if (c.avgETR != null) {
       const delta = effectiveTaxRate - c.avgETR;
       const avgPct = (c.avgETR * 100).toFixed(1);
@@ -109,7 +110,7 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
         : `, in line with the multi-year average of ${avgPct}%`;
     }
     const atmText = afterTaxMargin != null
-      ? `, retaining ${(afterTaxMargin * 100).toFixed(1)}% of gross income after tax`
+      ? `, retaining ${(afterTaxMargin * 100).toFixed(1)}% of total income after tax`
       : "";
     // Only emit if we have a comparison OR an afterTaxMargin comparison
     if (compText || afterTaxMargin != null) {
@@ -124,17 +125,19 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
     if (c.priorDE != null) {
       const delta = deductionEfficiency - c.priorDE;
       const priorPct = (c.priorDE * 100).toFixed(1);
-      compText = Math.abs(delta) > 0.005
-        ? ` (${delta > 0 ? "up" : "down"} from ${priorPct}% prior year)`
-        : ` (unchanged from ${priorPct}% prior year)`;
+      compText = Math.abs(delta) > 0.01
+        ? ` (${delta > 0 ? "up" : "down"} ${(Math.abs(delta) * 100).toFixed(1)}pp from ${priorPct}% prior year)`
+        : Math.abs(delta) > 0.002
+        ? ` (slightly ${delta > 0 ? "up" : "down"} from ${priorPct}% prior year)`
+        : ` (essentially unchanged from ${priorPct}% prior year)`;
     } else if (c.avgDE != null) {
       const avgPct = (c.avgDE * 100).toFixed(1);
       compText = ` (vs ${avgPct}% multi-year average)`;
     }
     if (deduction?.level === "low") {
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — only ${dePct}% of gross income offset by deductions, leaving ${(100 - Number(dePct)).toFixed(1)}% fully taxable`, metric: "deduction" });
+      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — only ${dePct}% of total income offset by deductions, leaving ${(100 - Number(dePct)).toFixed(1)}% fully taxable`, metric: "deduction" });
     } else if (deduction?.level === "high") {
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${dePct}% of gross income sheltered from taxation through deductions and pre-tax contributions`, metric: "deduction" });
+      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${dePct}% of total income sheltered from taxation through deductions and pre-tax contributions`, metric: "deduction" });
     } else {
       items.push({ text: `Deduction efficiency: ${dePct}%${compText} — moderate sheltering; increasing pre-tax contributions would raise this ratio`, metric: "deduction" });
     }
