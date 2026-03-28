@@ -2144,6 +2144,12 @@ export default function TaxVista() {
       note = `Income is trending downward at ${cagrPct}% annualized. Priority shifts to preserving current after-tax income: verify withholding is accurate, claim all eligible deductions, and evaluate whether income sources can be restructured.`;
     }
 
+    // Override for one-time capital event
+    if (metrics.some(m => (m?.falseSignals ?? []).some(s => s.flag === "ONE_TIME_EVENT"))) {
+      phase = "Event-Driven Income";
+      note = "Income growth this period includes a significant one-time capital event. This may not reflect your ongoing earnings trajectory.";
+    }
+
     return { years, cagr, phase, note, characteristics, implication };
   })();
 
@@ -2545,6 +2551,7 @@ export default function TaxVista() {
                   if (!ps) return "Strategy Detected";
                   if (ps.severity === "CRITICAL") return "\u26A0 Income Alert";
                   if (ps.severity === "HIGH") return "\u26A0 Signal Distorted";
+                  if (ps.severity === "MEDIUM" && ps.flag === "ONE_TIME_EVENT") return "\u26A0 Event Detected";
                   if (ps.severity === "MEDIUM") return "\u26A0 Signal Mixed";
                   if (ps.severity === "POSITIVE") return "\u2713 Strategy Confirmed";
                   return "Strategy Detected";
