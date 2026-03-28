@@ -1846,6 +1846,7 @@ export default function TaxVista() {
   const resolvedActiveYear  = activeYear ?? latestFilteredYear;
   const vResult = results.find(r => r.year === verticalYear) ?? results[0];
   const vMetric = vResult ? metricMap[vResult.year] : null;
+  const healthColorMap = { positive: "var(--success)", neutral: "var(--accent)", caution: "#f59e0b", danger: "var(--danger)" };
   const $v = (v) => v != null
     ? (Math.abs(v) >= 1_000_000 ? "$" + (v / 1_000_000).toFixed(1) + "M"
      : Math.abs(v) >= 1000      ? "$" + (v / 1000).toFixed(0) + "K"
@@ -2710,6 +2711,12 @@ export default function TaxVista() {
                                   <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, color: row.color }}>{row.val}</span>
                                 </div>
                               ))}
+                              {m?.healthScore != null && (
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, paddingTop: 4, borderTop: "1px solid var(--border)" }}>
+                                  <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em" }}>HEALTH</span>
+                                  <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, color: healthColorMap[m.healthColor] ?? "var(--text)" }}>{m.healthScore} — {m.healthLabel}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
@@ -2985,6 +2992,25 @@ export default function TaxVista() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Health Score card */}
+                      {vMetric?.healthScore != null && (
+                        <div style={{ marginTop: 16, padding: "16px 20px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", gap: 20 }}>
+                          <div style={{ textAlign: "center", flexShrink: 0 }}>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 36, fontWeight: 700, color: healthColorMap[vMetric.healthColor], lineHeight: 1 }}>{vMetric.healthScore}</div>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em", color: "var(--muted)", marginTop: 4 }}>HEALTH SCORE</div>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 13, fontWeight: 700, color: healthColorMap[vMetric.healthColor], marginBottom: 4 }}>{vMetric.healthLabel}</div>
+                            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                              Based on income trajectory, tax efficiency, deduction structure, and signal quality.
+                              {vMetric.primarySignal && (
+                                <span style={{ color: healthColorMap[vMetric.healthColor] }}>{" "}Primary flag: {vMetric.primarySignal.flag.replace(/_/g, " ")}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Signal Quality card */}
                       {vMetric.primarySignal && (
@@ -3351,6 +3377,7 @@ export default function TaxVista() {
                     { label: "After-Tax Income", value: $v(_latestM.afterTaxIncome) },
                     { label: "Effective Tax Rate", value: pf(_latestM.effectiveTaxRate) },
                     { label: "After-Tax Margin", value: pf(_latestM.afterTaxMargin) },
+                    { label: "Health Score", value: _latestM.healthScore != null ? `${_latestM.healthScore} — ${_latestM.healthLabel}` : "—" },
                   ].map(k => (
                     <div className="tv-pr-kpi-box" key={k.label}>
                       <div className="tv-pr-kpi-label">{k.label}</div>

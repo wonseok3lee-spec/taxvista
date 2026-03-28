@@ -66,6 +66,21 @@ export function calculateMetrics(data, compare) {
   falseSignals.sort((a, b) => priorityOrder.indexOf(a.severity) - priorityOrder.indexOf(b.severity));
   const primarySignal = falseSignals[0] ?? null;
 
+  // === FINANCIAL HEALTH SCORE ===
+  let healthScore = 50;
+  if (falseSignals.some(s => s.flag === "TRUE_OPTIMIZATION")) healthScore += 20;
+  if (effectiveTaxRate != null && effectiveTaxRate < 0.15) healthScore += 10;
+  if (deductionEfficiency != null && deductionEfficiency > 0.20) healthScore += 10;
+  if (afterTaxMargin != null && afterTaxMargin > 0.80) healthScore += 10;
+  if (falseSignals.some(s => s.flag === "INCOME_COLLAPSE")) healthScore -= 30;
+  if (falseSignals.some(s => s.flag === "FALSE_EFFICIENCY")) healthScore -= 25;
+  if (falseSignals.some(s => s.flag === "LOSS_DISTORTION")) healthScore -= 20;
+  if (falseSignals.some(s => s.flag === "DEDUCTION_ILLUSION")) healthScore -= 10;
+  if (falseSignals.some(s => s.flag === "ONE_TIME_EVENT")) healthScore -= 5;
+  healthScore = Math.max(0, Math.min(100, healthScore));
+  const healthLabel = healthScore >= 80 ? "Strong" : healthScore >= 60 ? "Stable" : healthScore >= 40 ? "Moderate" : healthScore >= 20 ? "At Risk" : "Critical";
+  const healthColor = healthScore >= 80 ? "positive" : healthScore >= 60 ? "neutral" : healthScore >= 40 ? "caution" : "danger";
+
   const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal }, compare);
 
   return {
@@ -87,6 +102,9 @@ export function calculateMetrics(data, compare) {
     isLossDriven,
     falseSignals,
     primarySignal,
+    healthScore,
+    healthLabel,
+    healthColor,
     insights,
   };
 }
