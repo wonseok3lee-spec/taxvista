@@ -2336,6 +2336,22 @@ export default function TaxVista() {
                     Next &rarr;
                   </button>
                 </div>
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <button style={{ background: "none", border: "1px solid var(--border)", color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 10, padding: "6px 14px", borderRadius: 6, cursor: "pointer", letterSpacing: "0.08em" }}
+                    onClick={() => {
+                      const yrs = [2024, 2025];
+                      setWizYears(yrs);
+                      setWizForms({ 2024: "1040", 2025: "1040" });
+                      setWizData({
+                        2024: { wages: "120000", capitalGains: "20000", interest: "", dividends: "", totalIncome: "140000", adjustments: "", agi: "140000", deductions: "15000", taxableIncome: "125000", totalTax: "25000" },
+                        2025: { wages: "130000", capitalGains: "150000", interest: "", dividends: "", totalIncome: "280000", adjustments: "", agi: "280000", deductions: "15000", taxableIncome: "265000", totalTax: "90000" },
+                      });
+                      setWizActiveYear(2025);
+                      setWizStep(3);
+                    }}>
+                    Load Test Scenario (2024–2025)
+                  </button>
+                </div>
               </>
             )}
 
