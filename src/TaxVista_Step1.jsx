@@ -1909,6 +1909,12 @@ export default function TaxVista() {
     if (!vMetric) return [];
     const ins = [];
 
+    // Signal flags for the selected vertical year
+    const vFalseSignals = new Set((vMetric.falseSignals ?? []).map(s => s.flag));
+    const vHasOneTimeEvent    = vFalseSignals.has("ONE_TIME_EVENT");
+    const vHasIncomeCollapse  = vFalseSignals.has("INCOME_COLLAPSE");
+    const vHasFalseEfficiency = vFalseSignals.has("FALSE_EFFICIENCY");
+
     // Insight 1: Effective Tax Rate vs multi-year average
     const validRates = metrics.filter(m => m?.effectiveTaxRate != null);
     const avgETR = validRates.length > 1
@@ -1959,6 +1965,12 @@ export default function TaxVista() {
           { text: " — " + note },
         ]);
       }
+      // One-time event ETR note
+      if (vHasOneTimeEvent && vMetric.effectiveTaxRate > 0.25) {
+        ins.push([
+          { text: "Note: high effective tax rate this year reflects one-time capital gains taxed at elevated rates — not indicative of your typical tax burden." },
+        ]);
+      }
     }
 
     // Insight 2: Investment income share
@@ -1994,7 +2006,9 @@ export default function TaxVista() {
         ins.push([
           { text: "Investment income: " },
           { text: investStr, accent: true },
-          { text: " — strong lower-rate mix (capital gains + dividends); structural tax advantage — protect and maintain" },
+          { text: vHasOneTimeEvent
+            ? " — capital gains dominate income this year, likely reflecting a one-time liquidity event rather than a stable recurring income mix"
+            : " — strong lower-rate mix (capital gains + dividends); structural tax advantage — protect and maintain" },
         ]);
       }
     }
@@ -2016,13 +2030,16 @@ export default function TaxVista() {
           { text: " — moderate; retirement account contributions not yet maxed — additional pre-tax funding would improve this further" },
         ]);
       } else {
-        const lowIncomeCaveat = (vResult?.summary?.totalIncome ?? 0) < 50000 && de > 0.25
+        const collapseOverride = (vHasIncomeCollapse || vHasFalseEfficiency)
+          ? " — high ratio partly reflects lower income base — verify this holds as income recovers"
+          : null;
+        const lowIncomeCaveat = !collapseOverride && (vResult?.summary?.totalIncome ?? 0) < 50000 && de > 0.25
           ? " (note: this high efficiency partly reflects the lower income base — it may not persist as income scales)"
           : "";
         ins.push([
           { text: "Deduction efficiency: " },
           { text: dePct, accent: true },
-          { text: ` — strong tax base reduction; structure is working — maintain as income scales${lowIncomeCaveat}` },
+          { text: collapseOverride ?? ` — strong tax base reduction; structure is working — maintain as income scales${lowIncomeCaveat}` },
         ]);
       }
     }
