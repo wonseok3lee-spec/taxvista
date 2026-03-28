@@ -1670,7 +1670,8 @@ export default function TaxVista() {
         compare.priorETR    = computedMetrics[i - 1].effectiveTaxRate;
         compare.priorDE     = computedMetrics[i - 1].deductionEfficiency;
         compare.priorATM    = computedMetrics[i - 1].afterTaxMargin;
-        compare.priorIncome = collected[i - 1].summary?.totalIncome ?? null;
+        compare.priorIncome   = collected[i - 1].summary?.totalIncome ?? null;
+        compare.priorCapGains = collected[i - 1].income?.capitalGains ?? null;
       }
       const prev = computedMetrics.slice(0, i);
       if (prev.length > 0) {
@@ -1729,19 +1730,36 @@ export default function TaxVista() {
 
     const items = [];
 
-    // Sentence 1: income direction + magnitude (with low-base guard)
+    // Event-driven income detection
+    const lastFullResult = results.find(r => r.year === last.year);
+    const lastWages     = lastFullResult?.income?.wages ?? 0;
+    const lastCapGains  = lastFullResult?.income?.capitalGains ?? 0;
+    const lastDividends = lastFullResult?.income?.dividends ?? 0;
+    const lastInterest  = lastFullResult?.income?.interest ?? 0;
+    const lastTotalInc  = last.totalIncome || 1;
+    const eventIncome   = Math.max(lastCapGains, 0);
+    const eventRatio    = eventIncome / lastTotalInc;
+
+    // Sentence 1: income direction + magnitude (with low-base guard + event detection)
     if (incomeGrowth != null) {
       if (lowBase) {
         items.push({ text: `Income increased significantly from a low base ($${Math.round(first.totalIncome).toLocaleString()} in ${first.year}). Growth rates are not meaningful at this scale — trajectory analysis begins once income exceeds $10K.`, metric: "income" });
       } else {
         const pct   = Math.abs(incomeGrowth * 100).toFixed(0);
         const dir   = incomeGrowth >= 0 ? "↑" : "↓";
-        items.push({ text: `Gross income ${dir} ${pct}% (${first.year}→${last.year}). ${
-          incomeGrowth > 0.15 ? "This pace of growth signals meaningful career or business acceleration."
-          : incomeGrowth > 0   ? "Modest year-over-year gains — income is expanding but not rapidly."
-          : incomeGrowth < -0.05 ? "Income is contracting — review whether this reflects a structural change or a temporary adjustment."
-          : "Income is effectively flat — no significant trajectory in either direction."
-        }`, metric: "income" });
+        let growthNote;
+        if (incomeGrowth > 0.15) {
+          if (eventRatio > 0.40) growthNote = "This growth is primarily driven by non-recurring capital gains, not core earnings — it may not reflect your ongoing income trajectory.";
+          else if (eventRatio > 0.20) growthNote = "Growth reflects a mix of core earnings and investment gains — verify how much is recurring before drawing long-term conclusions.";
+          else growthNote = "This pace of growth signals meaningful career or business acceleration.";
+        } else if (incomeGrowth > 0) {
+          growthNote = "Modest year-over-year gains — income is expanding but not rapidly.";
+        } else if (incomeGrowth < -0.05) {
+          growthNote = "Income is contracting — review whether this reflects a structural change or a temporary adjustment.";
+        } else {
+          growthNote = "Income is effectively flat — no significant trajectory in either direction.";
+        }
+        items.push({ text: `Gross income ${dir} ${pct}% (${first.year}→${last.year}). ${growthNote}`, metric: "income" });
       }
     }
 
@@ -1767,10 +1785,21 @@ export default function TaxVista() {
     if (Math.abs(wagesDelta) > 0.05 || Math.abs(gainsDelta) > 0.05) {
       if (wagesDelta > 0.05 && gainsDelta < -0.05)
         items.push({ text: `Income is shifting toward W-2 wages and away from investment income. This increases exposure to ordinary tax rates and reduces access to preferential capital gains treatment.`, metric: "income" });
-      else if (wagesDelta < -0.05 && gainsDelta > 0.05)
-        items.push({ text: `Income mix is diversifying into capital gains, which are taxed at lower rates. This structural shift improves long-term tax efficiency if sustained.`, metric: "income" });
-      else if (gainsDelta > 0.05)
-        items.push({ text: `Investment income share is growing. Capital gains and qualified dividends receive preferential tax rates — this diversification will reduce effective tax burden over time.`, metric: "income" });
+      else if (wagesDelta < -0.05 && gainsDelta > 0.05) {
+        const firstFullR = results.find(r => r.year === first.year);
+        const firstCG = firstFullR?.income?.capitalGains ?? 0;
+        const isSpike = lastCapGains > firstCG * 3 && lastCapGains / lastTotalInc > 0.30;
+        items.push({ text: isSpike
+          ? `Capital gains spiked significantly this year — this likely reflects a one-time event (asset sale, exit) rather than structural income diversification. Tax impact may not repeat.`
+          : `Income mix is diversifying into capital gains, which are taxed at lower rates. This structural shift improves long-term tax efficiency if sustained.`, metric: "income" });
+      } else if (gainsDelta > 0.05) {
+        const firstFullR = results.find(r => r.year === first.year);
+        const firstCG = firstFullR?.income?.capitalGains ?? 0;
+        const isSpike = lastCapGains > firstCG * 3 && lastCapGains / lastTotalInc > 0.30;
+        items.push({ text: isSpike
+          ? `Capital gains spiked significantly — likely a one-time event rather than sustained income diversification. Verify whether this level of investment income is expected to recur.`
+          : `Investment income share is growing. Capital gains and qualified dividends receive preferential tax rates — this diversification will reduce effective tax burden over time.`, metric: "income" });
+      }
       else if (gainsDelta < -0.05) {
         const lastCapGains = results.find(r => r.year === last.year)?.income?.capitalGains;
         items.push({ text: lastCapGains != null && lastCapGains < 0

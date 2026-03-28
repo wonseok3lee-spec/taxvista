@@ -57,6 +57,11 @@ export function calculateMetrics(data, compare) {
   if (incomeYoY != null && incomeYoY > 0.05 && etrYoY != null && etrYoY < -0.01 && deductionYoY != null && deductionYoY > 0.01) {
     falseSignals.push({ flag: "TRUE_OPTIMIZATION", severity: "POSITIVE", override: "Tax efficiency improved alongside income growth — indicates effective tax structuring." });
   }
+  // RULE 6 — Capital Gain Spike (one-time event)
+  const priorCapGains = c.priorCapGains ?? null;
+  if (cg > 0 && totalIncome > 0 && cg > totalIncome * 0.35 && (priorCapGains === null || cg > priorCapGains * 3)) {
+    falseSignals.push({ flag: "ONE_TIME_EVENT", severity: "MEDIUM", override: "Income growth this year includes a significant capital gain that may be non-recurring. Core earnings growth may differ from total income growth." });
+  }
   const priorityOrder = ["CRITICAL", "HIGH", "MEDIUM", "POSITIVE"];
   falseSignals.sort((a, b) => priorityOrder.indexOf(a.severity) - priorityOrder.indexOf(b.severity));
   const primarySignal = falseSignals[0] ?? null;
