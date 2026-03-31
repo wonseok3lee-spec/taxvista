@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, ScrollView, KeyboardAvoidingView, Platform, BackHandler } from 'react-native';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { transcribeWithWhisper } from '../lib/whisper';
@@ -28,6 +28,7 @@ export default function VoiceTestScreen({ u, lang, initialPhrase, onBack }: Prop
     if (initialPhrase) return;
     AsyncStorage.getItem(PHRASE_KEY).then(val => { if (val) { setPhrase(val); setPhraseInput(val); } }).catch(() => {});
   }, []);
+  useEffect(() => { const s = BackHandler.addEventListener('hardwareBackPress', () => { onBack(); return true; }); return () => s.remove(); }, []);
   useEffect(() => { if (!isLoading) return; setLoadingText(u.transcribing); const t = setTimeout(() => setLoadingText(u.almostThere), 2000); return () => clearTimeout(t); }, [isLoading]);
 
   async function savePhrase() { try { const t = phraseInput.trim(); if (!t) return; await AsyncStorage.setItem(PHRASE_KEY, t); setPhrase(t); setPhraseSaved(true); } catch {} }
@@ -69,7 +70,7 @@ export default function VoiceTestScreen({ u, lang, initialPhrase, onBack }: Prop
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack}><Text style={styles.backText}>←</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn}><Text style={styles.backText}>{u.cancel}</Text></TouchableOpacity>
         <Text style={styles.headerTitle}>{u.tryNow.split(' →')[0]}</Text>
         <View style={{ width: 40 }} />
       </View>
@@ -102,18 +103,18 @@ export default function VoiceTestScreen({ u, lang, initialPhrase, onBack }: Prop
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0A' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 60, paddingBottom: 12 },
-  backText: { color: '#6C63FF', fontSize: 24 }, headerTitle: { color: '#fff', fontSize: 17, fontWeight: '600' },
+  backBtn: { paddingVertical: 12, paddingHorizontal: 4 }, backText: { color: '#6C63FF', fontSize: 16, fontWeight: '600' }, headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
   content: { alignItems: 'center', padding: 24, paddingTop: 12 },
-  label: { color: '#555', fontSize: 11, marginBottom: 8, alignSelf: 'flex-start', letterSpacing: 1.2 },
-  phraseInput: { backgroundColor: '#1A1A1A', color: '#fff', fontSize: 16, width: '100%', borderRadius: 12, padding: 14, marginBottom: 8 },
+  label: { color: '#888', fontSize: 11, fontWeight: '700', marginBottom: 8, alignSelf: 'flex-start', letterSpacing: 1.5 },
+  phraseInput: { backgroundColor: '#1A1A1A', color: '#FFFFFF', fontSize: 16, fontWeight: '500', width: '100%', borderRadius: 12, padding: 14, marginBottom: 8 },
   saveBtn: { backgroundColor: '#333', paddingVertical: 10, paddingHorizontal: 28, borderRadius: 50, alignSelf: 'flex-end' },
-  saveBtnText: { color: '#fff', fontSize: 14 },
+  saveBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   divider: { width: '80%', height: 1, backgroundColor: '#222', marginVertical: 24 },
-  phrase: { color: '#fff', fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 24 },
+  phrase: { color: '#FFFFFF', fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 24 },
   btn: { backgroundColor: '#6C63FF', paddingVertical: 20, paddingHorizontal: 40, borderRadius: 50 },
-  btnRec: { backgroundColor: '#EF4444' }, btnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  loadWrap: { alignItems: 'center', marginTop: 24 }, loadLabel: { color: '#888', fontSize: 14, marginTop: 8 },
+  btnRec: { backgroundColor: '#EF4444' }, btnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
+  loadWrap: { alignItems: 'center', marginTop: 24 }, loadLabel: { color: '#888', fontSize: 14, fontWeight: '500', marginTop: 8 },
   result: { marginTop: 32, alignItems: 'flex-start', width: '100%', gap: 10 },
-  rLabel: { color: '#888', fontSize: 14 }, rValue: { color: '#fff' },
+  rLabel: { color: '#AAA', fontSize: 15, fontWeight: '600' }, rValue: { color: '#fff', fontWeight: '600' },
   badge: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 24, borderRadius: 50, marginTop: 8 },
 });

@@ -5,7 +5,8 @@
       "Bash(node tests/run_synthetic_tests.js)",
       "Bash(npm run:*)",
       "Bash(vercel whoami:*)",
-      "Bash(vercel --yes)"
+      "Bash(vercel --yes)",
+      "Bash(node -e \":*)"
     ]
   }
 }
