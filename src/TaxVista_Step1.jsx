@@ -32,6 +32,36 @@ const styles = `
   input, button, select, textarea, .tv-drop-zone { cursor: pointer; }
   input, textarea { user-select: text; -webkit-user-select: text; cursor: text; }
 
+  /* ── Content selection: allow copy/paste on analysis screens ── */
+  .tv-dashboard, .tv-dashboard *,
+  .tv-strategy-bar, .tv-strategy-bar *,
+  .tv-print-report, .tv-print-report * {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    cursor: text;
+  }
+
+  /* Re-apply none + default cursor on interactive controls inside dashboard */
+  .tv-dashboard button,
+  .tv-dashboard .tv-nav-btn,
+  .tv-dashboard .tv-year-pill,
+  .tv-dashboard .tv-export-btn,
+  .tv-dashboard .tv-vpicker,
+  .tv-dashboard .tv-vpicker *,
+  .tv-strategy-bar button,
+  .tv-strategy-bar .tv-strategy-badge {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+  }
+
+  /* Charts should use default cursor (not text I-beam) on SVG/canvas areas */
+  .tv-dashboard svg, .tv-dashboard canvas,
+  .tv-dashboard .recharts-wrapper, .tv-dashboard .recharts-wrapper * {
+    cursor: default;
+  }
+
   html, body, #root {
     margin: 0 !important;
     padding: 0 !important;
@@ -1191,6 +1221,7 @@ const styles = `
 
     .tv-root > *:not(.tv-print-report) { display: none !important; }
     .tv-print-modal-overlay { display: none !important; }
+    .tv-test-scenario-badge { display: none !important; }
     body { background: white !important; margin: 0 !important; padding: 0 !important; }
 
     .tv-print-report {
@@ -1548,6 +1579,114 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// TEST SCENARIO SEED — DELETE THIS BLOCK TO REMOVE
+// Toggle TEST_SCENARIO_ENABLED to false to disable without deleting.
+// ═══════════════════════════════════════════════════════════════
+const TEST_SCENARIO_ENABLED = true;
+
+const TEST_SCENARIOS = {
+  freelance: {
+    label: "Freelance Consultant",
+    sublabel: "Income roller-coaster (self-employed, 2023–2025)",
+    emoji: "🎢",
+    years: [2023, 2024, 2025],
+    forms: { 2023: "1040", 2024: "1040", 2025: "1040" },
+    data: {
+      2023: {
+        wages: "0",
+        interest: "650",
+        dividends: "1800",
+        capitalGains: "8400",
+        otherIncome: "98000",
+        totalIncome: "108850",
+        adjustments: "9800",
+        agi: "99050",
+        deductions: "13850",
+        taxableIncome: "85200",
+        totalTax: "13680",
+      },
+      2024: {
+        wages: "0",
+        interest: "890",
+        dividends: "2100",
+        capitalGains: "-3000",
+        otherIncome: "42000",
+        totalIncome: "41990",
+        adjustments: "3200",
+        agi: "38790",
+        deductions: "14600",
+        taxableIncome: "24190",
+        totalTax: "2680",
+      },
+      2025: {
+        wages: "8500",
+        interest: "1240",
+        dividends: "3850",
+        capitalGains: "18500",
+        otherIncome: "142000",
+        totalIncome: "174090",
+        adjustments: "14200",
+        agi: "159890",
+        deductions: "15000",
+        taxableIncome: "144890",
+        totalTax: "38420",
+      },
+    },
+  },
+  tech_rsu: {
+    label: "Tech Engineer — RSU Ladder",
+    sublabel: "Job switch + RSU vest (W-2 dominant, 2023–2025)",
+    emoji: "🚀",
+    years: [2023, 2024, 2025],
+    forms: { 2023: "1040", 2024: "1040", 2025: "1040" },
+    data: {
+      2023: {
+        wages: "185000",
+        interest: "3200",
+        dividends: "4800",
+        capitalGains: "12500",
+        otherIncome: "0",
+        totalIncome: "205500",
+        adjustments: "0",
+        agi: "205500",
+        deductions: "13850",
+        taxableIncome: "191650",
+        totalTax: "39180",
+      },
+      2024: {
+        wages: "310000",
+        interest: "5800",
+        dividends: "6200",
+        capitalGains: "28000",
+        otherIncome: "0",
+        totalIncome: "350000",
+        adjustments: "0",
+        agi: "350000",
+        deductions: "14600",
+        taxableIncome: "335400",
+        totalTax: "82650",
+      },
+      2025: {
+        wages: "385000",
+        interest: "8400",
+        dividends: "9600",
+        capitalGains: "145000",
+        otherIncome: "0",
+        totalIncome: "548000",
+        adjustments: "0",
+        agi: "548000",
+        deductions: "15000",
+        taxableIncome: "533000",
+        totalTax: "138500",
+      },
+    },
+  },
+};
+// ═══════════════════════════════════════════════════════════════
+// END TEST SCENARIO SEED
+// ═══════════════════════════════════════════════════════════════
+
 export default function TaxVista() {
   // ── Wizard state ──
   const [wizStep, setWizStep] = useState(1);
@@ -1587,6 +1726,17 @@ export default function TaxVista() {
     link.setAttribute("data-taxvista-font", "1");
     document.head.appendChild(link);
   }, []);
+
+  // TEST SCENARIO SEED — delete this handler along with the constants above and the button JSX
+  const loadTestScenario = (scenarioKey) => {
+    const scenario = TEST_SCENARIOS[scenarioKey];
+    if (!scenario) return;
+    setWizYears(scenario.years);
+    setWizForms(scenario.forms);
+    setWizData(scenario.data);
+    setWizActiveYear(scenario.years[scenario.years.length - 1]);
+    setWizStep(3);
+  };
 
   // ── Wizard helpers ──
   const toggleYear = (y) => {
@@ -1751,15 +1901,15 @@ export default function TaxVista() {
         if (incomeGrowth > 0.15) {
           if (eventRatio > 0.40) growthNote = "This growth is primarily driven by non-recurring capital gains, not core earnings — it may not reflect your ongoing income trajectory.";
           else if (eventRatio > 0.20) growthNote = "Growth reflects a mix of core earnings and investment gains — verify how much is recurring before drawing long-term conclusions.";
-          else growthNote = "This pace of growth signals meaningful career or business acceleration.";
+          else growthNote = "This pace signals meaningful career or business acceleration.";
         } else if (incomeGrowth > 0) {
-          growthNote = "Modest year-over-year gains — income is expanding but not rapidly.";
+          growthNote = "Modest cumulative growth — income is expanding but not rapidly.";
         } else if (incomeGrowth < -0.05) {
           growthNote = "Income is contracting — review whether this reflects a structural change or a temporary adjustment.";
         } else {
           growthNote = "Income is effectively flat — no significant trajectory in either direction.";
         }
-        items.push({ text: `Gross income ${dir} ${pct}% (${first.year}→${last.year}). ${growthNote}`, metric: "income", type: "income_growth" });
+        items.push({ text: `Gross income ${dir} ${pct}% cumulatively from ${first.year} to ${last.year}. ${growthNote}`, metric: "income", type: "income_growth" });
       }
     }
 
@@ -1767,7 +1917,7 @@ export default function TaxVista() {
     if (taxGrowth != null && incomeGrowth != null && taxGrowth > incomeGrowth + 0.05 && !lowBase) {
       const incPct = (incomeGrowth * 100).toFixed(0);
       const taxPct = (taxGrowth * 100).toFixed(0);
-      items.push({ text: `Over ${first.year}–${last.year}, income grew ${incPct}% while taxes grew ${taxPct}%, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`, metric: "tax", type: "tax_efficiency" });
+      items.push({ text: `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`, metric: "tax", type: "tax_efficiency" });
     } else if (afterTaxGrowth != null && incomeGrowth != null && afterTaxGrowth < incomeGrowth - 0.05 && !lowBase) {
       items.push({ text: `After-tax income is growing slower than gross income, indicating rising tax drag. A portion of income growth is being absorbed by higher marginal rates without corresponding tax optimization.`, metric: "afterTax", type: "tax_efficiency" });
     } else if (lowBase && taxGrowth != null && taxGrowth > 1) {
@@ -2249,9 +2399,12 @@ export default function TaxVista() {
 
     // Deduction efficiency — low deductions flagged as opportunity (red)
     const dePct    = de != null ? (de * 100).toFixed(1) + "%" : null;
+    const deIsHighIncome = ti != null && ti > 250000;
     const deLabel  = de == null ? null
       : de > 0.2 ? `${dePct}, strong — income effectively sheltered`
       : de > 0.1 ? `${dePct}, moderate — room to increase pre-tax contributions`
+      : deIsHighIncome
+      ? `${dePct} (standard deduction is flat — pre-tax 401k/HSA/IRA are the levers at this income)`
       : `${dePct}, limited — most income taxed without offsets`;
     const deColor   = de == null ? "var(--accent)"
       : de > 0.2 ? "var(--success)" : de > 0.1 ? "var(--accent)" : "var(--danger)";
@@ -2285,16 +2438,21 @@ export default function TaxVista() {
     const atm      = m.afterTaxMargin;
 
     const bullets = [];
+    const whyIsHighIncome = ti != null && ti > 250000;
 
     // Income grew but deductions didn't keep pace (only when rate is rising)
     if (ti && tiPrior && etrDelta != null && etrDelta > 0.01) {
       const g = ((ti - tiPrior) / tiPrior * 100).toFixed(0);
-      bullets.push(`income +${g}% YoY — deductions didn't scale proportionally`);
+      bullets.push(whyIsHighIncome
+        ? `income +${g}% YoY — deductions are flat by design; 401k/HSA contributions reduce the taxable base`
+        : `income +${g}% YoY — deductions didn't scale proportionally`);
     }
 
     // Deduction efficiency: low = problem, high = strength
     if (de != null && de < 0.08) {
-      bullets.push(`deduction efficiency ${(de * 100).toFixed(1)}% — taxable income close to gross`);
+      bullets.push(whyIsHighIncome
+        ? `deduction efficiency ${(de * 100).toFixed(1)}% — expected at this income level; focus on pre-tax contribution caps, not ratios`
+        : `deduction efficiency ${(de * 100).toFixed(1)}% — taxable income close to gross`);
     } else if (de != null && de > 0.2 && bullets.length < 2) {
       bullets.push(`deduction efficiency ${(de * 100).toFixed(1)}% — strong tax base reduction`);
     }
@@ -2343,6 +2501,30 @@ export default function TaxVista() {
   return (
     <>
       <style>{styles}</style>
+
+      {TEST_SCENARIO_ENABLED && (
+        <div
+          style={{
+            position: "fixed",
+            top: "8px",
+            right: "8px",
+            zIndex: 9999,
+            background: "#FFE55C",
+            color: "#000",
+            padding: "4px 10px",
+            fontSize: "11px",
+            fontFamily: "'Courier New', monospace",
+            fontWeight: "bold",
+            letterSpacing: "0.1em",
+            borderRadius: "3px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+            pointerEvents: "none",
+          }}
+          className="tv-test-scenario-badge"
+        >
+          TEST SCENARIO
+        </div>
+      )}
 
       {/* Print instruction modal */}
       {showPrintModal && (
@@ -2508,6 +2690,43 @@ export default function TaxVista() {
             <div className="tv-privacy" style={{ marginTop: 20 }}>
               🔒 <span style={{ color: "var(--accent)", fontWeight: 600 }}>Zero data risk.</span> You type only numbers — no SSN, no names, no addresses. Nothing is stored or transmitted. Everything runs in your browser.
             </div>
+
+            {/* TEST SCENARIO SEED — delete this block to remove the buttons */}
+            {wizStep === 1 && TEST_SCENARIO_ENABLED && (
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px dashed rgba(255,255,255,0.08)", textAlign: "center" }}>
+                <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.12em", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
+                  🧪 Test Scenarios — skip manual entry
+                </div>
+                <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                  {Object.entries(TEST_SCENARIOS).map(([key, scenario]) => (
+                    <button
+                      key={key}
+                      onClick={() => loadTestScenario(key)}
+                      style={{
+                        fontFamily: "var(--mono)",
+                        background: "transparent",
+                        border: "1px dashed rgba(255,255,255,0.25)",
+                        borderRadius: 6,
+                        padding: "12px 18px",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                        textAlign: "left",
+                        minWidth: 240,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: "0.04em" }}>
+                        {scenario.emoji} {scenario.label}
+                      </div>
+                      <div style={{ marginTop: 4, fontSize: 10, color: "var(--muted)", fontFamily: "var(--sans)", letterSpacing: 0 }}>
+                        {scenario.sublabel}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {error && <div className="tv-error">{error}</div>}
           </div>
@@ -2700,7 +2919,7 @@ export default function TaxVista() {
                                 { label: "Adjusted Gross Income",  val: $v(r.summary?.adjustedGrossIncome), color: "var(--text)" },
                                 { label: "TOTAL TAX",  val: $v(r.summary?.totalTax),            color: "var(--danger)" },
                                 { label: "AFTER-TAX",  val: $v(m?.afterTaxIncome),              color: "var(--success)" },
-                                { label: "TAX RATE",   val: pf(m?.taxToIncome),                 color: "var(--accent)" },
+                                { label: "TAX / INCOME", val: pf(m?.taxToIncome),               color: "var(--accent)" },
                               ].map(row => (
                                 <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                   <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em" }}>{row.label}</span>
@@ -2851,7 +3070,7 @@ export default function TaxVista() {
                               />
                               <Tooltip
                                 content={<ChartTooltip chartRef={barChartRef} fmtVal={v => v.toFixed(1) + "%"} />}
-                                cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                                cursor={false}
                               />
                               <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "#6b7280" }} />
                               <Bar dataKey="taxRate"          fill="#b85c5c" name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
@@ -3438,9 +3657,9 @@ export default function TaxVista() {
                 </table>
                 {(incomeCagr != null || afterTaxCagr != null || taxRateDelta != null) && (
                   <div className="tv-pr-trend-row">
-                    {incomeCagr != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Income Growth Rate</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (incomeCagr >= 0 ? "+" : "") + pf(incomeCagr)}</div></div>}
-                    {afterTaxCagr != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Take-Home Growth</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (afterTaxCagr >= 0 ? "+" : "") + pf(afterTaxCagr)}</div></div>}
-                    {taxRateDelta != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Tax Rate Shift</div><div className="tv-pr-trend-value">{taxRateDelta > 0 ? "+" : ""}{(taxRateDelta * 100).toFixed(1)}pp</div></div>}
+                    {incomeCagr != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Income Growth (annualized)</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (incomeCagr >= 0 ? "+" : "") + pf(incomeCagr)}</div></div>}
+                    {afterTaxCagr != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Take-Home Growth (annualized)</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (afterTaxCagr >= 0 ? "+" : "") + pf(afterTaxCagr)}</div></div>}
+                    {taxRateDelta != null && <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Tax Rate Shift (first→last)</div><div className="tv-pr-trend-value">{taxRateDelta > 0 ? "+" : ""}{(taxRateDelta * 100).toFixed(1)}pp</div></div>}
                   </div>
                 )}
               </div>
@@ -3537,7 +3756,7 @@ export default function TaxVista() {
                 <div className="tv-pr-section-title">Strategic Assessment</div>
                 <div className="tv-pr-trend-row" style={{ marginTop: 0, marginBottom: "10pt" }}>
                   <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Financial Phase</div><div className="tv-pr-trend-value">{strategyPhase.phase}</div></div>
-                  <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Growth Rate</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (strategyPhase.cagr * 100).toFixed(1) + "%"}</div></div>
+                  <div className="tv-pr-trend-kpi"><div className="tv-pr-trend-label">Growth Rate (annualized)</div><div className="tv-pr-trend-value">{_lowBase ? "Low base*" : (strategyPhase.cagr * 100).toFixed(1) + "%"}</div></div>
                 </div>
                 {strategyPhase.characteristics && strategyPhase.characteristics.map((c, i) => <div className="tv-pr-bullet" key={i}>{c}</div>)}
                 {strategyPhase.implication && <div className="tv-pr-callout" style={{ marginTop: "8pt" }}>{strategyPhase.implication}</div>}

@@ -81,7 +81,7 @@ export function calculateMetrics(data, compare) {
   const healthLabel = healthScore >= 80 ? "Strong" : healthScore >= 60 ? "Stable" : healthScore >= 40 ? "Moderate" : healthScore >= 20 ? "At Risk" : "Critical";
   const healthColor = healthScore >= 80 ? "positive" : healthScore >= 60 ? "neutral" : healthScore >= 40 ? "caution" : "danger";
 
-  const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal }, compare);
+  const insights = generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal, incomeYoY, totalIncome }, compare);
 
   return {
     incomeBreakdown: {
@@ -109,7 +109,7 @@ export function calculateMetrics(data, compare) {
   };
 }
 
-function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal }, compare) {
+function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal, incomeYoY, totalIncome }, compare) {
   const signals = { agi: null, tax: null, deduction: null, margin: null };
 
   if (agiRatio != null) {
@@ -143,15 +143,23 @@ function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, aft
     if (signals.margin?.level === "high")   signals.margin    = { label: "\u26A0 Contraction",   level: "low" };
   }
 
-  const summary = buildSummary({ ...signals, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal }, compare);
+  // Contraction-driven deduction rise: override deduction tag when income shrank
+  // (runs after CRITICAL/HIGH override so Income-driven / Loss-driven tags take priority)
+  if (incomeYoY != null && incomeYoY < -0.05 && signals.deduction && signals.deduction.level !== "low") {
+    signals.deduction = { label: "\u26A0 Contraction-driven", level: "low" };
+  }
+
+  const summary = buildSummary({ ...signals, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal, incomeYoY, totalIncome }, compare);
 
   return { signals, summary };
 }
 
 // compare: optional { priorETR, avgETR, priorDE, avgDE, priorATM } for cross-year context
-function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal }, compare) {
+function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deductionEfficiency, afterTaxMargin, hasCapitalLoss, isLossDriven, primarySignal, incomeYoY, totalIncome }, compare) {
   const items = [];
   const c = compare || {};
+  const isContracting = incomeYoY != null && incomeYoY < -0.05;
+  const isHighIncome  = totalIncome != null && totalIncome > 250000;
 
   // False signal override — must appear first when severity is CRITICAL or HIGH
   if (primarySignal && (primarySignal.severity === "CRITICAL" || primarySignal.severity === "HIGH")) {
@@ -207,11 +215,22 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
       compText = ` (vs ${avgPct}% multi-year average)`;
     }
     if (deduction?.level === "low") {
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — only ${dePct}% of total income offset by deductions, leaving ${(100 - Number(dePct)).toFixed(1)}% fully taxable`, metric: "deduction" });
+      const lowAction = isHighIncome
+        ? `Standard Deduction is a fixed IRS amount — at this income level it naturally covers only ${dePct}% of gross. Lowering taxable income requires above-the-line moves: 401k, HSA, IRA, Mega Backdoor Roth`
+        : `only ${dePct}% of total income offset by deductions, leaving ${(100 - Number(dePct)).toFixed(1)}% fully taxable`;
+      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${lowAction}`, metric: "deduction" });
     } else if (deduction?.level === "high") {
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${dePct}% of total income sheltered from taxation through deductions and pre-tax contributions`, metric: "deduction" });
+      const highAction = isContracting
+        ? `${dePct}% reflects income contraction outpacing flat deductions, not active sheltering`
+        : `${dePct}% of total income sheltered from taxation through deductions and pre-tax contributions`;
+      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${highAction}`, metric: "deduction" });
     } else {
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — moderate sheltering; increasing pre-tax contributions would raise this ratio`, metric: "deduction" });
+      const midAction = isContracting
+        ? "moderate sheltering; hold current contribution pace — income contraction makes liquidity the higher priority"
+        : isHighIncome
+        ? "moderate sheltering — at this income level, Mega Backdoor Roth and Deferred Compensation often outrank simple 401k increases for marginal tax reduction"
+        : "moderate sheltering; increasing pre-tax contributions would raise this ratio";
+      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${midAction}`, metric: "deduction" });
     }
   }
 
@@ -219,16 +238,32 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
   if (deduction?.level === "low" && deductionEfficiency != null && afterTaxMargin != null) {
     const dePct = (deductionEfficiency * 100).toFixed(1);
     const atmPct = (afterTaxMargin * 100).toFixed(1);
-    const deAction = deductionEfficiency < 0.06
-      ? "401k / IRA contributions have near-zero competition for tax reduction — this is the highest-leverage action"
-      : deductionEfficiency <= 0.10
-      ? "pre-tax contributions are the primary lever — 401k and IRA reduce taxable income dollar-for-dollar"
-      : "deductions are active — continue scaling pre-tax contributions as income grows";
+    let deAction;
+    if (isContracting) {
+      deAction = "deduction efficiency rose mechanically due to income contraction, not optimization — prioritize liquidity; avoid increasing pre-tax contributions until income recovers";
+    } else if (isHighIncome && deductionEfficiency < 0.06) {
+      deAction = "At this income level, Standard Deduction alone won't move the needle. Highest-leverage moves: max 401k ($23,500 in 2025), HSA if eligible ($4,300 single), and Backdoor Roth IRA. Above ~$350K total income, also consider Mega Backdoor Roth and Deferred Compensation if available through employer.";
+    } else if (isHighIncome && deductionEfficiency <= 0.10) {
+      deAction = "Pre-tax contributions reduce taxable income dollar-for-dollar. At this income level, prioritize: 401k max, HSA (if eligible), Backdoor Roth, then Mega Backdoor Roth if plan allows after-tax contributions.";
+    } else if (deductionEfficiency < 0.06) {
+      deAction = "401k / IRA contributions have near-zero competition for tax reduction — this is the highest-leverage action";
+    } else if (deductionEfficiency <= 0.10) {
+      deAction = "pre-tax contributions are the primary lever — 401k and IRA reduce taxable income dollar-for-dollar";
+    } else if (incomeYoY != null && incomeYoY <= 0.05) {
+      deAction = "deductions are active — maintain current pre-tax contribution pace";
+    } else {
+      deAction = "deductions are active — continue scaling pre-tax contributions as income grows";
+    }
     items.push({ text: `At ${dePct}% deduction efficiency vs ${atmPct}% after-tax retention — ${deAction}`, metric: "deduction" });
   } else if (effectiveTaxRate != null && afterTaxMargin != null) {
     const etrPct = (effectiveTaxRate * 100).toFixed(1);
     const atmPct = (afterTaxMargin * 100).toFixed(1);
-    items.push({ text: `${etrPct}% effective rate vs ${atmPct}% retention — ${afterTaxMargin > 0.85 ? "protect this margin by routing growth through tax-advantaged accounts" : "withholding review + deduction audit to improve retention ratio"}`, metric: "deduction" });
+    const marginAction = afterTaxMargin > 0.85
+      ? (isContracting
+        ? "high retention this year reflects reduced income rather than optimization — preserve liquidity until income recovers"
+        : "protect this margin by routing growth through tax-advantaged accounts")
+      : "withholding review + deduction audit to improve retention ratio";
+    items.push({ text: `${etrPct}% effective rate vs ${atmPct}% retention — ${marginAction}`, metric: "deduction" });
   }
 
   return items.length ? items : null;
