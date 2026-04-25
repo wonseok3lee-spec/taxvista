@@ -135,6 +135,8 @@ const styles = `
     margin: 0;
   }
   .tv-header h1 span { color: var(--accent); }
+  .tv-header h1 .tv-h1-line { display: block; color: var(--text); }
+  .tv-header h1 .tv-h1-accent { display: block; color: var(--accent); }
   .tv-subtitle {
     margin-top: 14px;
     color: var(--muted);
@@ -2566,8 +2568,8 @@ export default function TaxToBook() {
         <div className="tv-header">
           <div className="tv-logo"><span className="tv-logo-name">TAX<span className="tv-logo-mid">to</span>BOOK</span></div>
           <h1>
-            Your Tax Return is Your<br />
-            <span>Financial Story.</span>
+            <span className="tv-h1-line">Your Tax Return is</span>
+            <span className="tv-h1-accent">Your Financial Story.</span>
           </h1>
           <p className="tv-subtitle">
             Enter your 1040 numbers — no uploads, no SSN, numbers only.
