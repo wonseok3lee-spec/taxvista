@@ -806,18 +806,22 @@ const styles = `
   }
   /* ── Dashboard body (sidebar + canvas) ── */
   .tv-dashboard-body {
-    display: flex;
-    flex: 1;
-    min-height: 620px;
+    position: relative;
+    padding-left: 220px;
+    min-height: 560px;
   }
   .tv-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
     width: 220px;
-    flex-shrink: 0;
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     padding: 28px 0;
     gap: 0;
+    overflow-y: auto;
   }
   .tv-sidebar-section {
     padding: 0 20px 20px;
@@ -889,9 +893,7 @@ const styles = `
   .tv-nav-btn.active { color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
   .tv-nav-icon { font-size: 14px; }
   .tv-canvas {
-    flex: 1;
     padding: 32px 36px;
-    overflow-y: auto;
     min-width: 0;
     display: flex;
     flex-direction: column;
