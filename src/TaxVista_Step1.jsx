@@ -155,7 +155,7 @@ const styles = `
   .tv-header { text-align: center; margin-bottom: 56px; }
   .tv-logo {
     font-family: 'Georgia', serif;
-    font-size: 28px;
+    font-size: 34px;
     font-weight: 700;
     letter-spacing: 0.25em;
     color: var(--accent);
@@ -186,7 +186,7 @@ const styles = `
   }
   .tv-header h1 {
     font-family: var(--mono);
-    font-size: clamp(32px, 5.4vw, 48px);
+    font-size: clamp(38px, 6vw, 56px);
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text);
@@ -199,7 +199,7 @@ const styles = `
   .tv-subtitle {
     margin-top: 14px;
     color: var(--muted);
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 300;
     letter-spacing: 0.01em;
     line-height: 1.6;
@@ -763,7 +763,7 @@ const styles = `
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 1320px;
+    max-width: 1480px;
     margin-top: 40px;
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -920,15 +920,16 @@ const styles = `
   .tv-metric-card {
     background: var(--bg);
     border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
     border-radius: 10px;
-    padding: 18px 16px;
+    padding: 18px 16px 18px 12px;
     display: flex;
     flex-direction: column;
     gap: 5px;
   }
   .tv-metric-label {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.07em;
     text-transform: uppercase;
@@ -936,7 +937,7 @@ const styles = `
   }
   .tv-metric-value {
     font-family: var(--mono);
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 700;
     color: var(--accent);
     line-height: 1;
@@ -1026,19 +1027,19 @@ const styles = `
   }
   .tv-iblock-title {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgba(var(--white-rgb),0.82);
     margin-bottom: 16px;
-    padding-left: 10px;
-    border-left: 2px solid var(--accent);
+    padding-left: 12px;
+    border-left: 4px solid var(--accent);
   }
   .tv-iblock p {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--text);
-    line-height: 1.75;
+    line-height: 1.7;
     margin: 0 0 8px;
     transition: opacity 0.15s, color 0.15s;
     cursor: default;
@@ -3109,7 +3110,7 @@ export default function TaxToBook() {
                           <div className="tv-metric-card" key={r.year}>
                             <div className="tv-metric-label">{r.year}</div>
                             <div className="tv-metric-value">{$v(r.summary?.totalIncome)}</div>
-                            <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: "0.1em", marginTop: 2 }}>TOTAL INCOME</div>
+                            <div style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: "0.1em", marginTop: 2 }}>TOTAL INCOME</div>
                             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                               {[
                                 { label: "Adjusted Gross Income",  val: $v(r.summary?.adjustedGrossIncome), color: "var(--text)" },
@@ -3118,14 +3119,14 @@ export default function TaxToBook() {
                                 { label: "TAX / INCOME", val: pf(m?.taxToIncome),               color: "var(--accent)" },
                               ].map(row => (
                                 <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                  <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em" }}>{row.label}</span>
-                                  <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, color: row.color }}>{row.val}</span>
+                                  <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.12em" }}>{row.label}</span>
+                                  <span style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 700, color: row.color }}>{row.val}</span>
                                 </div>
                               ))}
                               {m?.healthScore != null && (
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, paddingTop: 4, borderTop: "1px solid var(--border)" }}>
-                                  <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.12em" }}>HEALTH</span>
-                                  <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, color: healthColorMap[m.healthColor] ?? "var(--text)" }}>{m.healthScore} — {m.healthLabel}</span>
+                                  <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.12em" }}>HEALTH</span>
+                                  <span style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 700, color: healthColorMap[m.healthColor] ?? "var(--text)" }}>{m.healthScore} — {m.healthLabel}</span>
                                 </div>
                               )}
                             </div>
