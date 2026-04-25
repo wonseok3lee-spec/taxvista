@@ -119,6 +119,7 @@ const styles = `
     font-weight: 400;
     opacity: 0.85;
     letter-spacing: 0.05em;
+    margin: 0 0.2em;
   }
   .tv-header h1 {
     font-family: var(--mono);
@@ -1254,6 +1255,7 @@ const styles = `
       font-weight: 400;
       opacity: 0.85;
       letter-spacing: 0.04em;
+      margin: 0 0.15em;
     }
     .tv-pr-title {
       font-size: 21pt; font-weight: 700; font-family: Georgia, serif;
@@ -2560,7 +2562,7 @@ export default function TaxToBook() {
         <div className="tv-header">
           <div className="tv-logo"><span className="tv-logo-name">TAX<span className="tv-logo-mid">to</span>BOOK</span></div>
           <h1>
-            Your Tax Return is a<br />
+            Your Tax Return is Your<br />
             <span>Financial Story.</span>
           </h1>
           <p className="tv-subtitle">
