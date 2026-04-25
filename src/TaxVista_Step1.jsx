@@ -3214,7 +3214,7 @@ export default function TaxToBook() {
                     <>
                       {/* After-Tax Income Trend (area) */}
                       <div className="tv-chart-block">
-                        <div className="tv-chart-label"><Tip tip="How much you kept after taxes — year over year.">After-Tax Income Trend</Tip></div>
+                        <div className="tv-chart-label"><Tip tip="How much you kept after taxes — year over year">After-Tax Income Trend</Tip></div>
                         <div ref={areaChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
@@ -3247,7 +3247,7 @@ export default function TaxToBook() {
                       {/* KPI callout row */}
                       <div className="tv-metric-grid" style={{ marginBottom: 28 }}>
                         <div className="tv-metric-card">
-                          <div className="tv-metric-label"><Tip tip={_lowBase ? "Growth rate suppressed — base year income below $10K distorts percentages." : "Your average annual income growth rate."}>Income Growth Rate</Tip></div>
+                          <div className="tv-metric-label"><Tip tip={_lowBase ? "How a base year below $10K can distort growth percentages — rate suppressed for accuracy" : "How your income changes over time from your first to latest year — (Last ÷ First)^(1/(n−1)) − 1"}>Income Growth Rate</Tip></div>
                           <div className="tv-metric-value" style={{ fontSize: 20, color: _lowBase ? "var(--muted)" : incomeCagr != null && incomeCagr >= 0 ? "var(--success)" : "var(--danger)" }}>
                             {_lowBase ? "Low base" : incomeCagr != null ? (incomeCagr >= 0 ? "+" : "") + pf(incomeCagr) : "—"}
                           </div>
@@ -3267,7 +3267,7 @@ export default function TaxToBook() {
                           })()}
                         </div>
                         <div className="tv-metric-card">
-                          <div className="tv-metric-label"><Tip tip={_lowBase ? "Growth rate suppressed — base year income below $10K distorts percentages." : "Your average annual growth rate for take-home income after taxes."}>Take-Home Growth Rate</Tip></div>
+                          <div className="tv-metric-label"><Tip tip={_lowBase ? "How a base year below $10K can distort growth percentages — rate suppressed for accuracy" : "How your after-tax income changes over time from your first to latest year — (Last ÷ First)^(1/(n−1)) − 1"}>Take-Home Growth Rate</Tip></div>
                           <div className="tv-metric-value" style={{ fontSize: 20, color: _lowBase ? "var(--muted)" : afterTaxCagr != null && afterTaxCagr >= 0 ? "var(--success)" : "var(--danger)" }}>
                             {_lowBase ? "Low base" : afterTaxCagr != null ? (afterTaxCagr >= 0 ? "+" : "") + pf(afterTaxCagr) : "—"}
                           </div>
@@ -3276,7 +3276,7 @@ export default function TaxToBook() {
                           </div>
                         </div>
                         <div className="tv-metric-card">
-                          <div className="tv-metric-label"><Tip tip="Change in effective tax rate (tax ÷ taxable income) from first to most recent year.">Effective Tax Rate Change</Tip></div>
+                          <div className="tv-metric-label"><Tip tip="How your effective tax rate shifted from your first to most recent year — change in (Total Tax ÷ Taxable Income)">Effective Tax Rate Change</Tip></div>
                           <div className="tv-metric-value" style={{ fontSize: 20, color: taxRateDelta == null ? "var(--muted)" : taxRateDelta > 0 ? "var(--danger)" : "var(--success)" }}>
                             {taxRateDelta != null ? (taxRateDelta > 0 ? "+" : "") + (taxRateDelta * 100).toFixed(1) + " percentage points" : "—"}
                           </div>
@@ -3286,7 +3286,7 @@ export default function TaxToBook() {
 
                       {/* Gross Income vs Take-Home Income (line) */}
                       <div className="tv-chart-block">
-                        <div className="tv-chart-label"><Tip tip="What you earned vs what you kept after taxes.">Gross Income vs Take-Home Income</Tip></div>
+                        <div className="tv-chart-label"><Tip tip="How earnings compare to what you kept after taxes">Gross Income vs Take-Home Income</Tip></div>
                         <div ref={lineChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={200}>
                             <LineChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
@@ -3315,7 +3315,7 @@ export default function TaxToBook() {
 
                       {/* Tax Burden Comparison (bar) */}
                       <div className="tv-chart-block">
-                        <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year.">Tax Burden Comparison</Tip></div>
+                        <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year">Tax Burden Comparison</Tip></div>
                         <div ref={barChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={180}>
                             <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onBarMove} onMouseLeave={onBarLeave}>
@@ -3348,8 +3348,8 @@ export default function TaxToBook() {
                             </BarChart>
                           </ResponsiveContainer>
                           <div style={{ display: "flex", gap: 16, fontFamily: "var(--mono)", fontSize: 14, color: "var(--muted)", marginTop: 8, justifyContent: "center" }}>
-                            <Tip tip="Total tax ÷ taxable income. Your true tax rate on income subject to tax.">Effective Tax Rate (taxable income) ?</Tip>
-                            <Tip tip="Total tax ÷ total income (before deductions). Always lower than Effective Tax Rate.">Tax / Income (total income) ?</Tip>
+                            <Tip tip="How your true tax rate is calculated — Total Tax ÷ Taxable Income">Effective Tax Rate (taxable income) ?</Tip>
+                            <Tip tip="How much of your total income went to taxes — Total Tax ÷ Total Income (before deductions)">Tax / Income (total income) ?</Tip>
                           </div>
                         </div>
                       </div>
@@ -3386,7 +3386,7 @@ export default function TaxToBook() {
                         {/* Income Composition Donut */}
                         <div>
                           <div className="tv-chart-block" style={{ marginBottom: 0 }}>
-                            <div className="tv-chart-label"><Tip tip="Where your income comes from — wages, investments, dividends, and other sources.">Where Income Comes From</Tip></div>
+                            <div className="tv-chart-label"><Tip tip="How your income breaks down by source — wages, investments, dividends, and other">Where Income Comes From</Tip></div>
                             <div className="tv-chart-box" style={{ padding: "16px 8px 8px" }}>
                               {vPieData.length > 0 ? (
                                 <>
@@ -3438,21 +3438,21 @@ export default function TaxToBook() {
                         {/* P&L Ratios table */}
                         <div>
                           <div className="tv-chart-block" style={{ marginBottom: 0 }}>
-                            <div className="tv-chart-label"><Tip tip="How your income shrinks from what you earn to what gets taxed to what you keep.">Income & Tax Summary</Tip></div>
+                            <div className="tv-chart-label"><Tip tip="How your income flows from what you earn to what gets taxed to what you keep">Income & Tax Summary</Tip></div>
                             <div className="tv-chart-box" style={{ padding: 0 }}>
                               <table className="tv-ratio-table" style={{ width: "100%" }}>
                                 <tbody>
                                   {[
                                     { label: "Total Income",         val: $v(vResult.summary?.totalIncome),           accent: false, tip: null },
-                                    { label: "Adjusted Gross Income", val: $v(vResult.summary?.adjustedGrossIncome),   accent: false, tip: "Income after pre-tax deductions like IRA contributions and student loan interest." },
-                                    { label: "Taxable Income",       val: $v(vResult.summary?.taxableIncome),         accent: false, tip: "The portion of your income that is actually taxed." },
+                                    { label: "Adjusted Gross Income", val: $v(vResult.summary?.adjustedGrossIncome),   accent: false, tip: "How your gross income is reduced by pre-tax adjustments — Total Income − Adjustments" },
+                                    { label: "Taxable Income",       val: $v(vResult.summary?.taxableIncome),         accent: false, tip: "How much of your income is actually subject to tax — AGI − Deductions" },
                                     { label: "Total Tax",            val: $v(vResult.summary?.totalTax),              accent: false, tip: null },
-                                    { label: "After-Tax Income",     val: $v(vMetric.afterTaxIncome),                 accent: true,  tip: "What you kept after all taxes were paid." },
-                                    { label: "Adjusted Gross / Total", val: pf(vMetric.agiRatio),                     accent: false, tip: "How much of your income remains after pre-tax adjustments. Lower means more was reduced upfront." },
-                                    { label: "Taxable / Adjusted Gross", val: pf(vMetric.taxableRatio),               accent: false, tip: "How much of your adjusted income ends up being taxed. Lower is better." },
-                                    { label: "Effective Tax Rate",   val: pf(vMetric.effectiveTaxRate),               accent: false, tip: "The percentage of your taxable income that goes to taxes." },
-                                    { label: "After-Tax Margin",     val: pf(vMetric.afterTaxMargin),                 accent: true,  tip: "The percentage of your total income that you actually keep." },
-                                    { label: "Deduction Efficiency", val: pf(vMetric.deductionEfficiency),            accent: false, tip: "How much your deductions reduce your taxable income." },
+                                    { label: "After-Tax Income",     val: $v(vMetric.afterTaxIncome),                 accent: true,  tip: "How much you kept after all taxes were paid — Total Income − Total Tax" },
+                                    { label: "Adjusted Gross / Total", val: pf(vMetric.agiRatio),                     accent: false, tip: "How much of your income remains after pre-tax adjustments — AGI ÷ Total Income" },
+                                    { label: "Taxable / Adjusted Gross", val: pf(vMetric.taxableRatio),               accent: false, tip: "How much of your adjusted income ends up being taxed — Taxable Income ÷ AGI" },
+                                    { label: "Effective Tax Rate",   val: pf(vMetric.effectiveTaxRate),               accent: false, tip: "How your true tax rate is calculated — Total Tax ÷ Taxable Income" },
+                                    { label: "After-Tax Margin",     val: pf(vMetric.afterTaxMargin),                 accent: true,  tip: "How much of your total income you actually keep — (Total Income − Total Tax) ÷ Total Income" },
+                                    { label: "Deduction Efficiency", val: pf(vMetric.deductionEfficiency),            accent: false, tip: "How much your deductions reduce your gross income — (AGI − Taxable Income) ÷ Total Income" },
                                   ].map(row => (
                                     <tr key={row.label}>
                                       <td>{row.tip ? <Tip tip={row.tip}>{row.label}</Tip> : row.label}</td>
