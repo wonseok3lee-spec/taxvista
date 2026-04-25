@@ -2546,7 +2546,7 @@ export default function TaxVista() {
 
         {/* ── Header ── */}
         <div className="tv-header">
-          <div className="tv-logo">TaxVista</div>
+          <div className="tv-logo">TaxToBook</div>
           <h1>
             Your Tax Return is a<br />
             <span>Financial Story.</span>
