@@ -1169,7 +1169,7 @@ const styles = `
     color: var(--accent); margin-bottom: 6px;
   }
   .tv-wiz-step-sub {
-    font-size: 15px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;
+    font-size: 17px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;
   }
   .tv-wiz-year-grid {
     display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;
@@ -1266,8 +1266,8 @@ const styles = `
     display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px;
   }
   .tv-wiz-year-tab {
-    font-family: var(--mono); font-size: 12px; font-weight: 700;
-    padding: 10px 20px; border: none; background: none;
+    font-family: var(--mono); font-size: 16px; font-weight: 700;
+    padding: 12px 22px; border: none; background: none;
     color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
     transition: all 0.15s;
   }
@@ -1866,6 +1866,7 @@ export default function TaxToBook() {
   const [selectedYears, setSelectedYears] = useState([]);
   const [verticalYear, setVerticalYear] = useState(null);
   const [activeYear, setActiveYear] = useState(null);
+  const [barHoverYear, setBarHoverYear] = useState(null);
   const [activeMetric, setActiveMetric] = useState(null);
   const [reportName, setReportName] = useState("");
   const [theme, setTheme] = useState(() =>
@@ -1880,6 +1881,8 @@ export default function TaxToBook() {
 
   const onChartMove  = (e) => { if (e?.activeLabel) setActiveYear(Number(e.activeLabel)); };
   const onChartLeave = ()  => setActiveYear(null);
+  const onBarMove    = (e) => { if (e?.activeLabel) { const y = Number(e.activeLabel); setActiveYear(y); setBarHoverYear(y); } };
+  const onBarLeave   = ()  => { setActiveYear(null); setBarHoverYear(null); };
 
   const metricOpacity = (metric) => activeMetric == null ? 1 : activeMetric === metric ? 1 : 0.4;
   const metricStroke  = (metric, base) => activeMetric === metric ? base + 1 : base;
@@ -2768,23 +2771,27 @@ export default function TaxToBook() {
         {/* ── Header ── */}
         <div className="tv-header">
           <div className="tv-logo"><span className="tv-logo-name">TAX<span className="tv-logo-mid">to</span>BOOK</span></div>
-          <h1>
-            <span className="tv-h1-line">Your Tax Return is</span>
-            <span className="tv-h1-accent">Your Financial Story.</span>
-          </h1>
-          <p className="tv-subtitle">
-            Enter your 1040 numbers — no uploads, no SSN, numbers only.
-            <br />
-            In under 5 minutes, get a bird's-eye view of your financial story.
-          </p>
-          <p style={{
-            fontFamily: "var(--mono)", fontWeight: 700, fontSize: 15,
-            color: "var(--accent)", marginTop: 10, letterSpacing: "0.02em",
-            textShadow: "0 0 18px rgba(var(--accent-rgb),0.35)",
-            textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(var(--accent-rgb),0.35)",
-          }}>
-            Download your Financial Story Report.
-          </p>
+          {results.length === 0 && (
+            <>
+              <h1>
+                <span className="tv-h1-line">Your Tax Return is</span>
+                <span className="tv-h1-accent">Your Financial Story.</span>
+              </h1>
+              <p className="tv-subtitle">
+                Enter your 1040 numbers — no uploads, no SSN, numbers only.
+                <br />
+                In under 5 minutes, get a bird's-eye view of your financial story.
+              </p>
+              <p style={{
+                fontFamily: "var(--mono)", fontWeight: 700, fontSize: 15,
+                color: "var(--accent)", marginTop: 10, letterSpacing: "0.02em",
+                textShadow: "0 0 18px rgba(var(--accent-rgb),0.35)",
+                textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(var(--accent-rgb),0.35)",
+              }}>
+                Download your Financial Story Report.
+              </p>
+            </>
+          )}
         </div>
 
         {/* ── Data Entry Wizard ── */}
@@ -2864,7 +2871,7 @@ export default function TaxToBook() {
                     {[...wizYears].sort((a, b) => b - a).map(yr => (
                       <button key={yr} className={`tv-wiz-year-tab${yr === y ? " active" : ""}`}
                         onClick={() => setWizActiveYear(yr)}>
-                        {yr} <span style={{ fontSize: 9, color: "var(--muted)", marginLeft: 4 }}>{wizForms[yr] ?? "1040"}</span>
+                        {yr} <span style={{ fontSize: 13, color: "var(--muted)", marginLeft: 4 }}>{wizForms[yr] ?? "1040"}</span>
                       </button>
                     ))}
                   </div>
@@ -2917,7 +2924,7 @@ export default function TaxToBook() {
             {/* TEST SCENARIO SEED — delete this block to remove the buttons */}
             {wizStep === 1 && TEST_SCENARIO_ENABLED && (
               <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px dashed rgba(var(--white-rgb),0.08)", textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.12em", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.12em", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
                   🧪 Test Scenarios — skip manual entry
                 </div>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -2939,10 +2946,10 @@ export default function TaxToBook() {
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(var(--white-rgb),0.4)"; e.currentTarget.style.background = "rgba(var(--white-rgb),0.02)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(var(--white-rgb),0.25)"; e.currentTarget.style.background = "transparent"; }}
                     >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(var(--white-rgb),0.85)", letterSpacing: "0.04em" }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(var(--white-rgb),0.85)", letterSpacing: "0.04em" }}>
                         {scenario.emoji} {scenario.label}
                       </div>
-                      <div style={{ marginTop: 4, fontSize: 10, color: "var(--muted)", fontFamily: "var(--sans)", letterSpacing: 0 }}>
+                      <div style={{ marginTop: 4, fontSize: 13, color: "var(--muted)", fontFamily: "var(--sans)", letterSpacing: 0 }}>
                         {scenario.sublabel}
                       </div>
                     </button>
@@ -3033,7 +3040,7 @@ export default function TaxToBook() {
                     <div key={"why-" + resolvedActiveYear} className="tv-year-insight"
                       style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       {whyBullets.map((b, i) => (
-                        <span key={i} style={{ fontSize: 11, color: "rgba(var(--white-rgb),0.48)", lineHeight: 1.55 }}>
+                        <span key={i} style={{ fontSize: 14, color: "rgba(var(--white-rgb),0.48)", lineHeight: 1.55 }}>
                           <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 10, marginRight: 5 }}>→</span>
                           {b}
                         </span>
@@ -3111,7 +3118,7 @@ export default function TaxToBook() {
 
               {/* Export */}
               <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, marginBottom: 4 }}>
-                <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--muted)", letterSpacing: "0.02em" }}>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: "0.02em" }}>
                   Tip: In print dialog → Headers and Footers → set to None
                 </span>
                 <button className="tv-export-btn" onClick={handleExport}>
@@ -3124,12 +3131,12 @@ export default function TaxToBook() {
                 <>
                   <div className="tv-canvas-title">
                     Overview
-                    <span style={{ color: "var(--muted)", fontSize: 10 }}>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>
                       {filteredResults.length} year{filteredResults.length !== 1 ? "s" : ""} selected
                     </span>
                   </div>
                   {filteredResults.length === 0 ? (
-                    <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, padding: 32, textAlign: "center" }}>
+                    <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 16, padding: 32, textAlign: "center" }}>
                       Select at least one year from the sidebar.
                     </div>
                   ) : (
@@ -3173,10 +3180,10 @@ export default function TaxToBook() {
                 <>
                   <div className="tv-canvas-title">
                     Horizontal Analysis
-                    <span style={{ color: "var(--muted)", fontSize: 10 }}>multi-year comparison</span>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>multi-year comparison</span>
                   </div>
                   {filteredResults.length < 2 ? (
-                    <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, padding: 32, textAlign: "center" }}>
+                    <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 16, padding: 32, textAlign: "center" }}>
                       Select 2 or more years from the sidebar to enable horizontal analysis.
                     </div>
                   ) : (
@@ -3220,7 +3227,7 @@ export default function TaxToBook() {
                           <div className="tv-metric-value" style={{ fontSize: 20, color: _lowBase ? "var(--muted)" : incomeCagr != null && incomeCagr >= 0 ? "var(--success)" : "var(--danger)" }}>
                             {_lowBase ? "Low base" : incomeCagr != null ? (incomeCagr >= 0 ? "+" : "") + pf(incomeCagr) : "—"}
                           </div>
-                          <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>
+                          <div style={{ fontSize: 13, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>
                             {trendData[0]?.year} → {trendData[trendData.length - 1]?.year}
                           </div>
                           {(() => {
@@ -3228,7 +3235,7 @@ export default function TaxToBook() {
                             const peakTd = trendData.reduce((a, b) => (b.totalIncome ?? 0) > (a.totalIncome ?? 0) ? b : a);
                             const lastTd = trendData[trendData.length - 1];
                             if (peakTd.year !== lastTd.year && (peakTd.totalIncome ?? 0) > (lastTd.totalIncome ?? 0) * 1.15) {
-                              return <div style={{ fontSize: 9, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 3, lineHeight: 1.4 }}>
+                              return <div style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 3, lineHeight: 1.4 }}>
                                 Growth concentrated early, peak in {peakTd.year} then pullback.
                               </div>;
                             }
@@ -3240,7 +3247,7 @@ export default function TaxToBook() {
                           <div className="tv-metric-value" style={{ fontSize: 20, color: _lowBase ? "var(--muted)" : afterTaxCagr != null && afterTaxCagr >= 0 ? "var(--success)" : "var(--danger)" }}>
                             {_lowBase ? "Low base" : afterTaxCagr != null ? (afterTaxCagr >= 0 ? "+" : "") + pf(afterTaxCagr) : "—"}
                           </div>
-                          <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>
+                          <div style={{ fontSize: 13, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>
                             {trendData[0]?.year} → {trendData[trendData.length - 1]?.year}
                           </div>
                         </div>
@@ -3249,7 +3256,7 @@ export default function TaxToBook() {
                           <div className="tv-metric-value" style={{ fontSize: 20, color: taxRateDelta == null ? "var(--muted)" : taxRateDelta > 0 ? "var(--danger)" : "var(--success)" }}>
                             {taxRateDelta != null ? (taxRateDelta > 0 ? "+" : "") + (taxRateDelta * 100).toFixed(1) + " percentage points" : "—"}
                           </div>
-                          <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>first vs last year</div>
+                          <div style={{ fontSize: 13, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 4 }}>first vs last year</div>
                         </div>
                       </div>
 
@@ -3287,7 +3294,7 @@ export default function TaxToBook() {
                         <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year.">Tax Burden Comparison</Tip></div>
                         <div ref={barChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={180}>
-                            <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
+                            <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onBarMove} onMouseLeave={onBarLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
@@ -3303,14 +3310,14 @@ export default function TaxToBook() {
                               <Bar dataKey="taxRate"          fill={cssVar("--chart-tax-ratio")} name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
                                   <Cell key={entry.year} fill={cssVar("--chart-tax-ratio")} fillOpacity={
-                                    (activeYear && entry.year !== String(activeYear) ? 0.3 : 1) * metricOpacity("tax")
+                                    (barHoverYear && entry.year !== String(barHoverYear) ? 0.3 : 1) * metricOpacity("tax")
                                   } />
                                 ))}
                               </Bar>
                               <Bar dataKey="effectiveTaxRate" fill={cssVar("--chart-effective-rate")} name="Effective Tax Rate (taxable income)" radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
                                   <Cell key={entry.year} fill={cssVar("--chart-effective-rate")} fillOpacity={
-                                    (activeYear && entry.year !== String(activeYear) ? 0.3 : 1) * metricOpacity("etr")
+                                    (barHoverYear && entry.year !== String(barHoverYear) ? 0.3 : 1) * metricOpacity("etr")
                                   } />
                                 ))}
                               </Bar>
@@ -3346,7 +3353,7 @@ export default function TaxToBook() {
                 <>
                   <div className="tv-canvas-title">
                     Vertical Analysis — {verticalYear ?? "—"}
-                    <span style={{ color: "var(--muted)", fontSize: 10 }}>personal P&amp;L structure</span>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>personal P&amp;L structure</span>
                   </div>
                   {vResult && vMetric ? (
                     <>
@@ -3390,13 +3397,13 @@ export default function TaxToBook() {
                                     ))}
                                   </div>
                                   {vCapLoss != null && (
-                                    <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--danger)", textAlign: "center", marginTop: 6, opacity: 0.8 }}>
+                                    <div style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--danger)", textAlign: "center", marginTop: 6, opacity: 0.8 }}>
                                       Capital losses of ${vCapLoss.toLocaleString()} offset total income this year and are not shown in composition above.
                                     </div>
                                   )}
                                 </>
                               ) : (
-                                <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 11, textAlign: "center", padding: 24 }}>
+                                <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 16, textAlign: "center", padding: 24 }}>
                                   No income breakdown data
                                 </div>
                               )}
@@ -3440,11 +3447,11 @@ export default function TaxToBook() {
                         <div style={{ marginTop: 16, padding: "16px 20px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", gap: 20 }}>
                           <div style={{ textAlign: "center", flexShrink: 0 }}>
                             <div style={{ fontFamily: "var(--mono)", fontSize: 36, fontWeight: 700, color: healthColorMap[vMetric.healthColor], lineHeight: 1 }}>{vMetric.healthScore}</div>
-                            <div style={{ fontFamily: "var(--mono)", fontSize: 9, letterSpacing: "0.1em", color: "var(--muted)", marginTop: 4 }}>HEALTH SCORE</div>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 13, letterSpacing: "0.1em", color: "var(--muted)", marginTop: 4 }}>HEALTH SCORE</div>
                           </div>
                           <div>
-                            <div style={{ fontFamily: "var(--mono)", fontSize: 13, fontWeight: 700, color: healthColorMap[vMetric.healthColor], marginBottom: 4 }}>{vMetric.healthLabel}</div>
-                            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 17, fontWeight: 700, color: healthColorMap[vMetric.healthColor], marginBottom: 4 }}>{vMetric.healthLabel}</div>
+                            <div style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.6 }}>
                               Based on income trajectory, tax efficiency, deduction structure, and signal quality.
                               {vMetric.primarySignal && (
                                 <span style={{ color: healthColorMap[vMetric.healthColor] }}>{" "}Primary flag: {vMetric.primarySignal.flag.replace(/_/g, " ")}</span>
@@ -3469,22 +3476,22 @@ export default function TaxToBook() {
                           }}>Signal Quality</div>
                           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
                             <div>
-                              <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em" }}>STATUS </span>
-                              <span style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, color: "var(--text)" }}>
+                              <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em" }}>STATUS </span>
+                              <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>
                                 {vMetric.primarySignal.flag.replace(/_/g, " ")}
                               </span>
                             </div>
                             <div>
-                              <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em" }}>SEVERITY </span>
+                              <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em" }}>SEVERITY </span>
                               <span style={{
-                                fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700,
+                                fontFamily: "var(--mono)", fontSize: 15, fontWeight: 700,
                                 color: vMetric.primarySignal.severity === "POSITIVE" ? "var(--success)"
                                   : vMetric.primarySignal.severity === "MEDIUM" ? "var(--accent)"
                                   : "var(--danger)",
                               }}>{vMetric.primarySignal.severity}</span>
                             </div>
                           </div>
-                          <p style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7 }}>
+                          <p style={{ fontSize: 17, color: "var(--text)", lineHeight: 1.7 }}>
                             {vMetric.primarySignal.override}
                           </p>
                         </div>
@@ -3529,7 +3536,7 @@ export default function TaxToBook() {
                       )}
                     </>
                   ) : (
-                    <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, padding: 32, textAlign: "center" }}>
+                    <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 16, padding: 32, textAlign: "center" }}>
                       No data available for selected year.
                     </div>
                   )}
@@ -3541,7 +3548,7 @@ export default function TaxToBook() {
                 <>
                   <div className="tv-canvas-title">
                     Insights
-                    <span style={{ color: "var(--muted)", fontSize: 10 }}>financial intelligence</span>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>financial intelligence</span>
                   </div>
                   <div className="tv-insights-panel">
                     {overriddenInsights.length > 0 && (
@@ -3562,7 +3569,7 @@ export default function TaxToBook() {
                       </div>
                     )}
                     {filteredResults.length === 0 ? (
-                      <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, padding: 32, textAlign: "center" }}>
+                      <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 16, padding: 32, textAlign: "center" }}>
                         Select years from the sidebar to view insights.
                       </div>
                     ) : filteredResultsDesc.map((r) => {
@@ -3582,12 +3589,12 @@ export default function TaxToBook() {
                             >{s.text}</p>
                           ))}
                           {peakRiskYear === r.year && (
-                            <p style={{ color: "var(--danger)", fontSize: 12 }}>
+                            <p style={{ color: "var(--danger)", fontSize: 15 }}>
                               {r.year} was your most tax-exposed year: peak income, highest effective tax rate, and lowest deduction efficiency across all years analyzed. This is the highest-leverage year for retroactive optimization review.
                             </p>
                           )}
                           {nrTransitionYear === r.year && (
-                            <p style={{ color: "var(--accent)", fontSize: 12 }}>
+                            <p style={{ color: "var(--accent)", fontSize: 15 }}>
                               Your tax profile changed materially in {r.year} as you transitioned from non-resident (1040-NR) to U.S. resident filing. This expanded your taxable base and increased exposure to ordinary income tax rates.
                             </p>
                           )}
@@ -3608,11 +3615,11 @@ export default function TaxToBook() {
                 <>
                   <div className="tv-canvas-title">
                     Caveats
-                    <span style={{ color: "var(--muted)", fontSize: 10 }}>what this report does not capture</span>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>what this report does not capture</span>
                   </div>
                   <div className="tv-iblock" style={{ borderColor: "var(--border)" }}>
                     <div className="tv-iblock-title">Caveats</div>
-                    <p style={{ color: "var(--muted)", fontSize: 12, marginBottom: 14, lineHeight: 1.7 }}>
+                    <p style={{ color: "var(--muted)", fontSize: 15, marginBottom: 14, lineHeight: 1.7 }}>
                       Your tax return (Form 1040) shows what was taxed — not your full financial picture. Here are a few things it doesn't fully capture:
                     </p>
                     {[
@@ -3623,14 +3630,14 @@ export default function TaxToBook() {
                       { title: "One-time events", text: "A big gain, job change, or unusual income can make one year look very different. It may not reflect your normal situation." },
                     ].map((item, i) => (
                       <div key={i} style={{ marginBottom: 10 }}>
-                        <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", marginBottom: 2 }}>{i + 1}. {item.title}</p>
-                        <p style={{ fontSize: 12, color: "rgba(var(--white-rgb),0.6)", lineHeight: 1.65, paddingLeft: 16 }}>{item.text}</p>
+                        <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", marginBottom: 2 }}>{i + 1}. {item.title}</p>
+                        <p style={{ fontSize: 15, color: "rgba(var(--white-rgb),0.6)", lineHeight: 1.65, paddingLeft: 16 }}>{item.text}</p>
                       </div>
                     ))}
-                    <p style={{ color: "var(--accent)", fontSize: 13, textAlign: "center", marginTop: 16, fontFamily: "var(--mono)", fontWeight: 500 }}>
+                    <p style={{ color: "var(--accent)", fontSize: 17, textAlign: "center", marginTop: 16, fontFamily: "var(--mono)", fontWeight: 500 }}>
                       Think of this as a snapshot — not the full story of your finances.
                     </p>
-                    <p style={{ fontSize: 10, color: "var(--muted)", textAlign: "center", marginTop: 10, borderTop: "1px solid var(--border)", paddingTop: 10, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginTop: 10, borderTop: "1px solid var(--border)", paddingTop: 10, lineHeight: 1.6 }}>
                       This report is based solely on filed tax return data.<br />It is not financial or tax advice.
                     </p>
                   </div>
