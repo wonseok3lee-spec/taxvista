@@ -92,9 +92,9 @@ const styles = `
   .tv-header { text-align: center; margin-bottom: 56px; }
   .tv-logo {
     font-family: 'Georgia', serif;
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 700;
-    letter-spacing: 0.5em;
+    letter-spacing: 0.25em;
     color: var(--accent);
     text-transform: uppercase;
     text-shadow: 0 0 30px rgba(180, 255, 0, 0.6), 0 0 60px rgba(180, 255, 0, 0.2);
@@ -118,11 +118,11 @@ const styles = `
     text-transform: lowercase;
     font-weight: 400;
     opacity: 0.85;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
   }
   .tv-header h1 {
     font-family: var(--mono);
-    font-size: clamp(26px, 4.5vw, 40px);
+    font-size: clamp(32px, 5.4vw, 48px);
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text);
@@ -133,7 +133,7 @@ const styles = `
   .tv-subtitle {
     margin-top: 14px;
     color: var(--muted);
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 300;
     letter-spacing: 0.01em;
     line-height: 1.6;
@@ -1090,18 +1090,18 @@ const styles = `
   .tv-wiz-dot.active { background: var(--accent); }
   .tv-wiz-dot.done   { background: var(--accent2); }
   .tv-wiz-step-title {
-    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--accent); margin-bottom: 6px;
   }
   .tv-wiz-step-sub {
-    font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;
+    font-size: 15px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;
   }
   .tv-wiz-year-grid {
     display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;
   }
   .tv-wiz-year-btn {
-    font-family: var(--mono); font-size: 14px; font-weight: 700;
+    font-family: var(--mono); font-size: 17px; font-weight: 700;
     padding: 12px 22px; border-radius: 8px; cursor: pointer;
     border: 1.5px solid var(--border); background: var(--panel); color: var(--text);
     transition: all 0.15s; user-select: none;
@@ -1246,14 +1246,14 @@ const styles = `
       margin-bottom: 22pt;
     }
     .tv-pr-logo {
-      font-size: 10pt; font-weight: 700; letter-spacing: 0.35em;
+      font-size: 10pt; font-weight: 700; letter-spacing: 0.18em;
       text-transform: uppercase; color: #555;
     }
     .tv-pr-logo-mid {
       text-transform: lowercase;
       font-weight: 400;
       opacity: 0.85;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.04em;
     }
     .tv-pr-title {
       font-size: 21pt; font-weight: 700; font-family: Georgia, serif;
