@@ -764,16 +764,17 @@ const styles = `
     flex-direction: column;
     width: 100%;
     max-width: 1480px;
-    margin-top: 40px;
+    margin-top: 0;
     border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
     background: var(--panel);
+    position: relative;
   }
   /* ── Strategy bar ── */
   .tv-strategy-bar {
     border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
+    padding: 20px 140px 20px 32px;
     background: linear-gradient(90deg, rgba(var(--accent-rgb),0.05) 0%, transparent 60%);
     display: flex;
     align-items: center;
@@ -1147,6 +1148,31 @@ const styles = `
   .tv-export-btn:hover {
     background: rgba(var(--accent-rgb),0.06);
     border-color: var(--accent);
+  }
+
+  /* ── Edit Data button (analysis screens, top-right of dashboard) ── */
+  .tv-edit-data-btn {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 5;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 9px 18px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .tv-edit-data-btn:hover {
+    background: rgba(var(--accent-rgb),0.1);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb),0.25);
   }
 
   /* ── Wizard ── */
@@ -2768,31 +2794,29 @@ export default function TaxToBook() {
 
       <div className="tv-root">
 
-        {/* ── Header ── */}
-        <div className="tv-header">
-          <div className="tv-logo"><span className="tv-logo-name">TAX<span className="tv-logo-mid">to</span>BOOK</span></div>
-          {results.length === 0 && (
-            <>
-              <h1>
-                <span className="tv-h1-line">Your Tax Return is</span>
-                <span className="tv-h1-accent">Your Financial Story.</span>
-              </h1>
-              <p className="tv-subtitle">
-                Enter your 1040 numbers — no uploads, no SSN, numbers only.
-                <br />
-                In under 5 minutes, get a bird's-eye view of your financial story.
-              </p>
-              <p style={{
-                fontFamily: "var(--mono)", fontWeight: 700, fontSize: 15,
-                color: "var(--accent)", marginTop: 10, letterSpacing: "0.02em",
-                textShadow: "0 0 18px rgba(var(--accent-rgb),0.35)",
-                textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(var(--accent-rgb),0.35)",
-              }}>
-                Download your Financial Story Report.
-              </p>
-            </>
-          )}
-        </div>
+        {/* ── Header (wizard only) ── */}
+        {results.length === 0 && (
+          <div className="tv-header">
+            <div className="tv-logo"><span className="tv-logo-name">TAX<span className="tv-logo-mid">to</span>BOOK</span></div>
+            <h1>
+              <span className="tv-h1-line">Your Tax Return is</span>
+              <span className="tv-h1-accent">Your Financial Story.</span>
+            </h1>
+            <p className="tv-subtitle">
+              Enter your 1040 numbers — no uploads, no SSN, numbers only.
+              <br />
+              In under 5 minutes, get a bird's-eye view of your financial story.
+            </p>
+            <p style={{
+              fontFamily: "var(--mono)", fontWeight: 700, fontSize: 15,
+              color: "var(--accent)", marginTop: 10, letterSpacing: "0.02em",
+              textShadow: "0 0 18px rgba(var(--accent-rgb),0.35)",
+              textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(var(--accent-rgb),0.35)",
+            }}>
+              Download your Financial Story Report.
+            </p>
+          </div>
+        )}
 
         {/* ── Data Entry Wizard ── */}
         {results.length === 0 && (
@@ -2962,18 +2986,16 @@ export default function TaxToBook() {
           </div>
         )}
 
-        {/* Edit data button (when dashboard is showing) */}
-        {results.length > 0 && (
-          <div style={{ width: "100%", maxWidth: 700, display: "flex", justifyContent: "flex-end", marginBottom: -20 }}>
-            <button className="tv-export-btn" onClick={() => { setResults([]); setMetrics([]); }}>
-              Edit Data
-            </button>
-          </div>
-        )}
-
         {/* ── Dashboard ── */}
         {results.length > 0 && (
           <div className="tv-dashboard">
+
+            <button
+              className="tv-edit-data-btn"
+              onClick={() => { setResults([]); setMetrics([]); }}
+            >
+              ← Edit Data
+            </button>
 
             {/* ── Strategy Detected bar ── */}
             {strategyPhase && (
