@@ -140,11 +140,10 @@ const styles = `
   body { color: var(--text); font-family: var(--sans); }
 
   .tv-root {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 48px 24px 80px;
+    padding: 24px 24px 16px;
     background:
       radial-gradient(ellipse 60% 40% at 20% 10%, rgba(var(--accent-rgb),0.05) 0%, transparent 70%),
       radial-gradient(ellipse 50% 50% at 80% 90%, rgba(var(--accent2-rgb),0.04) 0%, transparent 70%),
