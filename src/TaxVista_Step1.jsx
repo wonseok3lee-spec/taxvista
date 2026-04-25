@@ -46,6 +46,13 @@ const styles = `
     --chart-pie-3: #5b9bd4;
     --chart-pie-4: #c96888;
     --chart-pie-5: #8878c8;
+    --bg-rgb: 10, 12, 15;
+    --text-rgb: 232, 234, 237;
+    --accent-rgb: 200, 241, 53;
+    --accent2-rgb: 59, 240, 160;
+    --danger-rgb: 248, 113, 113;
+    --black-rgb: 0, 0, 0;
+    --white-rgb: 255, 255, 255;
     --mono: 'Space Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
@@ -105,8 +112,8 @@ const styles = `
     align-items: center;
     padding: 48px 24px 80px;
     background:
-      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(200,241,53,0.05) 0%, transparent 70%),
-      radial-gradient(ellipse 50% 50% at 80% 90%, rgba(59,240,160,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(var(--accent-rgb),0.05) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 90%, rgba(var(--accent2-rgb),0.04) 0%, transparent 70%),
       var(--bg);
   }
 
@@ -182,12 +189,12 @@ const styles = `
   }
   .tv-drop-zone:hover {
     border-color: var(--accent);
-    background: rgba(200,241,53,0.025);
+    background: rgba(var(--accent-rgb),0.025);
     transform: translateY(-1px);
   }
   .tv-drop-zone.drag-over {
     border-color: var(--accent);
-    background: rgba(200,241,53,0.05);
+    background: rgba(var(--accent-rgb),0.05);
     border-style: solid;
   }
   .tv-drop-zone.full {
@@ -196,7 +203,7 @@ const styles = `
   }
   .tv-drop-icon {
     width: 56px; height: 56px;
-    background: rgba(200,241,53,0.08);
+    background: rgba(var(--accent-rgb),0.08);
     border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
     font-size: 24px;
@@ -211,7 +218,7 @@ const styles = `
   }
   .tv-drop-sub {
     font-size: 13px;
-    color: rgba(255,255,255,0.6);
+    color: rgba(var(--white-rgb),0.6);
     text-align: center;
     line-height: 1.7;
   }
@@ -250,7 +257,7 @@ const styles = `
     gap: 10px;
     font-family: var(--mono);
     font-size: 12px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(var(--white-rgb),0.5);
   }
   .tv-limit-track {
     flex: 1;
@@ -271,13 +278,13 @@ const styles = `
     display: inline;
     position: relative;
     cursor: default;
-    border-bottom: 1px dotted rgba(255,255,255,0.35);
+    border-bottom: 1px dotted rgba(var(--white-rgb),0.35);
     vertical-align: baseline;
   }
   .tv-tip-box {
     position: fixed;
     background: var(--surface-tip);
-    color: rgba(255,255,255,0.88);
+    color: rgba(var(--white-rgb),0.88);
     font-family: var(--sans);
     font-size: 11px;
     font-weight: 400;
@@ -289,8 +296,8 @@ const styles = `
     max-width: 240px;
     white-space: normal;
     pointer-events: none;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 14px rgba(var(--black-rgb),0.5);
+    border: 1px solid rgba(var(--white-rgb),0.08);
     z-index: 9999;
     will-change: transform;
     transform: translate(-50%, -100%) translateZ(0);
@@ -302,12 +309,12 @@ const styles = `
     margin-top: 14px;
     font-family: var(--mono);
     font-size: 13px;
-    color: rgba(255,255,255,0.75);
+    color: rgba(var(--white-rgb),0.75);
     line-height: 1.65;
     letter-spacing: 0.01em;
     padding: 12px 14px;
-    border-left: 2px solid rgba(200,241,53,0.5);
-    background: rgba(200,241,53,0.03);
+    border-left: 2px solid rgba(var(--accent-rgb),0.5);
+    background: rgba(var(--accent-rgb),0.03);
     border-radius: 0 6px 6px 0;
   }
   .tv-privacy-footer {
@@ -315,7 +322,7 @@ const styles = `
     padding: 10px 28px;
     font-family: var(--mono);
     font-size: 12px;
-    color: rgba(255,255,255,0.45);
+    color: rgba(var(--white-rgb),0.45);
     letter-spacing: 0.02em;
   }
 
@@ -356,12 +363,12 @@ const styles = `
   .tv-file-icon {
     flex-shrink: 0;
     width: 36px; height: 36px;
-    background: rgba(200,241,53,0.07);
+    background: rgba(var(--accent-rgb),0.07);
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px;
   }
-  .tv-file-icon.img { background: rgba(59,240,160,0.07); }
+  .tv-file-icon.img { background: rgba(var(--accent2-rgb),0.07); }
   .tv-file-info { flex: 1; min-width: 0; }
   .tv-file-name {
     font-family: var(--mono);
@@ -374,7 +381,7 @@ const styles = `
   .tv-file-meta {
     margin-top: 4px;
     font-size: 12px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(var(--white-rgb),0.5);
     display: flex;
     gap: 8px;
     align-items: center;
@@ -405,7 +412,7 @@ const styles = `
     transition: color 0.15s, background 0.15s;
     line-height: 1;
   }
-  .tv-remove-btn:hover { color: var(--danger); background: rgba(248,113,113,0.08); }
+  .tv-remove-btn:hover { color: var(--danger); background: rgba(var(--danger-rgb),0.08); }
 
   /* ── Parsing status per file ── */
   .tv-parse-status {
@@ -415,9 +422,9 @@ const styles = `
     border-radius: 4px;
     letter-spacing: 0.05em;
   }
-  .tv-parse-status.parsing { color: var(--accent); background: rgba(200,241,53,0.08); }
-  .tv-parse-status.done    { color: var(--success); background: rgba(59,240,160,0.08); }
-  .tv-parse-status.error   { color: var(--danger);  background: rgba(248,113,113,0.08); }
+  .tv-parse-status.parsing { color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
+  .tv-parse-status.done    { color: var(--success); background: rgba(var(--accent2-rgb),0.08); }
+  .tv-parse-status.error   { color: var(--danger);  background: rgba(var(--danger-rgb),0.08); }
 
   /* ── CTA ── */
   .tv-cta {
@@ -444,7 +451,7 @@ const styles = `
   }
   .tv-cta-btn:hover:not(:disabled) {
     background: var(--accent-hover);
-    box-shadow: 0 0 32px rgba(200,241,53,0.18);
+    box-shadow: 0 0 32px rgba(var(--accent-rgb),0.18);
     transform: translateY(-1px);
   }
   .tv-cta-btn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
@@ -493,7 +500,7 @@ const styles = `
     font-weight: 500;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
+    color: rgba(var(--white-rgb),0.55);
   }
   .tv-result-value {
     font-family: var(--mono);
@@ -574,7 +581,7 @@ const styles = `
     font-weight: 500;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
+    color: rgba(var(--white-rgb),0.55);
   }
   .tv-insight-value {
     font-family: var(--mono);
@@ -588,7 +595,7 @@ const styles = `
   .tv-analysis {
     margin-top: 10px;
     padding: 14px 16px;
-    background: rgba(255,255,255,0.02);
+    background: rgba(var(--white-rgb),0.02);
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -600,11 +607,11 @@ const styles = `
     font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.6);
+    color: rgba(var(--white-rgb),0.6);
   }
   .tv-analysis-summary {
     font-size: 13px;
-    color: rgba(255,255,255,0.82);
+    color: rgba(var(--white-rgb),0.82);
     line-height: 1.7;
   }
   .tv-analysis-signals {
@@ -620,9 +627,9 @@ const styles = `
     border-radius: 4px;
     letter-spacing: 0.04em;
   }
-  .tv-signal.high { color: var(--success); background: rgba(59,240,160,0.08); }
-  .tv-signal.mid  { color: var(--accent);  background: rgba(200,241,53,0.08); }
-  .tv-signal.low  { color: var(--danger);  background: rgba(248,113,113,0.08); }
+  .tv-signal.high { color: var(--success); background: rgba(var(--accent2-rgb),0.08); }
+  .tv-signal.mid  { color: var(--accent);  background: rgba(var(--accent-rgb),0.08); }
+  .tv-signal.low  { color: var(--danger);  background: rgba(var(--danger-rgb),0.08); }
 
   /* ── Trend tab ── */
   .tv-trend-table {
@@ -637,7 +644,7 @@ const styles = `
     font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.6);
+    color: rgba(var(--white-rgb),0.6);
     padding: 10px 14px;
     border-bottom: 1px solid var(--border);
   }
@@ -663,8 +670,8 @@ const styles = `
   .tv-insight-box {
     margin-top: 16px;
     padding: 16px 18px;
-    background: rgba(200,241,53,0.04);
-    border: 1px solid rgba(200,241,53,0.12);
+    background: rgba(var(--accent-rgb),0.04);
+    border: 1px solid rgba(var(--accent-rgb),0.12);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -672,7 +679,7 @@ const styles = `
   }
   .tv-insight-line {
     font-size: 13px;
-    color: rgba(255,255,255,0.82);
+    color: rgba(var(--white-rgb),0.82);
     line-height: 1.7;
   }
   .tv-insight-line::before { content: "→ "; color: var(--accent); }
@@ -706,7 +713,7 @@ const styles = `
     font-weight: 500;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
+    color: rgba(var(--white-rgb),0.55);
   }
   .tv-info-value {
     font-family: var(--mono);
@@ -715,7 +722,7 @@ const styles = `
     color: var(--accent);
     line-height: 1;
   }
-  .tv-info-desc { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+  .tv-info-desc { font-size: 12px; color: rgba(var(--white-rgb),0.55); line-height: 1.6; }
 
   /* ── Dashboard shell ── */
   .tv-dashboard {
@@ -733,7 +740,7 @@ const styles = `
   .tv-strategy-bar {
     border-bottom: 1px solid var(--border);
     padding: 16px 28px;
-    background: linear-gradient(90deg, rgba(200,241,53,0.05) 0%, transparent 60%);
+    background: linear-gradient(90deg, rgba(var(--accent-rgb),0.05) 0%, transparent 60%);
     display: flex;
     align-items: center;
     gap: 18px;
@@ -788,14 +795,14 @@ const styles = `
     font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.82);
+    color: rgba(var(--white-rgb),0.82);
     margin-bottom: 4px;
   }
   .tv-sidebar-sub {
     font-family: var(--mono);
     font-size: 11px;
     font-weight: 400;
-    color: rgba(255,255,255,0.45);
+    color: rgba(var(--white-rgb),0.45);
     margin-bottom: 10px;
     letter-spacing: 0.02em;
   }
@@ -809,7 +816,7 @@ const styles = `
     transition: background 0.15s;
     user-select: none;
   }
-  .tv-year-pill:hover { background: rgba(255,255,255,0.04); }
+  .tv-year-pill:hover { background: rgba(var(--white-rgb),0.04); }
   .tv-year-dot {
     width: 9px; height: 9px;
     border-radius: 50%;
@@ -831,7 +838,7 @@ const styles = `
     padding: 11px 12px;
     border: none;
     background: none;
-    color: rgba(255,255,255,0.7);
+    color: rgba(var(--white-rgb),0.7);
     font-family: var(--mono);
     font-size: 12px;
     font-weight: 500;
@@ -843,8 +850,8 @@ const styles = `
     transition: color 0.15s, background 0.15s;
     gap: 10px;
   }
-  .tv-nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-  .tv-nav-btn.active { color: var(--accent); background: rgba(200,241,53,0.08); }
+  .tv-nav-btn:hover { color: var(--text); background: rgba(var(--white-rgb),0.04); }
+  .tv-nav-btn.active { color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
   .tv-nav-icon { font-size: 14px; }
   .tv-canvas {
     flex: 1;
@@ -861,7 +868,7 @@ const styles = `
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.92);
+    color: rgba(var(--white-rgb),0.92);
     padding-bottom: 18px;
     margin-bottom: 28px;
     border-bottom: 1px solid var(--border);
@@ -891,7 +898,7 @@ const styles = `
     font-weight: 500;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.65);
+    color: rgba(var(--white-rgb),0.65);
   }
   .tv-metric-value {
     font-family: var(--mono);
@@ -917,7 +924,7 @@ const styles = `
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.82);
+    color: rgba(var(--white-rgb),0.82);
     margin-bottom: 14px;
     margin-top: 4px;
   }
@@ -980,8 +987,8 @@ const styles = `
   }
   .tv-iblock:hover {
     border-color: var(--accent);
-    background: rgba(200,241,53,0.04);
-    box-shadow: 0 0 12px rgba(200,241,53,0.08);
+    background: rgba(var(--accent-rgb),0.04);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb),0.08);
   }
   .tv-iblock-title {
     font-family: var(--mono);
@@ -989,7 +996,7 @@ const styles = `
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.82);
+    color: rgba(var(--white-rgb),0.82);
     margin-bottom: 16px;
     padding-left: 10px;
     border-left: 2px solid var(--accent);
@@ -1015,8 +1022,8 @@ const styles = `
   .tv-insight-row {
     margin-top: 20px;
     padding: 20px 22px;
-    background: rgba(200,241,53,0.03);
-    border: 1px solid rgba(200,241,53,0.1);
+    background: rgba(var(--accent-rgb),0.03);
+    border: 1px solid rgba(var(--accent-rgb),0.1);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -1090,7 +1097,7 @@ const styles = `
     text-transform: uppercase;
     padding: 7px 14px;
     background: none;
-    border: 1px solid rgba(200,241,53,0.3);
+    border: 1px solid rgba(var(--accent-rgb),0.3);
     color: var(--accent);
     border-radius: 6px;
     cursor: pointer;
@@ -1099,7 +1106,7 @@ const styles = `
     flex-shrink: 0;
   }
   .tv-export-btn:hover {
-    background: rgba(200,241,53,0.06);
+    background: rgba(var(--accent-rgb),0.06);
     border-color: var(--accent);
   }
 
@@ -1131,9 +1138,9 @@ const styles = `
     border: 1.5px solid var(--border); background: var(--panel); color: var(--text);
     transition: all 0.15s; user-select: none;
   }
-  .tv-wiz-year-btn:hover { border-color: var(--accent); background: rgba(200,241,53,0.04); }
+  .tv-wiz-year-btn:hover { border-color: var(--accent); background: rgba(var(--accent-rgb),0.04); }
   .tv-wiz-year-btn.on {
-    border-color: var(--accent); background: rgba(200,241,53,0.1); color: var(--accent);
+    border-color: var(--accent); background: rgba(var(--accent-rgb),0.1); color: var(--accent);
   }
   .tv-wiz-form-row {
     display: flex; align-items: center; gap: 14px;
@@ -1152,13 +1159,13 @@ const styles = `
     color: var(--muted); cursor: pointer; transition: all 0.15s;
   }
   .tv-wiz-form-pick button.on {
-    border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.06);
+    border-color: var(--accent); color: var(--accent); background: rgba(var(--accent-rgb),0.06);
   }
   .tv-wiz-fields { display: flex; flex-direction: column; gap: 0; }
   .tv-wiz-field-group {
     font-family: var(--mono); font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
-    padding: 16px 0 8px; border-bottom: 1px solid rgba(200,241,53,0.1);
+    padding: 16px 0 8px; border-bottom: 1px solid rgba(var(--accent-rgb),0.1);
   }
   .tv-wiz-field {
     display: grid; grid-template-columns: 64px 1fr 140px;
@@ -1167,7 +1174,7 @@ const styles = `
   }
   .tv-wiz-line-badge {
     font-family: var(--mono); font-size: 10px; font-weight: 700;
-    color: var(--accent); background: rgba(200,241,53,0.08);
+    color: var(--accent); background: rgba(var(--accent-rgb),0.08);
     padding: 3px 7px; border-radius: 4px; text-align: center; white-space: nowrap;
   }
   .tv-wiz-field-label {
@@ -1210,7 +1217,7 @@ const styles = `
   .tv-wiz-next:disabled { opacity: 0.3; cursor: not-allowed; }
   .tv-wiz-warn {
     font-family: var(--mono); font-size: 11px; color: var(--danger);
-    background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.15);
+    background: rgba(var(--danger-rgb),0.06); border: 1px solid rgba(var(--danger-rgb),0.15);
     border-radius: 6px; padding: 8px 12px; margin-top: 12px;
   }
   .tv-wiz-year-tab-bar {
@@ -1226,7 +1233,7 @@ const styles = `
 
   /* ── Print modal ── */
   .tv-print-modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    position: fixed; inset: 0; background: rgba(var(--black-rgb),0.7);
     display: flex; align-items: center; justify-content: center;
     z-index: 10000;
   }
@@ -1595,7 +1602,7 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
       borderRadius: 6, fontFamily: "Space Mono, monospace",
       fontSize: 11, padding: "10px 14px",
       pointerEvents: "none", maxWidth: W,
-      boxShadow: "0 4px 14px rgba(0,0,0,0.5)",
+      boxShadow: "0 4px 14px rgba(var(--black-rgb),0.5)",
     }}>
       {label != null && (
         <div style={{ color: "#8a95a0", marginBottom: 6, fontSize: 10, letterSpacing: "0.05em" }}>
@@ -2423,8 +2430,8 @@ export default function TaxToBook() {
       : etr > 0.15 ? "var(--accent)"
       : "var(--success)";
     const etrGlow   = etr == null ? null
-      : (etrRising || etr > 0.25) ? "0 0 8px rgba(248,113,113,0.35)"
-      : etr <= 0.15               ? "0 0 8px rgba(59,240,160,0.25)"
+      : (etrRising || etr > 0.25) ? "0 0 8px rgba(var(--danger-rgb),0.35)"
+      : etr <= 0.15               ? "0 0 8px rgba(var(--accent2-rgb),0.25)"
       : null;
     const etrTrend  = etrDelta == null ? null
       : etrDelta > 0.015 ? " ↑" : etrDelta < -0.015 ? " ↓" : null;
@@ -2433,7 +2440,7 @@ export default function TaxToBook() {
     const atiPrior  = mPrior?.afterTaxIncome ?? null;
     const atiGrowth = ati != null && atiPrior != null ? (ati - atiPrior) / atiPrior : null;
     const atiColor  = atiGrowth != null && atiGrowth < -0.05 ? "var(--danger)" : "var(--success)";
-    const atiGlow   = atiGrowth != null && atiGrowth > 0.1 ? "0 0 8px rgba(59,240,160,0.25)" : null;
+    const atiGlow   = atiGrowth != null && atiGrowth > 0.1 ? "0 0 8px rgba(var(--accent2-rgb),0.25)" : null;
 
     // Deduction efficiency — low deductions flagged as opportunity (red)
     const dePct    = de != null ? (de * 100).toFixed(1) + "%" : null;
@@ -2446,7 +2453,7 @@ export default function TaxToBook() {
       : `${dePct}, limited — most income taxed without offsets`;
     const deColor   = de == null ? "var(--accent)"
       : de > 0.2 ? "var(--success)" : de > 0.1 ? "var(--accent)" : "var(--danger)";
-    const deGlow    = de != null && de < 0.1 ? "0 0 8px rgba(248,113,113,0.3)" : null;
+    const deGlow    = de != null && de < 0.1 ? "0 0 8px rgba(var(--danger-rgb),0.3)" : null;
 
     return {
       year: resolvedActiveYear, ti, ati, etr, de,
@@ -2555,7 +2562,7 @@ export default function TaxToBook() {
             fontWeight: "bold",
             letterSpacing: "0.1em",
             borderRadius: "3px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+            boxShadow: "0 2px 6px rgba(var(--black-rgb),0.4)",
             pointerEvents: "none",
           }}
           className="tv-test-scenario-badge"
@@ -2597,8 +2604,8 @@ export default function TaxToBook() {
           <p style={{
             fontFamily: "var(--mono)", fontWeight: 700, fontSize: 15,
             color: "var(--accent)", marginTop: 10, letterSpacing: "0.02em",
-            textShadow: "0 0 18px rgba(200,241,53,0.35)",
-            textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(200,241,53,0.35)",
+            textShadow: "0 0 18px rgba(var(--accent-rgb),0.35)",
+            textDecoration: "underline", textUnderlineOffset: 4, textDecorationColor: "rgba(var(--accent-rgb),0.35)",
           }}>
             Download your Financial Story Report.
           </p>
@@ -2731,7 +2738,7 @@ export default function TaxToBook() {
 
             {/* TEST SCENARIO SEED — delete this block to remove the buttons */}
             {wizStep === 1 && TEST_SCENARIO_ENABLED && (
-              <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px dashed rgba(255,255,255,0.08)", textAlign: "center" }}>
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px dashed rgba(var(--white-rgb),0.08)", textAlign: "center" }}>
                 <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.12em", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
                   🧪 Test Scenarios — skip manual entry
                 </div>
@@ -2743,7 +2750,7 @@ export default function TaxToBook() {
                       style={{
                         fontFamily: "var(--mono)",
                         background: "transparent",
-                        border: "1px dashed rgba(255,255,255,0.25)",
+                        border: "1px dashed rgba(var(--white-rgb),0.25)",
                         borderRadius: 6,
                         padding: "12px 18px",
                         cursor: "pointer",
@@ -2751,10 +2758,10 @@ export default function TaxToBook() {
                         textAlign: "left",
                         minWidth: 240,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)"; e.currentTarget.style.background = "transparent"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(var(--white-rgb),0.4)"; e.currentTarget.style.background = "rgba(var(--white-rgb),0.02)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(var(--white-rgb),0.25)"; e.currentTarget.style.background = "transparent"; }}
                     >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: "0.04em" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(var(--white-rgb),0.85)", letterSpacing: "0.04em" }}>
                         {scenario.emoji} {scenario.label}
                       </div>
                       <div style={{ marginTop: 4, fontSize: 10, color: "var(--muted)", fontFamily: "var(--sans)", letterSpacing: 0 }}>
@@ -2844,7 +2851,7 @@ export default function TaxToBook() {
                     <div key={"why-" + resolvedActiveYear} className="tv-year-insight"
                       style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       {whyBullets.map((b, i) => (
-                        <span key={i} style={{ fontSize: 11, color: "rgba(255,255,255,0.48)", lineHeight: 1.55 }}>
+                        <span key={i} style={{ fontSize: 11, color: "rgba(var(--white-rgb),0.48)", lineHeight: 1.55 }}>
                           <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 10, marginRight: 5 }}>→</span>
                           {b}
                         </span>
@@ -2853,11 +2860,11 @@ export default function TaxToBook() {
                   )}
 
                   {/* Static — multi-year summary */}
-                  <span className="tv-strategy-text" style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
+                  <span className="tv-strategy-text" style={{ color: "rgba(var(--white-rgb),0.5)", fontSize: 12 }}>
                     Based on your{" "}
-                    <strong style={{ color: "rgba(255,255,255,0.65)" }}>{strategyPhase.years}-year</strong> trend{_lowBase ? "" : <>, with an annualized growth rate of{" "}
-                    <strong style={{ color: "rgba(255,255,255,0.65)" }}>{(strategyPhase.cagr * 100).toFixed(1)}%</strong></>}, your financial phase is{" "}
-                    <strong style={{ color: "rgba(255,255,255,0.65)" }}>{strategyPhase.phase}</strong>.{" "}
+                    <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{strategyPhase.years}-year</strong> trend{_lowBase ? "" : <>, with an annualized growth rate of{" "}
+                    <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{(strategyPhase.cagr * 100).toFixed(1)}%</strong></>}, your financial phase is{" "}
+                    <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{strategyPhase.phase}</strong>.{" "}
                     {strategyPhase.note}
                   </span>
 
@@ -3435,7 +3442,7 @@ export default function TaxToBook() {
                     ].map((item, i) => (
                       <div key={i} style={{ marginBottom: 10 }}>
                         <p style={{ fontWeight: 700, fontSize: 12, color: "var(--text)", marginBottom: 2 }}>{i + 1}. {item.title}</p>
-                        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, paddingLeft: 16 }}>{item.text}</p>
+                        <p style={{ fontSize: 12, color: "rgba(var(--white-rgb),0.6)", lineHeight: 1.65, paddingLeft: 16 }}>{item.text}</p>
                       </div>
                     ))}
                     <p style={{ color: "var(--accent)", fontSize: 13, textAlign: "center", marginTop: 16, fontFamily: "var(--mono)", fontWeight: 500 }}>
