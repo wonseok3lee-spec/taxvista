@@ -2084,7 +2084,11 @@ export default function TaxToBook() {
     if (taxGrowth != null && incomeGrowth != null && taxGrowth > incomeGrowth + 0.05 && !lowBase) {
       const incPct = (incomeGrowth * 100).toFixed(0);
       const taxPct = (taxGrowth * 100).toFixed(0);
-      items.push({ text: `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`, metric: "tax", type: "tax_efficiency" });
+      const lastIsHighIncome = last.totalIncome != null && last.totalIncome > 250000;
+      items.push({ text: lastIsHighIncome
+        ? `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets — Standard Deduction is flat by design, so reducing the taxable base requires pre-tax contribution growth (401k, HSA, Mega Backdoor Roth).`
+        : `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`,
+        metric: "tax", type: "tax_efficiency" });
     } else if (afterTaxGrowth != null && incomeGrowth != null && afterTaxGrowth < incomeGrowth - 0.05 && !lowBase) {
       items.push({ text: `After-tax income is growing slower than gross income, indicating rising tax drag. A portion of income growth is being absorbed by higher marginal rates without corresponding tax optimization.`, metric: "afterTax", type: "tax_efficiency" });
     } else if (lowBase && taxGrowth != null && taxGrowth > 1) {
@@ -2567,18 +2571,31 @@ export default function TaxToBook() {
     // Deduction efficiency — low deductions flagged as opportunity (red)
     const dePct    = de != null ? (de * 100).toFixed(1) + "%" : null;
     const deIsHighIncome = ti != null && ti > 250000;
+    const tiPriorForDe = rPrior?.summary?.totalIncome ?? null;
+    const deIncomeYoY  = ti != null && tiPriorForDe ? (ti - tiPriorForDe) / tiPriorForDe : null;
+    const deIsContracting = deIncomeYoY != null && deIncomeYoY < -0.05;
     const deLabel  = de == null ? null
-      : de > 0.2 ? `${dePct}, strong — income effectively sheltered`
-      : de > 0.1 ? `${dePct}, moderate — room to increase pre-tax contributions`
+      : de > 0.2 && deIsContracting
+        ? `${dePct} — high ratio reflects contracted income, not active sheltering`
+      : de > 0.2
+        ? `${dePct}, strong — income effectively sheltered`
+      : de > 0.1 && deIsContracting
+        ? `${dePct} — elevated by income contraction, not optimization`
+      : de > 0.1
+        ? `${dePct}, moderate — room to increase pre-tax contributions`
       : deIsHighIncome
-      ? `${dePct} (standard deduction is flat — pre-tax 401k/HSA/IRA are the levers at this income)`
+        ? `${dePct} (standard deduction is flat — pre-tax 401k/HSA/IRA are the levers at this income)`
       : `${dePct}, limited — most income taxed without offsets`;
     const deColor   = de == null ? "var(--accent)"
-      : de > 0.2 ? "var(--success)" : de > 0.1 ? "var(--accent)" : "var(--danger)";
+      : de > 0.2 && deIsContracting ? "var(--muted)"
+      : de > 0.2 ? "var(--success)"
+      : de > 0.1 ? "var(--accent)"
+      : "var(--danger)";
     const deGlow    = de != null && de < 0.1 ? "0 0 8px rgba(var(--danger-rgb),0.3)" : null;
 
     return {
       year: resolvedActiveYear, ti, ati, etr, de,
+      tti: m.taxToIncome,
       etrLabel, etrColor, etrGlow, etrTrend,
       deLabel, deColor, deGlow,
       atiColor, atiGlow,
@@ -2973,15 +2990,19 @@ export default function TaxToBook() {
                           {" "}({((yearInsight.ati / yearInsight.ti) * 100).toFixed(0)}% retained)
                         </span>
                       )}
-                      {yearInsight.etr != null && (
-                        <>{" · "}Effective tax rate:{" "}
+                      {yearInsight.tti != null && (
+                        <>{" · "}Tax rate:{" "}
                           <strong style={{ color: yearInsight.etrColor, textShadow: yearInsight.etrGlow ?? "none" }}>
-                            {pf(yearInsight.etr)}
+                            {pf(yearInsight.tti)}
                           </strong>
+                          <span style={{ color: "var(--muted)", fontSize: 11 }}> of total income</span>
                           {yearInsight.etrTrend && (
                             <span style={{ color: yearInsight.etrColor, fontSize: 10, fontFamily: "var(--mono)" }}>
                               {yearInsight.etrTrend}
                             </span>
+                          )}
+                          {yearInsight.etr != null && (
+                            <span style={{ color: "var(--muted)" }}> ({pf(yearInsight.etr)} effective)</span>
                           )}
                           {yearInsight.etrLabel && (
                             <span style={{ color: "var(--muted)" }}> ({yearInsight.etrLabel})</span>
