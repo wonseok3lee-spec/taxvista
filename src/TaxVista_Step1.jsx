@@ -808,7 +808,6 @@ const styles = `
   .tv-dashboard-body {
     position: relative;
     padding-left: 220px;
-    min-height: 560px;
   }
   .tv-sidebar {
     position: absolute;
@@ -893,7 +892,7 @@ const styles = `
   .tv-nav-btn.active { color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
   .tv-nav-icon { font-size: 14px; }
   .tv-canvas {
-    padding: 20px 28px;
+    padding: 16px 28px 6px;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -3435,38 +3434,77 @@ export default function TaxToBook() {
                   ) : (
                     <>
                       {/* Where Income Came From (multi-year stacked bars matching Vertical donut categories) */}
-                      <div className="tv-chart-block">
-                        <div className="tv-chart-label"><Tip tip="How your income broke down by source over time — multi-year companion to the Vertical donut">Where Income Came From</Tip></div>
-                        <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
-                          <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
-                              <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
-                              <YAxis axisLine={false} tickLine={false}
-                                tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
-                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
-                                width={56}
-                              />
-                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 13, paddingTop: 8, color: "var(--muted)" }} />
-                              <Bar dataKey="wages"     stackId="income" fill={cssVar("--chart-income")}     name="Wages"      isAnimationActive={false}>
-                                <LabelList dataKey="wagesPct"     position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
-                              </Bar>
-                              <Bar dataKey="capGains"  stackId="income" fill={cssVar("--chart-after-tax")}  name="Cap Gains"  isAnimationActive={false}>
-                                <LabelList dataKey="capGainsPct"  position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
-                              </Bar>
-                              <Bar dataKey="dividends" stackId="income" fill={cssVar("--chart-pie-3")}      name="Dividends"  isAnimationActive={false}>
-                                <LabelList dataKey="dividendsPct" position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
-                              </Bar>
-                              <Bar dataKey="interest"  stackId="income" fill={cssVar("--chart-pie-4")}      name="Interest"   isAnimationActive={false}>
-                                <LabelList dataKey="interestPct"  position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
-                              </Bar>
-                              <Bar dataKey="other"     stackId="income" fill={cssVar("--chart-pie-5")}      name="Other"      isAnimationActive={false}>
-                                <LabelList dataKey="otherPct"     position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
+                      {(() => {
+                        const _waYear = verticalYear ?? filteredResults[filteredResults.length - 1]?.year;
+                        const _waR = filteredResults.find(r => r.year === _waYear) ?? filteredResults[filteredResults.length - 1];
+                        const _waInc = _waR?.income ?? {};
+                        const _waItems = [
+                          { name: "Wages",     amt: Math.max(_waInc.wages ?? 0, 0),            color: cssVar("--chart-income") },
+                          { name: "Cap Gains", amt: Math.max(_waInc.capitalGains ?? 0, 0),     color: cssVar("--chart-after-tax") },
+                          { name: "Dividends", amt: Math.max(_waInc.dividends ?? 0, 0),        color: cssVar("--chart-pie-3") },
+                          { name: "Interest",  amt: Math.max(_waInc.interest ?? 0, 0),         color: cssVar("--chart-pie-4") },
+                          { name: "Other",     amt: Math.max(_waInc.additionalIncome ?? 0, 0), color: cssVar("--chart-pie-5") },
+                        ];
+                        const _waTotal = _waItems.reduce((s, i) => s + i.amt, 0);
+                        const _waVisible = _waItems.filter(i => i.amt >= 1000).sort((a, b) => b.amt - a.amt);
+                        const _yearCount = filteredResults.length;
+                        const _barFlex = _yearCount <= 2 ? 0.40 : _yearCount === 3 ? 0.55 : _yearCount === 4 ? 0.65 : 0.75;
+                        const _panelFlex = 1 - _barFlex;
+                        return (
+                          <div className="tv-chart-block">
+                            <div className="tv-chart-label"><Tip tip="How your income broke down by source over time — multi-year companion to the Vertical donut">Where Income Came From</Tip></div>
+                            <div className="tv-chart-box" style={{ padding: "12px 14px 6px" }}>
+                              <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+                                <div style={{ flex: _barFlex, minWidth: 0 }}>
+                                  <ResponsiveContainer width="100%" height={200}>
+                                    <BarChart data={hChartData} margin={{ top: 4, right: 12, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
+                                      <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
+                                      <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
+                                      <YAxis axisLine={false} tickLine={false}
+                                        tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
+                                        tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
+                                        width={56}
+                                      />
+                                      <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 13, paddingTop: 8, color: "var(--muted)" }} />
+                                      <Bar dataKey="wages"     stackId="income" fill={cssVar("--chart-income")}     name="Wages"      isAnimationActive={false} />
+                                      <Bar dataKey="capGains"  stackId="income" fill={cssVar("--chart-after-tax")}  name="Cap Gains"  isAnimationActive={false} />
+                                      <Bar dataKey="dividends" stackId="income" fill={cssVar("--chart-pie-3")}      name="Dividends"  isAnimationActive={false} />
+                                      <Bar dataKey="interest"  stackId="income" fill={cssVar("--chart-pie-4")}      name="Interest"   isAnimationActive={false} />
+                                      <Bar dataKey="other"     stackId="income" fill={cssVar("--chart-pie-5")}      name="Other"      isAnimationActive={false} />
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+                                <div style={{
+                                  flex: _panelFlex, minWidth: 0,
+                                  paddingLeft: 14, borderLeft: "1px dashed var(--border)",
+                                  display: "flex", flexDirection: "column", justifyContent: "center",
+                                }}>
+                                  <div style={{
+                                    fontFamily: "var(--mono)", fontSize: 11, fontWeight: 700,
+                                    letterSpacing: "0.1em", color: "var(--muted)", marginBottom: 8,
+                                  }}>
+                                    {_waR?.year ?? "—"} BREAKDOWN
+                                  </div>
+                                  {_waVisible.map(item => {
+                                    const pct = _waTotal > 0 ? (item.amt / _waTotal) * 100 : 0;
+                                    return (
+                                      <div key={item.name} style={{
+                                        display: "flex", justifyContent: "space-between", gap: 10,
+                                        fontFamily: "var(--mono)", fontSize: 13, padding: "4px 0",
+                                      }}>
+                                        <span style={{ color: item.color, fontWeight: 600 }}>{item.name}</span>
+                                        <span style={{ color: "var(--text)" }}>
+                                          ${item.amt.toLocaleString()} <span style={{ color: "var(--muted)" }}>({pct.toFixed(1)}%)</span>
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* KPI callout row */}
                       <div className="tv-metric-grid" style={{ marginBottom: 18 }}>
@@ -3524,17 +3562,17 @@ export default function TaxToBook() {
                               <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 14, paddingTop: 10, color: "var(--muted)" }} />
                               <Line type="monotone" dataKey="totalIncome" stroke={cssVar("--chart-income")} strokeWidth={metricStroke("income", 2)}
                                 dot={{ r: 3, fill: cssVar("--chart-income"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
-                                strokeOpacity={metricOpacity("income")}>
+                                strokeOpacity={metricOpacity("income")} isAnimationActive={false}>
                                 <LabelList dataKey="totalIncome" position="top" offset={8}
                                   formatter={(v) => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"K")}
-                                  fill={cssVar("--chart-income")} fontSize={11} fontFamily="Space Mono, monospace" />
+                                  fill={cssVar("--chart-income")} fontSize={11} fontFamily="Space Mono, monospace" isAnimationActive={false} />
                               </Line>
                               <Line type="monotone" dataKey="afterTax" stroke={cssVar("--chart-after-tax")} strokeWidth={metricStroke("afterTax", 2)}
                                 dot={{ r: 3, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="After-Tax"
-                                strokeOpacity={metricOpacity("afterTax")}>
+                                strokeOpacity={metricOpacity("afterTax")} isAnimationActive={false}>
                                 <LabelList dataKey="afterTax" position="bottom" offset={8}
                                   formatter={(v) => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"K")}
-                                  fill={cssVar("--chart-after-tax")} fontSize={11} fontFamily="Space Mono, monospace" />
+                                  fill={cssVar("--chart-after-tax")} fontSize={11} fontFamily="Space Mono, monospace" isAnimationActive={false} />
                               </Line>
                             </LineChart>
                           </ResponsiveContainer>
