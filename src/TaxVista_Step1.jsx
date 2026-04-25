@@ -8,7 +8,18 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const PIE_COLORS = ["#b8c43a", "#45c986", "#5b9bd4", "#c96888", "#8878c8"];
+const cssVar = (name) =>
+  typeof window !== "undefined"
+    ? getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    : "";
+
+const getPieColors = () => [
+  cssVar("--chart-income"),
+  cssVar("--chart-after-tax"),
+  cssVar("--chart-pie-3"),
+  cssVar("--chart-pie-4"),
+  cssVar("--chart-pie-5"),
+];
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const styles = `
@@ -28,6 +39,13 @@ const styles = `
     --accent-hover: #d4f54a;
     --surface-tooltip: #0e1117;
     --surface-tip: #1c2128;
+    --chart-after-tax: #45c986;
+    --chart-income: #b8c43a;
+    --chart-tax-ratio: #b85c5c;
+    --chart-effective-rate: #c47a3a;
+    --chart-pie-3: #5b9bd4;
+    --chart-pie-4: #c96888;
+    --chart-pie-5: #8878c8;
     --mono: 'Space Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
@@ -2982,8 +3000,8 @@ export default function TaxToBook() {
                             <AreaChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <defs>
                                 <linearGradient id="afterTaxGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%"   stopColor="#45c986" stopOpacity={0.14} />
-                                  <stop offset="100%" stopColor="#45c986" stopOpacity={0}    />
+                                  <stop offset="0%"   stopColor={cssVar("--chart-after-tax")} stopOpacity={0.14} />
+                                  <stop offset="100%" stopColor={cssVar("--chart-after-tax")} stopOpacity={0}    />
                                 </linearGradient>
                               </defs>
                               <CartesianGrid strokeDasharray="2 6" stroke="#1e2430" strokeOpacity={0.7} vertical={false} />
@@ -2995,11 +3013,11 @@ export default function TaxToBook() {
                               />
                               <Tooltip
                                 content={<ChartTooltip chartRef={areaChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
-                                cursor={{ stroke: "#45c986", strokeWidth: 1, strokeOpacity: 0.3 }}
+                                cursor={{ stroke: cssVar("--chart-after-tax"), strokeWidth: 1, strokeOpacity: 0.3 }}
                               />
-                              <Area type="monotone" dataKey="afterTax" stroke="#45c986" strokeWidth={metricStroke("afterTax", 2)}
-                                fill="url(#afterTaxGrad)" dot={{ r: 3, fill: "#45c986", strokeWidth: 0 }}
-                                activeDot={{ r: 5, fill: "#45c986", strokeWidth: 0 }} name="After-Tax Income"
+                              <Area type="monotone" dataKey="afterTax" stroke={cssVar("--chart-after-tax")} strokeWidth={metricStroke("afterTax", 2)}
+                                fill="url(#afterTaxGrad)" dot={{ r: 3, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }}
+                                activeDot={{ r: 5, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }} name="After-Tax Income"
                                 strokeOpacity={metricOpacity("afterTax")} fillOpacity={metricOpacity("afterTax") * 0.14} />
                             </AreaChart>
                           </ResponsiveContainer>
@@ -3064,11 +3082,11 @@ export default function TaxToBook() {
                                 cursor={{ stroke: "#ffffff", strokeWidth: 1, strokeOpacity: 0.08 }}
                               />
                               <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
-                              <Line type="monotone" dataKey="totalIncome" stroke="#b8c43a" strokeWidth={metricStroke("income", 2)}
-                                dot={{ r: 3, fill: "#b8c43a", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
+                              <Line type="monotone" dataKey="totalIncome" stroke={cssVar("--chart-income")} strokeWidth={metricStroke("income", 2)}
+                                dot={{ r: 3, fill: cssVar("--chart-income"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
                                 strokeOpacity={metricOpacity("income")} />
-                              <Line type="monotone" dataKey="afterTax" stroke="#45c986" strokeWidth={metricStroke("afterTax", 2)}
-                                dot={{ r: 3, fill: "#45c986", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="After-Tax"
+                              <Line type="monotone" dataKey="afterTax" stroke={cssVar("--chart-after-tax")} strokeWidth={metricStroke("afterTax", 2)}
+                                dot={{ r: 3, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="After-Tax"
                                 strokeOpacity={metricOpacity("afterTax")} />
                             </LineChart>
                           </ResponsiveContainer>
@@ -3093,16 +3111,16 @@ export default function TaxToBook() {
                                 cursor={false}
                               />
                               <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
-                              <Bar dataKey="taxRate"          fill="#b85c5c" name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
+                              <Bar dataKey="taxRate"          fill={cssVar("--chart-tax-ratio")} name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
-                                  <Cell key={entry.year} fill="#b85c5c" fillOpacity={
+                                  <Cell key={entry.year} fill={cssVar("--chart-tax-ratio")} fillOpacity={
                                     (activeYear && entry.year !== String(activeYear) ? 0.3 : 1) * metricOpacity("tax")
                                   } />
                                 ))}
                               </Bar>
-                              <Bar dataKey="effectiveTaxRate" fill="#c47a3a" name="Effective Tax Rate (taxable income)" radius={[3,3,0,0]} isAnimationActive={false}>
+                              <Bar dataKey="effectiveTaxRate" fill={cssVar("--chart-effective-rate")} name="Effective Tax Rate (taxable income)" radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
-                                  <Cell key={entry.year} fill="#c47a3a" fillOpacity={
+                                  <Cell key={entry.year} fill={cssVar("--chart-effective-rate")} fillOpacity={
                                     (activeYear && entry.year !== String(activeYear) ? 0.3 : 1) * metricOpacity("etr")
                                   } />
                                 ))}
@@ -3164,7 +3182,7 @@ export default function TaxToBook() {
                                         dataKey="value"
                                       >
                                         {vPieData.map((entry, idx) => (
-                                          <Cell key={entry.name} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                                          <Cell key={entry.name} fill={getPieColors()[idx % 5]} />
                                         ))}
                                       </Pie>
                                       <Tooltip
@@ -3177,7 +3195,7 @@ export default function TaxToBook() {
                                   </ResponsiveContainer>
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", justifyContent: "center", marginTop: 6 }}>
                                     {vPieData.map((d, idx) => (
-                                      <span key={d.name} style={{ fontFamily: "Space Mono, monospace", fontSize: 10, color: d.value > 0 ? PIE_COLORS[idx % PIE_COLORS.length] : "#3a4250" }}>
+                                      <span key={d.name} style={{ fontFamily: "Space Mono, monospace", fontSize: 10, color: d.value > 0 ? getPieColors()[idx % 5] : "#3a4250" }}>
                                         ■ {d.name} {d.name === "Cap Gains" && vCapLoss ? "net loss" : d.value.toFixed(1) + "%"}
                                       </span>
                                     ))}
