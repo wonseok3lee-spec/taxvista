@@ -1573,17 +1573,17 @@ const FIELDS_1040 = [
 // 1040-NR core fields (line-number order, includes NR-specific lines inline)
 const FIELDS_1040NR = [
   { key: "wages",        label: "W-2 Wages",                    hint: "Wages, salaries, tips",                lineCode: () => "1a" },
-  { key: "treatyExempt", label: "Treaty Exempt Income",         hint: "Tax treaty scholarship/wage exemption",lineCode: (y) => y === 2021 ? "1c" : "1k" },
+  { key: "treatyExempt", label: "Treaty Exempt Income",         hint: "Tax treaty scholarship/wage exemption",lineCode: (y) => y === 2021 ? "1c" : "1k", glossaryTip: "How tax treaty exemptions apply — wages or scholarship income exempted under bilateral agreements with your home country" },
   { key: "interest",     label: "Taxable Interest",             hint: "From savings, CDs, bonds",             lineCode: () => "2b"  },
   { key: "dividends",    label: "Ordinary Dividends",           hint: "From stocks, mutual funds",            lineCode: () => "3b"  },
   { key: "capitalGains", label: "Capital Gain/Loss",            hint: "From selling assets",                  lineCode: (y) => y >= 2025 ? "7a" : "7" },
   { key: "otherIncome",  label: "Other Income",                 hint: "Schedule 1, business, etc.",           lineCode: () => "8"   },
-  { key: "totalIncome",  label: "Total ECI Income",             hint: "Effectively connected income",         lineCode: () => "9",    required: true },
+  { key: "totalIncome",  label: "Total ECI Income",             hint: "Effectively connected income",         lineCode: () => "9",    required: true, glossaryTip: "How effectively connected income (ECI) is taxed — income tied to U.S. trade or business at graduated rates, vs NEC at flat 30%" },
   { key: "adjustments",  label: "Adjustments to Income",        hint: "IRA, student loan, etc.",              lineCode: (y) => y <= 2022 ? "10d" : "10" },
   { key: "agi",          label: "Adjusted Gross Income",        hint: "After pre-tax deductions",             lineCode: (y) => y >= 2025 ? "11a" : "11", required: true },
   { key: "deductions",   label: "Itemized Deductions",          hint: "From Schedule A (1040-NR)",            lineCode: (y) => y === 2021 ? "12a" : "12" },
   { key: "taxableIncome",label: "Taxable Income",               hint: "Income subject to tax",                lineCode: () => "15",   required: true },
-  { key: "necTax",       label: "NEC Tax",                      hint: "Tax on non-effectively connected income", lineCode: () => "23a" },
+  { key: "necTax",       label: "NEC Tax",                      hint: "Tax on non-effectively connected income", lineCode: () => "23a", glossaryTip: "How non-effectively-connected income is taxed — flat 30% rate (or treaty rate) on U.S.-source passive income" },
   { key: "totalTax",     label: "Total Tax",                    hint: "Your total federal tax",               lineCode: () => "24",   required: true },
 ];
 
@@ -1610,6 +1610,31 @@ function fmtInput(v) {
   if (n == null) return v;
   return n.toLocaleString("en-US");
 }
+
+// ─── PHASE B TOOLTIP LOOKUPS ─────────────────────────────────────────────────
+// Glossary-style definitions for dynamic Signal Quality / Strategy badge values.
+const FLAG_TOOLTIPS = {
+  FALSE_EFFICIENCY:    "How an apparently low tax rate is driven by income loss rather than active sheltering",
+  LOSS_DISTORTION:     "How capital losses temporarily inflate the deduction efficiency reading",
+  INCOME_COLLAPSE:     "How a sharp income drop reshapes the tax picture compared to prior years",
+  DEDUCTION_ILLUSION:  "How high deduction efficiency reflects shrunken income, not optimization",
+  TRUE_OPTIMIZATION:   "How sustained efficiency confirms genuine tax planning across multiple years",
+  ONE_TIME_EVENT:      "How a single non-recurring event (sale, bonus, windfall) skews this year's metrics",
+};
+const SEVERITY_TOOLTIPS = {
+  POSITIVE: "How the signal confirms favorable position — reading reflects real strength",
+  MEDIUM:   "How the signal shows mixed quality — interpret with surrounding context",
+  HIGH:     "How the signal flags significant distortion — readings may not reflect underlying reality",
+  CRITICAL: "How the signal flags severe distortion — major caveat applies to year's metrics",
+};
+const BADGE_TOOLTIPS = {
+  "Strategy Detected":  "How TaxVista observed a clear pattern in your tax data",
+  "Strategy Confirmed": "How sustained signals confirm genuine tax optimization",
+  "Income Alert":       "How a critical income event distorts this year's tax metrics",
+  "Signal Distorted":   "How a major event causes apparent metrics to mislead",
+  "Event Detected":     "How a one-time event explains this year's unusual metrics",
+  "Signal Mixed":       "How partial signals make this year's reading ambiguous",
+};
 
 // ─── TOOLTIP ─────────────────────────────────────────────────────────────────
 function Tip({ children, tip }) {
@@ -2908,7 +2933,7 @@ export default function TaxToBook() {
                       <div key={f.key} className="tv-wiz-field">
                         <div className="tv-wiz-line-badge">Line {f.lineCode(y)}</div>
                         <div className="tv-wiz-field-label">
-                          <span className={`tv-wiz-field-name${f.required ? " tv-wiz-field-req" : ""}`}>{f.label}</span>
+                          <span className={`tv-wiz-field-name${f.required ? " tv-wiz-field-req" : ""}`}>{f.glossaryTip ? <Tip tip={f.glossaryTip}>{f.label}</Tip> : f.label}</span>
                           {(typeof f.hint === "function" ? f.hint(y) : f.hint) && (
                             <span className="tv-wiz-field-hint">· {typeof f.hint === "function" ? f.hint(y) : f.hint}</span>
                           )}
@@ -3002,16 +3027,26 @@ export default function TaxToBook() {
             {/* ── Strategy Detected bar ── */}
             {strategyPhase && (
               <div className="tv-strategy-bar">
-                <span className="tv-strategy-badge">{(() => {
+                {(() => {
                   const ps = resolvedActiveYear && metricMap[resolvedActiveYear]?.primarySignal;
-                  if (!ps) return "Strategy Detected";
-                  if (ps.severity === "CRITICAL") return "\u26A0 Income Alert";
-                  if (ps.severity === "HIGH") return "\u26A0 Signal Distorted";
-                  if (ps.severity === "MEDIUM" && ps.flag === "ONE_TIME_EVENT") return "\u26A0 Event Detected";
-                  if (ps.severity === "MEDIUM") return "\u26A0 Signal Mixed";
-                  if (ps.severity === "POSITIVE") return "\u2713 Strategy Confirmed";
-                  return "Strategy Detected";
-                })()}</span>
+                  let badgeText = "Strategy Detected";
+                  let lookupKey = "Strategy Detected";
+                  if (!ps) return (
+                    <Tip tip={BADGE_TOOLTIPS[lookupKey] ?? ""}>
+                      <span className="tv-strategy-badge">{badgeText}</span>
+                    </Tip>
+                  );
+                  if (ps.severity === "CRITICAL")                                    { badgeText = "⚠ Income Alert";       lookupKey = "Income Alert"; }
+                  else if (ps.severity === "HIGH")                                   { badgeText = "⚠ Signal Distorted";   lookupKey = "Signal Distorted"; }
+                  else if (ps.severity === "MEDIUM" && ps.flag === "ONE_TIME_EVENT") { badgeText = "⚠ Event Detected";     lookupKey = "Event Detected"; }
+                  else if (ps.severity === "MEDIUM")                                 { badgeText = "⚠ Signal Mixed";       lookupKey = "Signal Mixed"; }
+                  else if (ps.severity === "POSITIVE")                               { badgeText = "✓ Strategy Confirmed"; lookupKey = "Strategy Confirmed"; }
+                  return (
+                    <Tip tip={BADGE_TOOLTIPS[lookupKey] ?? ""}>
+                      <span className="tv-strategy-badge">{badgeText}</span>
+                    </Tip>
+                  );
+                })()}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
 
                   {/* Dynamic — updates on chart hover */}
@@ -3019,9 +3054,9 @@ export default function TaxToBook() {
                     <span key={yearInsight.year} className="tv-strategy-text tv-year-insight">
                       <strong>{yearInsight.year}</strong>
                       {" — "}
-                      Gross income:{" "}
+                      <Tip tip="How much you earned before any taxes or adjustments — Total Income (1040 Line 9)">Gross income</Tip>:{" "}
                       <strong>{$v(yearInsight.ti)}</strong>
-                      {" · "}After-tax:{" "}
+                      {" · "}<Tip tip="How much you kept after all taxes were paid — Total Income − Total Tax">After-tax</Tip>:{" "}
                       <strong style={{ color: yearInsight.atiColor, textShadow: yearInsight.atiGlow ?? "none" }}>
                         {$v(yearInsight.ati)}
                       </strong>
@@ -3031,7 +3066,7 @@ export default function TaxToBook() {
                         </span>
                       )}
                       {yearInsight.tti != null && (
-                        <>{" · "}Tax rate:{" "}
+                        <>{" · "}<Tip tip="How much of your total income went to taxes — Total Tax ÷ Total Income (before deductions)">Tax rate</Tip>:{" "}
                           <strong style={{ color: yearInsight.etrColor, textShadow: yearInsight.etrGlow ?? "none" }}>
                             {pf(yearInsight.tti)}
                           </strong>
@@ -3050,7 +3085,7 @@ export default function TaxToBook() {
                         </>
                       )}
                       {yearInsight.deLabel && (
-                        <>{" · "}Deductions:{" "}
+                        <>{" · "}<Tip tip="How effectively your deductions reduced gross income — qualitative band based on Deduction Efficiency">Deductions</Tip>:{" "}
                           <strong style={{ color: yearInsight.deColor, textShadow: yearInsight.deGlow ?? "none" }}>
                             {yearInsight.deLabel}
                           </strong>
@@ -3076,7 +3111,7 @@ export default function TaxToBook() {
                   <span className="tv-strategy-text" style={{ color: "rgba(var(--white-rgb),0.5)", fontSize: 15 }}>
                     Based on your{" "}
                     <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{strategyPhase.years}-year</strong> trend{_lowBase ? "" : <>, with an annualized growth rate of{" "}
-                    <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{(strategyPhase.cagr * 100).toFixed(1)}%</strong></>}, your financial phase is{" "}
+                    <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{(strategyPhase.cagr * 100).toFixed(1)}%</strong></>}, your <Tip tip="How your multi-year income growth pattern is classified — phase reflects growth rate and stability">financial phase</Tip> is{" "}
                     <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{strategyPhase.phase}</strong>.{" "}
                     {strategyPhase.note}
                   </span>
@@ -3186,7 +3221,7 @@ export default function TaxToBook() {
                               ))}
                               {m?.healthScore != null && (
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, paddingTop: 4, borderTop: "1px solid var(--border)" }}>
-                                  <span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.12em" }}>HEALTH</span>
+                                  <Tip tip="How healthy your tax position is — composite score 0-100 across income trajectory, tax efficiency, deductions, and signal quality"><span style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 12, letterSpacing: "0.12em" }}>HEALTH</span></Tip>
                                   <span style={{ fontFamily: "var(--mono)", fontSize: 14, fontWeight: 700, color: healthColorMap[m.healthColor] ?? "var(--text)" }}>{m.healthScore} — {m.healthLabel}</span>
                                 </div>
                               )}
@@ -3471,10 +3506,10 @@ export default function TaxToBook() {
                         <div style={{ marginTop: 16, padding: "16px 20px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", gap: 20 }}>
                           <div style={{ textAlign: "center", flexShrink: 0 }}>
                             <div style={{ fontFamily: "var(--mono)", fontSize: 36, fontWeight: 700, color: healthColorMap[vMetric.healthColor], lineHeight: 1 }}>{vMetric.healthScore}</div>
-                            <div style={{ fontFamily: "var(--mono)", fontSize: 13, letterSpacing: "0.1em", color: "var(--muted)", marginTop: 4 }}>HEALTH SCORE</div>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 13, letterSpacing: "0.1em", color: "var(--muted)", marginTop: 4 }}><Tip tip="How healthy your tax position is — composite score 0-100 across income trajectory, tax efficiency, deductions, and signal quality">HEALTH SCORE</Tip></div>
                           </div>
                           <div>
-                            <div style={{ fontFamily: "var(--mono)", fontSize: 17, fontWeight: 700, color: healthColorMap[vMetric.healthColor], marginBottom: 4 }}>{vMetric.healthLabel}</div>
+                            <div style={{ fontFamily: "var(--mono)", fontSize: 17, fontWeight: 700, color: healthColorMap[vMetric.healthColor], marginBottom: 4 }}><Tip tip="How healthy your tax position is on a 0-100 scale across 5 bands from Critical to Strong">{vMetric.healthLabel}</Tip></div>
                             <div style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.6 }}>
                               Based on income trajectory, tax efficiency, deduction structure, and signal quality.
                               {vMetric.primarySignal && (
@@ -3497,22 +3532,22 @@ export default function TaxToBook() {
                             borderLeftColor: vMetric.primarySignal.severity === "POSITIVE" ? "var(--success)"
                               : vMetric.primarySignal.severity === "MEDIUM" ? "var(--accent)"
                               : "var(--danger)",
-                          }}>Signal Quality</div>
+                          }}><Tip tip="How TaxVista validates whether your tax metrics reflect real optimization or hidden distortion">Signal Quality</Tip></div>
                           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
                             <div>
-                              <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em" }}>STATUS </span>
-                              <span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>
+                              <Tip tip="How the year's signal pattern is classified — see flag for specific meaning"><span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em" }}>STATUS </span></Tip>
+                              <Tip tip={FLAG_TOOLTIPS[vMetric.primarySignal.flag] ?? ""}><span style={{ fontFamily: "var(--mono)", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>
                                 {vMetric.primarySignal.flag.replace(/_/g, " ")}
-                              </span>
+                              </span></Tip>
                             </div>
                             <div>
-                              <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em" }}>SEVERITY </span>
-                              <span style={{
+                              <Tip tip="How serious the signal flag is — see severity value for specific level"><span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em" }}>SEVERITY </span></Tip>
+                              <Tip tip={SEVERITY_TOOLTIPS[vMetric.primarySignal.severity] ?? ""}><span style={{
                                 fontFamily: "var(--mono)", fontSize: 15, fontWeight: 700,
                                 color: vMetric.primarySignal.severity === "POSITIVE" ? "var(--success)"
                                   : vMetric.primarySignal.severity === "MEDIUM" ? "var(--accent)"
                                   : "var(--danger)",
-                              }}>{vMetric.primarySignal.severity}</span>
+                              }}>{vMetric.primarySignal.severity}</span></Tip>
                             </div>
                           </div>
                           <p style={{ fontSize: 17, color: "var(--text)", lineHeight: 1.7 }}>
