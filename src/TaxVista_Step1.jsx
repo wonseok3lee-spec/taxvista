@@ -206,7 +206,7 @@ const styles = `
   }
 
   /* ── Upload wrapper ── */
-  .tv-upload-wrapper { width: 100%; max-width: 700px; }
+  .tv-upload-wrapper { width: 100%; max-width: 840px; }
 
   /* ── Drop zone ── */
   .tv-drop-zone {
@@ -464,7 +464,7 @@ const styles = `
   .tv-cta {
     margin-top: 24px;
     width: 100%;
-    max-width: 700px;
+    max-width: 840px;
   }
   .tv-cta-btn {
     width: 100%;
@@ -495,7 +495,7 @@ const styles = `
   .tv-results {
     margin-top: 32px;
     width: 100%;
-    max-width: 700px;
+    max-width: 840px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -549,7 +549,7 @@ const styles = `
   .tv-tabs {
     margin-top: 32px;
     width: 100%;
-    max-width: 700px;
+    max-width: 840px;
     display: flex;
     gap: 8px;
     border-bottom: 1px solid var(--border);
@@ -573,7 +573,7 @@ const styles = `
   .tv-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
   .tv-tab-panel {
     width: 100%;
-    max-width: 700px;
+    max-width: 840px;
   }
   .tv-tab-placeholder {
     margin-top: 24px;
@@ -591,7 +591,7 @@ const styles = `
   .tv-insights {
     margin-top: 24px;
     width: 100%;
-    max-width: 700px;
+    max-width: 840px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -722,7 +722,7 @@ const styles = `
   .tv-info-row {
     margin-top: 44px;
     width: 100%;
-    max-width: 700px;
+    max-width: 840px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
@@ -763,7 +763,7 @@ const styles = `
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 1100px;
+    max-width: 1320px;
     margin-top: 40px;
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -1145,7 +1145,7 @@ const styles = `
   }
 
   /* ── Wizard ── */
-  .tv-wiz { width: 100%; max-width: 700px; }
+  .tv-wiz { width: 100%; max-width: 840px; }
   .tv-wiz-progress {
     display: flex; gap: 8px; margin-bottom: 28px; justify-content: center;
   }
@@ -1663,7 +1663,7 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
 // TEST SCENARIO SEED — DELETE THIS BLOCK TO REMOVE
 // Toggle TEST_SCENARIO_ENABLED to false to disable without deleting.
 // ═══════════════════════════════════════════════════════════════
-const TEST_SCENARIO_ENABLED = false;
+const TEST_SCENARIO_ENABLED = true;
 
 const TEST_SCENARIOS = {
   freelance: {
@@ -1759,6 +1759,80 @@ const TEST_SCENARIOS = {
         deductions: "15000",
         taxableIncome: "533000",
         totalTax: "138500",
+      },
+    },
+  },
+  chaotic_portfolio: {
+    label: "Chaotic Portfolio",
+    sublabel: "Multi-source income chaos (5 years, 2021–2025)",
+    emoji: "🎲",
+    years: [2021, 2022, 2023, 2024, 2025],
+    forms: { 2021: "1040", 2022: "1040", 2023: "1040", 2024: "1040", 2025: "1040" },
+    data: {
+      2021: {
+        wages: "62000",
+        interest: "180",
+        dividends: "420",
+        capitalGains: "3200",
+        otherIncome: "8500",
+        totalIncome: "74300",
+        adjustments: "1200",
+        agi: "73100",
+        deductions: "12550",
+        taxableIncome: "60550",
+        totalTax: "8240",
+      },
+      2022: {
+        wages: "118000",
+        interest: "850",
+        dividends: "2100",
+        capitalGains: "42000",
+        otherIncome: "15400",
+        totalIncome: "178350",
+        adjustments: "2300",
+        agi: "176050",
+        deductions: "12950",
+        taxableIncome: "163100",
+        totalTax: "31280",
+      },
+      2023: {
+        wages: "95000",
+        interest: "2400",
+        dividends: "1800",
+        capitalGains: "-3000",
+        otherIncome: "8200",
+        totalIncome: "104400",
+        adjustments: "4100",
+        agi: "100300",
+        deductions: "13850",
+        taxableIncome: "86450",
+        totalTax: "13950",
+      },
+      2024: {
+        wages: "108000",
+        interest: "3200",
+        dividends: "3400",
+        capitalGains: "87000",
+        otherIncome: "31000",
+        totalIncome: "232600",
+        adjustments: "5800",
+        agi: "226800",
+        deductions: "14600",
+        taxableIncome: "212200",
+        totalTax: "44120",
+      },
+      2025: {
+        wages: "0",
+        interest: "5400",
+        dividends: "6800",
+        capitalGains: "28000",
+        otherIncome: "215000",
+        totalIncome: "255200",
+        adjustments: "18500",
+        agi: "236700",
+        deductions: "15000",
+        taxableIncome: "221700",
+        totalTax: "47650",
       },
     },
   },
