@@ -1177,6 +1177,67 @@ const styles = `
     box-shadow: 0 0 12px rgba(var(--accent-rgb),0.25);
   }
 
+  /* ── Glossary ── */
+  .tv-glossary-search {
+    width: 100%; padding: 12px 16px; margin-bottom: 24px;
+    font-family: var(--mono); font-size: 15px;
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .tv-glossary-search:focus { border-color: var(--accent); }
+  .tv-glossary-section { margin-bottom: 32px; }
+  .tv-glossary-cat-header {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .tv-glossary-grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .tv-glossary-card {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; background: var(--bg);
+    display: flex; flex-direction: column; gap: 10px;
+    transition: border-color 0.15s;
+  }
+  .tv-glossary-card:hover { border-color: var(--accent); }
+  .tv-glossary-card-wide { grid-column: span 2; }
+  .tv-glossary-term {
+    font-family: var(--mono); font-size: 15px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.02em;
+  }
+  .tv-glossary-def { font-size: 14px; color: var(--text); line-height: 1.6; }
+  .tv-glossary-formula {
+    font-family: var(--mono); font-size: 13px;
+    color: var(--accent2); padding: 6px 10px;
+    background: rgba(var(--accent-rgb),0.05); border-radius: 5px;
+    overflow-x: auto;
+  }
+  .tv-glossary-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .tv-glossary-line {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--muted); letter-spacing: 0.05em;
+  }
+  .tv-glossary-bands { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .tv-glossary-band {
+    display: grid; grid-template-columns: 1fr auto 2fr; gap: 12px;
+    align-items: baseline;
+    font-size: 13px; padding: 4px 0;
+    border-bottom: 1px dashed rgba(var(--white-rgb),0.06);
+  }
+  .tv-glossary-band:last-child { border-bottom: none; }
+  .tv-glossary-band-name { font-family: var(--mono); font-weight: 700; color: var(--text); }
+  .tv-glossary-band-range { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+  .tv-glossary-band-desc { color: var(--text); opacity: 0.75; }
+  .tv-glossary-example {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--accent); padding-top: 8px;
+    border-top: 1px dashed rgba(var(--accent-rgb),0.25);
+  }
+
   /* ── Wizard ── */
   .tv-wiz { width: 100%; max-width: 840px; }
   .tv-wiz-progress {
@@ -1636,6 +1697,130 @@ const BADGE_TOOLTIPS = {
   "Signal Mixed":       "How partial signals make this year's reading ambiguous",
 };
 
+// ─── PHASE C GLOSSARY DATA ───────────────────────────────────────────────────
+// Source-of-truth definitions for the Glossary view. Wording mirrors Phase A/B
+// tooltips; the Glossary expands with formulas, line refs, bands, and personalized values.
+// value: (r, m, sp) => extracts personalized value from latest result/metric/strategyPhase
+// fmt:   "currency" | "percent" | "raw" | null  — null hides personalized line
+const GLOSSARY_TERMS = [
+  // ── INCOME (5) ──
+  { category: "INCOME", term: "Total Income", line: "1040 Line 9",
+    def: "All income reported before any adjustments or deductions — wages, interest, dividends, capital gains, and other sources combined",
+    formula: null, value: (r) => r?.summary?.totalIncome, fmt: "currency" },
+  { category: "INCOME", term: "Wages", line: "1040 Line 1a (or 1z for total)",
+    def: "Salary, tips, bonuses, and other compensation reported on W-2 forms",
+    formula: null, value: (r) => r?.income?.wages, fmt: "currency" },
+  { category: "INCOME", term: "Schedule C", line: "Schedule 1 Line 3",
+    def: "Profit or loss from self-employment, sole proprietorship, or single-member LLC business activity",
+    formula: null, value: null, fmt: null },
+  { category: "INCOME", term: "Capital Gain/Loss", line: "1040 Line 7 (7a in 2025)",
+    def: "Profit (gain) or loss from selling investments — stocks, bonds, real estate, crypto, or other capital assets",
+    formula: null, value: (r) => r?.income?.capitalGains, fmt: "currency" },
+  { category: "INCOME", term: "Adjusted Gross Income (AGI)", line: "1040 Line 11 (11a in 2025)",
+    def: "Your gross income after pre-tax adjustments like IRA contributions and student loan interest",
+    formula: "Total Income − Adjustments", value: (r) => r?.summary?.adjustedGrossIncome, fmt: "currency" },
+
+  // ── TAX (6) ──
+  { category: "TAX", term: "Total Tax", line: "1040 Line 24",
+    def: "All federal income tax owed for the year — what you actually paid (or owe)",
+    formula: null, value: (r) => r?.summary?.totalTax, fmt: "currency" },
+  { category: "TAX", term: "Effective Tax Rate", line: "Line 24 ÷ Line 15",
+    def: "Your true tax rate on income subject to tax — what percentage of taxable income went to taxes",
+    formula: "Total Tax ÷ Taxable Income", value: (r, m) => m?.effectiveTaxRate, fmt: "percent" },
+  { category: "TAX", term: "Tax / Income", line: "Line 24 ÷ Line 9",
+    def: "What percentage of your gross income (before deductions) went to taxes — always lower than Effective Tax Rate",
+    formula: "Total Tax ÷ Total Income", value: (r, m) => m?.taxToIncome, fmt: "percent" },
+  { category: "TAX", term: "Marginal Tax Rate", line: null,
+    def: "The tax rate on your next dollar of income — based on your top tax bracket, not your overall rate",
+    formula: null, value: null, fmt: null },
+  { category: "TAX", term: "After-Tax Income", line: null,
+    def: "What you actually kept after federal taxes were paid — your real take-home from a tax-return perspective",
+    formula: "Total Income − Total Tax", value: (r, m) => m?.afterTaxIncome, fmt: "currency" },
+  { category: "TAX", term: "After-Tax Margin", line: null,
+    def: "The percentage of your total income that you actually keep after taxes",
+    formula: "(Total Income − Total Tax) ÷ Total Income", value: (r, m) => m?.afterTaxMargin, fmt: "percent" },
+
+  // ── DEDUCTION (5) ──
+  { category: "DEDUCTION", term: "Standard Deduction", line: null,
+    def: "The flat-amount deduction available without itemizing — set by Congress, varies by filing status",
+    formula: null, value: null, fmt: null },
+  { category: "DEDUCTION", term: "Itemized Deductions", line: "Schedule A",
+    def: "Detailed list of allowable expenses (mortgage interest, SALT, charitable contributions, medical) — used when total exceeds the standard deduction",
+    formula: null, value: (r) => r?.deductions?.itemized, fmt: "currency" },
+  { category: "DEDUCTION", term: "Above-the-line Deductions", line: "Schedule 1 Line 26",
+    def: "Adjustments that reduce gross income to AGI — IRA contributions, student loan interest, HSA contributions, self-employment tax",
+    formula: null, value: (r) => r?.adjustments?.totalAdjustments, fmt: "currency" },
+  { category: "DEDUCTION", term: "Pre-tax Contributions", line: null,
+    def: "Money contributed to qualified accounts (401k, traditional IRA, HSA, FSA) that reduces taxable income in the contribution year — 2025 limits: 401k $23,500, IRA $7,000, HSA $4,300 single / $8,550 family",
+    formula: null, value: null, fmt: null },
+  { category: "DEDUCTION", term: "Deduction Efficiency", line: null,
+    def: "How much your deductions reduce your gross income — measures whether your deduction strategy scales with income",
+    formula: "(AGI − Taxable Income) ÷ Total Income", value: (r, m) => m?.deductionEfficiency, fmt: "percent" },
+
+  // ── GROWTH (3) ──
+  { category: "GROWTH", term: "CAGR (Income Growth Rate)", line: null,
+    def: "Your average yearly income change over a multi-year period — accounts for compounding so it isn't distorted by one big year",
+    formula: "(Last ÷ First)^(1/(n−1)) − 1", value: null, fmt: null },
+  { category: "GROWTH", term: "Cumulative Growth", line: null,
+    def: "The total percentage change from your first year to the latest year — does not account for time, just shows total change",
+    formula: "(Last − First) ÷ First", value: null, fmt: null },
+  { category: "GROWTH", term: "Year-over-Year (YoY) Change", line: null,
+    def: "The change between consecutive years — measures one-year delta, not multi-year trend",
+    formula: "(This Year − Last Year) ÷ Last Year", value: null, fmt: null },
+
+  // ── APP-SPECIFIC (6) ──
+  { category: "APP-SPECIFIC", term: "Health Score", line: null, wide: true,
+    def: "A 0-100 composite score across income trajectory, tax efficiency, deduction structure, and signal quality",
+    bands: [
+      ["Strong",   "≥80",   "Solid across all dimensions"],
+      ["Stable",   "60-79", "Generally healthy, minor flags"],
+      ["Moderate", "40-59", "Mixed signals, opportunities exist"],
+      ["At Risk",  "20-39", "Multiple weak dimensions"],
+      ["Critical", "<20",   "Serious distortions or weaknesses"],
+    ],
+    value: (r, m) => m?.healthScore != null ? `${m.healthScore} — ${m.healthLabel}` : null, fmt: "raw" },
+  { category: "APP-SPECIFIC", term: "Income Phase", line: null, wide: true,
+    def: "How your multi-year income growth pattern is classified — phase reflects growth rate and stability",
+    bands: [
+      ["Accelerated Growth",       ">12%/yr",          "Sustained rapid expansion"],
+      ["High Growth + Correction", ">12% w/ recent dip","Strong long-term growth, recent pullback"],
+      ["Early Income Expansion",   "low base + >12%",  "Income transitioning into taxable territory"],
+      ["Steady Accumulation",      "4-12%/yr",         "Moderate, above-inflation expansion"],
+      ["Stable Growth",            "2-4%/yr",          "Consistent, positive trajectory"],
+      ["Income Plateau",           "0-2%/yr",          "Effectively flat or below inflation"],
+      ["Income Contraction",       "<0%/yr",           "Income declining year-over-year"],
+    ],
+    value: (r, m, sp) => sp?.phase ?? null, fmt: "raw" },
+  { category: "APP-SPECIFIC", term: "Strategy Badges", line: null, wide: true,
+    def: "Status indicator at the top of the dashboard summarizing how TaxVista interprets your year's signal pattern",
+    bands: [
+      ["Strategy Detected",  "—",                "Clear pattern observed in your tax data"],
+      ["Strategy Confirmed", "POSITIVE",         "Sustained signals confirm genuine optimization"],
+      ["Income Alert",       "CRITICAL",         "Critical income event distorts metrics"],
+      ["Signal Distorted",   "HIGH",             "Major event causes apparent metrics to mislead"],
+      ["Event Detected",     "MEDIUM (one-time)","Single non-recurring event explains unusual metrics"],
+      ["Signal Mixed",       "MEDIUM",           "Partial signals make reading ambiguous"],
+    ],
+    value: null, fmt: null },
+  { category: "APP-SPECIFIC", term: "Primary Signal Flags", line: null, wide: true,
+    def: "Categorization of how this year's tax metrics should be interpreted — whether they reflect real optimization or hidden distortion",
+    bands: [
+      ["TRUE_OPTIMIZATION",  "Positive",  "Sustained efficiency confirms genuine planning"],
+      ["FALSE_EFFICIENCY",   "Distorted", "Apparently low rate driven by income loss"],
+      ["DEDUCTION_ILLUSION", "Distorted", "High efficiency reflects shrunken income"],
+      ["LOSS_DISTORTION",    "Distorted", "Capital losses inflate readings"],
+      ["INCOME_COLLAPSE",    "Critical",  "Sharp drop reshapes tax picture"],
+      ["ONE_TIME_EVENT",     "Mixed",     "Non-recurring event skews metrics"],
+    ],
+    value: (r, m) => m?.primarySignal?.flag ? m.primarySignal.flag.replace(/_/g, " ") : null, fmt: "raw" },
+  { category: "APP-SPECIFIC", term: "ETR vs Tax / Income", line: null,
+    def: "Two related but different rates: ETR uses taxable income (post-deduction) as denominator; Tax/Income uses total income (pre-deduction). ETR is always higher because deductions shrink the denominator",
+    formula: "ETR ≥ Tax/Income (always, since Taxable ≤ Total Income)", value: null, fmt: null },
+  { category: "APP-SPECIFIC", term: "Peak-Risk Year", line: null,
+    def: "The year identified as most tax-exposed in your history — peak income, highest effective tax rate, and lowest deduction efficiency. Highest leverage for retroactive optimization review",
+    formula: null, value: null, fmt: null },
+];
+
 // ─── TOOLTIP ─────────────────────────────────────────────────────────────────
 function Tip({ children, tip }) {
   const [coords, setCoords] = useState(null);
@@ -1922,6 +2107,7 @@ export default function TaxToBook() {
   const [barHoverYear, setBarHoverYear] = useState(null);
   const [activeMetric, setActiveMetric] = useState(null);
   const [reportName, setReportName] = useState("");
+  const [glossarySearch, setGlossarySearch] = useState("");
   const [theme, setTheme] = useState(() =>
     typeof window !== "undefined"
       ? document.documentElement.getAttribute("data-theme") || "light"
@@ -2219,6 +2405,9 @@ export default function TaxToBook() {
 
   // ── Dashboard derived state ──
   const metricMap = Object.fromEntries(results.map((r, i) => [r.year, metrics[i]]));
+  const latestR = results.length > 0 ? [...results].sort((a, b) => b.year - a.year)[0] : null;
+  const latestM = latestR ? metricMap[latestR.year] : null;
+  const latestYear = latestR?.year ?? null;
   const filteredResults = results
     .filter(r => selectedYears.includes(r.year))
     .sort((a, b) => a.year - b.year);
@@ -2237,6 +2426,39 @@ export default function TaxToBook() {
      : "$" + Math.round(v).toLocaleString())
     : "—";
   const pf = (v) => v != null ? (v * 100).toFixed(1) + "%" : "—";
+
+  // ── Glossary card renderer ──
+  const renderGlossaryCard = (t) => {
+    const raw = t.value ? t.value(latestR, latestM, strategyPhase) : null;
+    let formatted = null;
+    if (raw != null && raw !== "") {
+      if (t.fmt === "currency")    formatted = $v(raw);
+      else if (t.fmt === "percent") formatted = pf(raw);
+      else if (t.fmt === "raw")     formatted = String(raw);
+    }
+    return (
+      <div key={t.term} className={`tv-glossary-card${t.wide ? " tv-glossary-card-wide" : ""}`}>
+        <div className="tv-glossary-term">{t.term}</div>
+        <div className="tv-glossary-def">{t.def}</div>
+        {t.formula && <div className="tv-glossary-formula">{t.formula}</div>}
+        {t.line && <div className="tv-glossary-meta"><span className="tv-glossary-line">{t.line}</span></div>}
+        {t.bands && (
+          <div className="tv-glossary-bands">
+            {t.bands.map(([name, range, desc]) => (
+              <div key={name} className="tv-glossary-band">
+                <span className="tv-glossary-band-name">{name}</span>
+                <span className="tv-glossary-band-range">{range}</span>
+                <span className="tv-glossary-band-desc">{desc}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {formatted && latestYear && (
+          <div className="tv-glossary-example">Your {latestYear}: {formatted}</div>
+        )}
+      </div>
+    );
+  };
 
   // ── Chart data ──
   const hChartData = filteredResults.map((r, i) => {
@@ -3154,6 +3376,7 @@ export default function TaxToBook() {
               </div>
               <div className="tv-nav-section">
                 {[
+                  { id: "glossary",   icon: "❡", label: "Glossary"   },
                   { id: "overview",   icon: "◈", label: "Overview"   },
                   { id: "horizontal", icon: "↔", label: "Horizontal" },
                   { id: "vertical",   icon: "↕", label: "Vertical"   },
@@ -3666,6 +3889,38 @@ export default function TaxToBook() {
                       );
                     })}
                   </div>
+                </>
+              )}
+
+              {/* Glossary */}
+              {activeTab === "glossary" && (
+                <>
+                  <div className="tv-canvas-title">
+                    Glossary
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>plain-English definitions for every term</span>
+                  </div>
+                  <input
+                    className="tv-glossary-search"
+                    type="text"
+                    placeholder="Search terms…"
+                    value={glossarySearch}
+                    onChange={e => setGlossarySearch(e.target.value)}
+                  />
+                  {["INCOME", "TAX", "DEDUCTION", "GROWTH", "APP-SPECIFIC"].map(cat => {
+                    const items = GLOSSARY_TERMS.filter(t =>
+                      t.category === cat &&
+                      (!glossarySearch || t.term.toLowerCase().includes(glossarySearch.toLowerCase()))
+                    );
+                    if (items.length === 0) return null;
+                    return (
+                      <div key={cat} className="tv-glossary-section">
+                        <div className="tv-glossary-cat-header">{cat}</div>
+                        <div className="tv-glossary-grid">
+                          {items.map(renderGlossaryCard)}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </>
               )}
 
