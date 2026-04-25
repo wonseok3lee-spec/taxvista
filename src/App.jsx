@@ -1,7 +1,7 @@
-import TaxVista from "./TaxVista_Step1";
+import TaxToBook from "./TaxVista_Step1";
 
 function App() {
-  return <TaxVista />;
+  return <TaxToBook />;
 }
 
 export default App;

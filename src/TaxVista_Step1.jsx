@@ -114,6 +114,12 @@ const styles = `
   .tv-logo::after {
     background: linear-gradient(to left, transparent, var(--accent));
   }
+  .tv-logo-mid {
+    text-transform: lowercase;
+    font-weight: 400;
+    opacity: 0.85;
+    letter-spacing: 0.1em;
+  }
   .tv-header h1 {
     font-family: var(--mono);
     font-size: clamp(26px, 4.5vw, 40px);
@@ -1243,6 +1249,12 @@ const styles = `
       font-size: 10pt; font-weight: 700; letter-spacing: 0.35em;
       text-transform: uppercase; color: #555;
     }
+    .tv-pr-logo-mid {
+      text-transform: lowercase;
+      font-weight: 400;
+      opacity: 0.85;
+      letter-spacing: 0.08em;
+    }
     .tv-pr-title {
       font-size: 21pt; font-weight: 700; font-family: Georgia, serif;
       color: #111; margin: 6pt 0 4pt;
@@ -1687,7 +1699,7 @@ const TEST_SCENARIOS = {
 // END TEST SCENARIO SEED
 // ═══════════════════════════════════════════════════════════════
 
-export default function TaxVista() {
+export default function TaxToBook() {
   // ── Wizard state ──
   const [wizStep, setWizStep] = useState(1);
   const [wizYears, setWizYears] = useState([]);
@@ -1717,13 +1729,13 @@ export default function TaxVista() {
   const metricStroke  = (metric, base) => activeMetric === metric ? base + 1 : base;
 
   useEffect(() => {
-    const existing = document.querySelector('link[data-taxvista-font]');
+    const existing = document.querySelector('link[data-taxtobook-font]');
     if (existing) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href =
       "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap";
-    link.setAttribute("data-taxvista-font", "1");
+    link.setAttribute("data-taxtobook-font", "1");
     document.head.appendChild(link);
   }, []);
 
@@ -1832,7 +1844,7 @@ export default function TaxVista() {
       }
       computedMetrics.push(calculateMetrics(collected[i], Object.keys(compare).length > 0 ? compare : undefined));
     }
-    console.log("[TaxVista] False Signal Detection:", computedMetrics.map((m, i) => ({
+    console.log("[TaxToBook] False Signal Detection:", computedMetrics.map((m, i) => ({
       year: collected[i]?.year,
       primarySignal: m.primarySignal,
       falseSignals: m.falseSignals,
@@ -2338,7 +2350,7 @@ export default function TaxVista() {
     const maxYear  = Math.max(...years);
     const yearRange = minYear === maxYear ? String(minYear) : `${minYear}-${maxYear}`;
 
-    const printTitle   = `TaxVista_${descriptor}_${yearRange}`;
+    const printTitle   = `TaxToBook_${descriptor}_${yearRange}`;
     const originalTitle = document.title;
     document.title = printTitle;
 
@@ -2546,7 +2558,7 @@ export default function TaxVista() {
 
         {/* ── Header ── */}
         <div className="tv-header">
-          <div className="tv-logo">TaxToBook</div>
+          <div className="tv-logo"><span className="tv-logo-name">TAX<span className="tv-logo-mid">to</span>BOOK</span></div>
           <h1>
             Your Tax Return is a<br />
             <span>Financial Story.</span>
@@ -3565,7 +3577,7 @@ export default function TaxVista() {
 
             {/* ════════════ PAGE 1 — EXECUTIVE SUMMARY ════════════ */}
             <div className="tv-pr-header">
-              <div className="tv-pr-logo">TaxVista</div>
+              <div className="tv-pr-logo">TAX<span className="tv-pr-logo-mid">to</span>BOOK</div>
               <div className="tv-pr-title">Financial Intelligence Report</div>
               {reportName && <div style={{ fontSize: "11pt", color: "#333", marginTop: "4pt" }}>Prepared for: <strong style={{ fontFamily: "'Arial Unicode MS', 'Noto Sans', sans-serif", unicodeBidi: "normal" }}>{reportName}</strong></div>}
               <div className="tv-pr-subtitle">
@@ -3806,7 +3818,7 @@ export default function TaxVista() {
             </div>
 
             <div className="tv-pr-footer">
-              TaxVista Financial Intelligence
+              TaxToBook Financial Intelligence
               {" · "}Generated from your tax data — no documents stored
               {" · "}{new Date().getFullYear()}
             </div>
