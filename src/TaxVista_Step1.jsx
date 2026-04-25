@@ -3,9 +3,8 @@ import { calculateMetrics } from "./utils/calculateMetrics";
 import {
   LineChart, Line, BarChart, Bar,
   AreaChart, Area,
-  ComposedChart,
   PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList,
   ResponsiveContainer,
 } from "recharts";
 
@@ -1859,52 +1858,6 @@ function Tip({ children, tip }) {
   );
 }
 
-// ─── CHART TOOLTIP ───────────────────────────────────────────────────────────
-// Renders with position:fixed so it can overflow chart/card boundaries freely.
-// Recharts clones this element and injects: active, payload, label, coordinate.
-function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) {
-  if (!active || !payload?.length || !coordinate || !chartRef?.current) return null;
-
-  const rect = chartRef.current.getBoundingClientRect();
-  const vpX = rect.left + coordinate.x;
-  const vpY = rect.top + coordinate.y;
-
-  const W = 190;
-  const offset = 12;
-  let left = vpX + offset;
-  let top  = vpY - 24;
-  // Only reposition if the tooltip would go fully off-screen — never clamp inside chart bounds
-  if (left + W > window.innerWidth - 4) left = window.innerWidth - W - 4;
-  if (top < 10) top = vpY + offset;
-
-  return (
-    <div style={{
-      position: "fixed", left, top, zIndex: 9999,
-      background: "var(--surface-tooltip)", border: "1px solid var(--border)",
-      borderRadius: 6, fontFamily: "Space Mono, monospace",
-      fontSize: 11, padding: "10px 14px",
-      pointerEvents: "none", maxWidth: W,
-      boxShadow: "0 4px 14px rgba(var(--black-rgb),0.5)",
-    }}>
-      {label != null && (
-        <div style={{ color: "var(--muted)", marginBottom: 6, fontSize: 10, letterSpacing: "0.05em" }}>
-          {label}
-        </div>
-      )}
-      {payload.map((entry, i) => (
-        <div key={i} style={{
-          display: "flex", justifyContent: "space-between", gap: 12,
-          color: entry.color ?? entry.stroke ?? entry.fill ?? "var(--text)",
-          marginBottom: i < payload.length - 1 ? 4 : 0,
-        }}>
-          <span style={{ color: "var(--muted)" }}>{entry.name}</span>
-          <span>{fmtVal ? fmtVal(entry.value) : entry.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 // TEST SCENARIO SEED — DELETE THIS BLOCK TO REMOVE
@@ -2115,9 +2068,6 @@ export default function TaxToBook() {
       : "light"
   );
   const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
-  const areaChartRef = useRef(null);
-  const lineChartRef = useRef(null);
-  const barChartRef  = useRef(null);
 
   const onChartMove  = (e) => { if (e?.activeLabel) setActiveYear(Number(e.activeLabel)); };
   const onChartLeave = ()  => setActiveYear(null);
@@ -2465,17 +2415,24 @@ export default function TaxToBook() {
   const hChartData = filteredResults.map((r, i) => {
     const m = filteredMetrics[i];
     const inc = r.income ?? {};
+    const w  = Math.max(inc.wages ?? 0, 0);
+    const cg = Math.max(inc.capitalGains ?? 0, 0);
+    const dv = Math.max(inc.dividends ?? 0, 0);
+    const it = Math.max(inc.interest ?? 0, 0);
+    const ot = Math.max(inc.additionalIncome ?? 0, 0);
+    const incomeTotal = w + cg + dv + it + ot;
     return {
       year: String(r.year),
       totalIncome: r.summary?.totalIncome ?? 0,
       afterTax: m?.afterTaxIncome ?? 0,
       taxRate: +((m?.taxToIncome ?? 0) * 100).toFixed(2),
       effectiveTaxRate: +((m?.effectiveTaxRate ?? 0) * 100).toFixed(2),
-      wages:     Math.max(inc.wages ?? 0, 0),
-      capGains:  Math.max(inc.capitalGains ?? 0, 0),
-      dividends: Math.max(inc.dividends ?? 0, 0),
-      interest:  Math.max(inc.interest ?? 0, 0),
-      other:     Math.max(inc.additionalIncome ?? 0, 0),
+      wages: w, capGains: cg, dividends: dv, interest: it, other: ot,
+      wagesPct:     incomeTotal > 0 ? (w  / incomeTotal) * 100 : 0,
+      capGainsPct:  incomeTotal > 0 ? (cg / incomeTotal) * 100 : 0,
+      dividendsPct: incomeTotal > 0 ? (dv / incomeTotal) * 100 : 0,
+      interestPct:  incomeTotal > 0 ? (it / incomeTotal) * 100 : 0,
+      otherPct:     incomeTotal > 0 ? (ot / incomeTotal) * 100 : 0,
     };
   });
 
@@ -3477,12 +3434,12 @@ export default function TaxToBook() {
                     </div>
                   ) : (
                     <>
-                      {/* After-Tax Income Trend (composed: stacked income breakdown + after-tax overlay) */}
+                      {/* Where Income Came From (multi-year stacked bars matching Vertical donut categories) */}
                       <div className="tv-chart-block">
-                        <div className="tv-chart-label"><Tip tip="How much you kept after taxes — year over year">After-Tax Income Trend</Tip></div>
-                        <div ref={areaChartRef} className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
+                        <div className="tv-chart-label"><Tip tip="How your income broke down by source over time — multi-year companion to the Vertical donut">Where Income Came From</Tip></div>
+                        <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={200}>
-                            <ComposedChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
+                            <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
@@ -3490,21 +3447,23 @@ export default function TaxToBook() {
                                 tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={56}
                               />
-                              <Tooltip
-                                content={<ChartTooltip chartRef={areaChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
-                                cursor={{ stroke: cssVar("--accent"), strokeWidth: 1, strokeOpacity: 0.3 }}
-                              />
                               <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 13, paddingTop: 8, color: "var(--muted)" }} />
-                              <Bar dataKey="wages"     stackId="income" fill={cssVar("--chart-income")}     name="Wages"      isAnimationActive={false} />
-                              <Bar dataKey="capGains"  stackId="income" fill={cssVar("--chart-after-tax")}  name="Cap Gains"  isAnimationActive={false} />
-                              <Bar dataKey="dividends" stackId="income" fill={cssVar("--chart-pie-3")}      name="Dividends"  isAnimationActive={false} />
-                              <Bar dataKey="interest"  stackId="income" fill={cssVar("--chart-pie-4")}      name="Interest"   isAnimationActive={false} />
-                              <Bar dataKey="other"     stackId="income" fill={cssVar("--chart-pie-5")}      name="Other"      isAnimationActive={false} />
-                              <Line type="monotone" dataKey="afterTax"
-                                stroke={cssVar("--accent")} strokeWidth={metricStroke("afterTax", 3)} strokeOpacity={metricOpacity("afterTax")}
-                                dot={{ r: 4, fill: cssVar("--accent"), strokeWidth: 0 }} activeDot={{ r: 6 }}
-                                name="After-Tax Income" isAnimationActive={false} />
-                            </ComposedChart>
+                              <Bar dataKey="wages"     stackId="income" fill={cssVar("--chart-income")}     name="Wages"      isAnimationActive={false}>
+                                <LabelList dataKey="wagesPct"     position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
+                              </Bar>
+                              <Bar dataKey="capGains"  stackId="income" fill={cssVar("--chart-after-tax")}  name="Cap Gains"  isAnimationActive={false}>
+                                <LabelList dataKey="capGainsPct"  position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
+                              </Bar>
+                              <Bar dataKey="dividends" stackId="income" fill={cssVar("--chart-pie-3")}      name="Dividends"  isAnimationActive={false}>
+                                <LabelList dataKey="dividendsPct" position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
+                              </Bar>
+                              <Bar dataKey="interest"  stackId="income" fill={cssVar("--chart-pie-4")}      name="Interest"   isAnimationActive={false}>
+                                <LabelList dataKey="interestPct"  position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
+                              </Bar>
+                              <Bar dataKey="other"     stackId="income" fill={cssVar("--chart-pie-5")}      name="Other"      isAnimationActive={false}>
+                                <LabelList dataKey="otherPct"     position="center" fill={cssVar("--text")} fontSize={11} formatter={(v) => v >= 10 ? `${v.toFixed(0)}%` : ""} />
+                              </Bar>
+                            </BarChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
@@ -3552,9 +3511,9 @@ export default function TaxToBook() {
                       {/* Gross Income vs Take-Home Income (line) */}
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How earnings compare to what you kept after taxes">Gross Income vs Take-Home Income</Tip></div>
-                        <div ref={lineChartRef} className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
+                        <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={200}>
-                            <LineChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
+                            <LineChart data={hChartData} margin={{ top: 24, right: 28, bottom: 16, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
@@ -3562,17 +3521,21 @@ export default function TaxToBook() {
                                 tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={56}
                               />
-                              <Tooltip
-                                content={<ChartTooltip chartRef={lineChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
-                                cursor={{ stroke: cssVar("--muted"), strokeWidth: 1, strokeOpacity: 0.08 }}
-                              />
                               <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 14, paddingTop: 10, color: "var(--muted)" }} />
                               <Line type="monotone" dataKey="totalIncome" stroke={cssVar("--chart-income")} strokeWidth={metricStroke("income", 2)}
                                 dot={{ r: 3, fill: cssVar("--chart-income"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
-                                strokeOpacity={metricOpacity("income")} />
+                                strokeOpacity={metricOpacity("income")}>
+                                <LabelList dataKey="totalIncome" position="top" offset={8}
+                                  formatter={(v) => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"K")}
+                                  fill={cssVar("--chart-income")} fontSize={11} fontFamily="Space Mono, monospace" />
+                              </Line>
                               <Line type="monotone" dataKey="afterTax" stroke={cssVar("--chart-after-tax")} strokeWidth={metricStroke("afterTax", 2)}
                                 dot={{ r: 3, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="After-Tax"
-                                strokeOpacity={metricOpacity("afterTax")} />
+                                strokeOpacity={metricOpacity("afterTax")}>
+                                <LabelList dataKey="afterTax" position="bottom" offset={8}
+                                  formatter={(v) => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"K")}
+                                  fill={cssVar("--chart-after-tax")} fontSize={11} fontFamily="Space Mono, monospace" />
+                              </Line>
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
@@ -3581,19 +3544,15 @@ export default function TaxToBook() {
                       {/* Tax Burden Comparison (bar) */}
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year">Tax Burden Comparison</Tip></div>
-                        <div ref={barChartRef} className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
+                        <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={180}>
-                            <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onBarMove} onMouseLeave={onBarLeave}>
+                            <BarChart data={hChartData} margin={{ top: 24, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onBarMove} onMouseLeave={onBarLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => v.toFixed(0) + "%"}
                                 tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={38}
-                              />
-                              <Tooltip
-                                content={<ChartTooltip chartRef={barChartRef} fmtVal={v => v.toFixed(1) + "%"} />}
-                                cursor={false}
                               />
                               <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 14, paddingTop: 10, color: "var(--muted)" }} />
                               <Bar dataKey="taxRate"          fill={cssVar("--chart-tax-ratio")} name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
@@ -3602,6 +3561,9 @@ export default function TaxToBook() {
                                     (barHoverYear && entry.year !== String(barHoverYear) ? 0.3 : 1) * metricOpacity("tax")
                                   } />
                                 ))}
+                                <LabelList dataKey="taxRate" position="top" offset={4}
+                                  formatter={(v) => v.toFixed(1) + "%"}
+                                  fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
                               </Bar>
                               <Bar dataKey="effectiveTaxRate" fill={cssVar("--chart-effective-rate")} name="Effective Tax Rate (taxable income)" radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
@@ -3609,6 +3571,9 @@ export default function TaxToBook() {
                                     (barHoverYear && entry.year !== String(barHoverYear) ? 0.3 : 1) * metricOpacity("etr")
                                   } />
                                 ))}
+                                <LabelList dataKey="effectiveTaxRate" position="top" offset={4}
+                                  formatter={(v) => v.toFixed(1) + "%"}
+                                  fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
                               </Bar>
                             </BarChart>
                           </ResponsiveContainer>
