@@ -199,10 +199,10 @@ const styles = `
   .tv-subtitle {
     margin-top: 14px;
     color: var(--muted);
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 300;
     letter-spacing: 0.01em;
-    line-height: 1.6;
+    line-height: 1.55;
   }
 
   /* ── Upload wrapper ── */
@@ -773,7 +773,7 @@ const styles = `
   /* ── Strategy bar ── */
   .tv-strategy-bar {
     border-bottom: 1px solid var(--border);
-    padding: 16px 28px;
+    padding: 20px 32px;
     background: linear-gradient(90deg, rgba(var(--accent-rgb),0.05) 0%, transparent 60%);
     display: flex;
     align-items: center;
@@ -782,21 +782,21 @@ const styles = `
   }
   .tv-strategy-badge {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 14px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--bg);
     background: var(--accent);
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 5px;
     white-space: nowrap;
     font-weight: 700;
     flex-shrink: 0;
   }
   .tv-strategy-text {
-    font-size: 13px;
+    font-size: 17px;
     color: var(--text);
-    line-height: 1.5;
+    line-height: 1.55;
   }
   .tv-strategy-text strong {
     color: var(--accent);
@@ -825,8 +825,8 @@ const styles = `
   }
   .tv-sidebar-label {
     font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: rgba(var(--white-rgb),0.82);
@@ -834,7 +834,7 @@ const styles = `
   }
   .tv-sidebar-sub {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 400;
     color: rgba(var(--white-rgb),0.45);
     margin-bottom: 10px;
@@ -844,7 +844,7 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 8px;
+    padding: 10px 10px;
     border-radius: 7px;
     cursor: pointer;
     transition: background 0.15s;
@@ -852,7 +852,7 @@ const styles = `
   }
   .tv-year-pill:hover { background: rgba(var(--white-rgb),0.04); }
   .tv-year-dot {
-    width: 9px; height: 9px;
+    width: 11px; height: 11px;
     border-radius: 50%;
     border: 1.5px solid var(--muted);
     flex-shrink: 0;
@@ -861,7 +861,7 @@ const styles = `
   .tv-year-pill.on .tv-year-dot { background: var(--accent); border-color: var(--accent); }
   .tv-year-pill-text {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 17px;
     color: var(--text);
   }
   .tv-nav-section { padding: 12px 12px 0; }
@@ -869,12 +869,12 @@ const styles = `
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 11px 12px;
+    padding: 14px 14px;
     border: none;
     background: none;
     color: rgba(var(--white-rgb),0.7);
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 500;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -955,7 +955,7 @@ const styles = `
   .tv-chart-block { margin-bottom: 28px; }
   .tv-chart-label {
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 17px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1027,7 +1027,7 @@ const styles = `
   }
   .tv-iblock-title {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 17px;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1037,7 +1037,7 @@ const styles = `
     border-left: 4px solid var(--accent);
   }
   .tv-iblock p {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--text);
     line-height: 1.7;
     margin: 0 0 8px;
@@ -1105,6 +1105,10 @@ const styles = `
   }
   @media (max-width: 700px) {
     .tv-v-grid { grid-template-columns: 1fr; }
+    .tv-wiz-field { grid-template-columns: 70px 1fr; gap: 8px; }
+    .tv-wiz-field .tv-wiz-input { grid-column: 1 / -1; width: 100%; }
+    .tv-wiz-field-label { flex-direction: column; gap: 2px; align-items: flex-start; }
+    .tv-wiz-field-hint { font-size: 13px; }
   }
 
   /* ── Year insight fade ── */
@@ -1114,11 +1118,11 @@ const styles = `
   /* ── Vertical year picker ── */
   .tv-vpicker {
     font-family: var(--mono);
-    font-size: 11px;
+    font-size: 14px;
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--accent);
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
     outline: none;
@@ -1148,13 +1152,16 @@ const styles = `
   /* ── Wizard ── */
   .tv-wiz { width: 100%; max-width: 840px; }
   .tv-wiz-progress {
-    display: flex; gap: 8px; margin-bottom: 28px; justify-content: center;
+    display: flex; gap: 14px; margin-bottom: 28px; justify-content: center;
   }
   .tv-wiz-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--border); transition: background 0.2s;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--border); transition: background 0.2s, box-shadow 0.2s;
   }
-  .tv-wiz-dot.active { background: var(--accent); }
+  .tv-wiz-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.18);
+  }
   .tv-wiz-dot.done   { background: var(--accent2); }
   .tv-wiz-step-title {
     font-family: var(--mono); font-size: 14px; font-weight: 700;
@@ -1198,36 +1205,36 @@ const styles = `
   }
   .tv-wiz-fields { display: flex; flex-direction: column; gap: 0; }
   .tv-wiz-field-group {
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
     padding: 16px 0 8px; border-bottom: 1px solid rgba(var(--accent-rgb),0.1);
   }
   .tv-wiz-field {
-    display: grid; grid-template-columns: 64px 1fr 140px;
-    align-items: center; gap: 10px; padding: 8px 0;
+    display: grid; grid-template-columns: 80px 1fr 170px;
+    align-items: center; gap: 12px; padding: 10px 0;
     border-bottom: 1px solid var(--border);
   }
   .tv-wiz-line-badge {
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
     color: var(--accent); background: rgba(var(--accent-rgb),0.08);
-    padding: 3px 7px; border-radius: 4px; text-align: center; white-space: nowrap;
+    padding: 4px 9px; border-radius: 4px; text-align: center; white-space: nowrap;
   }
   .tv-wiz-field-label {
-    display: flex; flex-direction: column; gap: 2px;
+    display: flex; flex-direction: row; gap: 8px; align-items: baseline; flex-wrap: wrap;
   }
   .tv-wiz-field-name {
-    font-family: var(--mono); font-size: 12px; color: var(--text);
+    font-family: var(--mono); font-size: 18px; color: var(--text);
   }
   .tv-wiz-field-hint {
-    font-size: 11px; color: var(--muted);
+    font-size: 15px; color: var(--muted); font-weight: 400;
   }
   .tv-wiz-field-req::after {
-    content: " *"; color: var(--danger); font-size: 10px;
+    content: " *"; color: var(--danger); font-size: 14px;
   }
   .tv-wiz-input {
-    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    font-family: var(--mono); font-size: 18px; font-weight: 700;
     background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: 8px 12px; border-radius: 6px; text-align: right;
+    padding: 12px 14px; border-radius: 6px; text-align: right;
     outline: none; transition: border-color 0.15s;
   }
   .tv-wiz-input:focus { border-color: var(--accent); }
@@ -2869,7 +2876,9 @@ export default function TaxToBook() {
                         <div className="tv-wiz-line-badge">Line {f.lineCode(y)}</div>
                         <div className="tv-wiz-field-label">
                           <span className={`tv-wiz-field-name${f.required ? " tv-wiz-field-req" : ""}`}>{f.label}</span>
-                          <span className="tv-wiz-field-hint">{typeof f.hint === "function" ? f.hint(y) : f.hint}</span>
+                          {(typeof f.hint === "function" ? f.hint(y) : f.hint) && (
+                            <span className="tv-wiz-field-hint">· {typeof f.hint === "function" ? f.hint(y) : f.hint}</span>
+                          )}
                         </div>
                         <input
                           className="tv-wiz-input"
@@ -3033,7 +3042,7 @@ export default function TaxToBook() {
                   )}
 
                   {/* Static — multi-year summary */}
-                  <span className="tv-strategy-text" style={{ color: "rgba(var(--white-rgb),0.5)", fontSize: 12 }}>
+                  <span className="tv-strategy-text" style={{ color: "rgba(var(--white-rgb),0.5)", fontSize: 15 }}>
                     Based on your{" "}
                     <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{strategyPhase.years}-year</strong> trend{_lowBase ? "" : <>, with an annualized growth rate of{" "}
                     <strong style={{ color: "rgba(var(--white-rgb),0.65)" }}>{(strategyPhase.cagr * 100).toFixed(1)}%</strong></>}, your financial phase is{" "}
@@ -3185,10 +3194,10 @@ export default function TaxToBook() {
                                 </linearGradient>
                               </defs>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
+                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
-                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }}
+                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={56}
                               />
                               <Tooltip
@@ -3251,17 +3260,17 @@ export default function TaxToBook() {
                           <ResponsiveContainer width="100%" height={200}>
                             <LineChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
+                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
-                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }}
+                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={56}
                               />
                               <Tooltip
                                 content={<ChartTooltip chartRef={lineChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
                                 cursor={{ stroke: cssVar("--muted"), strokeWidth: 1, strokeOpacity: 0.08 }}
                               />
-                              <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
+                              <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 14, paddingTop: 10, color: "var(--muted)" }} />
                               <Line type="monotone" dataKey="totalIncome" stroke={cssVar("--chart-income")} strokeWidth={metricStroke("income", 2)}
                                 dot={{ r: 3, fill: cssVar("--chart-income"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
                                 strokeOpacity={metricOpacity("income")} />
@@ -3280,17 +3289,17 @@ export default function TaxToBook() {
                           <ResponsiveContainer width="100%" height={180}>
                             <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
+                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => v.toFixed(0) + "%"}
-                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }}
+                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={38}
                               />
                               <Tooltip
                                 content={<ChartTooltip chartRef={barChartRef} fmtVal={v => v.toFixed(1) + "%"} />}
                                 cursor={false}
                               />
-                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
+                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 14, paddingTop: 10, color: "var(--muted)" }} />
                               <Bar dataKey="taxRate"          fill={cssVar("--chart-tax-ratio")} name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
                                   <Cell key={entry.year} fill={cssVar("--chart-tax-ratio")} fillOpacity={
@@ -3307,7 +3316,7 @@ export default function TaxToBook() {
                               </Bar>
                             </BarChart>
                           </ResponsiveContainer>
-                          <div style={{ display: "flex", gap: 16, fontFamily: "var(--mono)", fontSize: 10, color: "var(--muted)", marginTop: 8, justifyContent: "center" }}>
+                          <div style={{ display: "flex", gap: 16, fontFamily: "var(--mono)", fontSize: 14, color: "var(--muted)", marginTop: 8, justifyContent: "center" }}>
                             <Tip tip="Total tax ÷ taxable income. Your true tax rate on income subject to tax.">Effective Tax Rate (taxable income) ?</Tip>
                             <Tip tip="Total tax ÷ total income (before deductions). Always lower than Effective Tax Rate.">Tax / Income (total income) ?</Tip>
                           </div>
@@ -3366,7 +3375,7 @@ export default function TaxToBook() {
                                         ))}
                                       </Pie>
                                       <Tooltip
-                                        contentStyle={{ background: "var(--surface-tooltip)", border: "1px solid var(--border)", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 11, padding: "8px 12px" }}
+                                        contentStyle={{ background: "var(--surface-tooltip)", border: "1px solid var(--border)", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 14, padding: "8px 12px" }}
                                         formatter={(v, name) => [v.toFixed(1) + "%", name]}
                                         labelStyle={{ display: "none" }}
                                         itemStyle={{ color: "var(--muted)" }}
@@ -3375,7 +3384,7 @@ export default function TaxToBook() {
                                   </ResponsiveContainer>
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", justifyContent: "center", marginTop: 6 }}>
                                     {vPieData.map((d, idx) => (
-                                      <span key={d.name} style={{ fontFamily: "Space Mono, monospace", fontSize: 10, color: d.value > 0 ? getPieColors()[idx % 5] : "#3a4250" }}>
+                                      <span key={d.name} style={{ fontFamily: "Space Mono, monospace", fontSize: 14, color: d.value > 0 ? getPieColors()[idx % 5] : "#3a4250" }}>
                                         ■ {d.name} {d.name === "Cap Gains" && vCapLoss ? "net loss" : d.value.toFixed(1) + "%"}
                                       </span>
                                     ))}
