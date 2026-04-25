@@ -3,6 +3,7 @@ import { calculateMetrics } from "./utils/calculateMetrics";
 import {
   LineChart, Line, BarChart, Bar,
   AreaChart, Area,
+  ComposedChart,
   PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
@@ -774,7 +775,7 @@ const styles = `
   /* ── Strategy bar ── */
   .tv-strategy-bar {
     border-bottom: 1px solid var(--border);
-    padding: 20px 140px 20px 32px;
+    padding: 12px 140px 12px 24px;
     background: linear-gradient(90deg, rgba(var(--accent-rgb),0.05) 0%, transparent 60%);
     display: flex;
     align-items: center;
@@ -819,14 +820,14 @@ const styles = `
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    padding: 28px 0;
+    padding: 18px 0;
     gap: 0;
     overflow-y: auto;
   }
   .tv-sidebar-section {
-    padding: 0 20px 20px;
+    padding: 0 16px 14px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .tv-sidebar-label {
     font-family: var(--mono);
@@ -849,7 +850,7 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 10px;
+    padding: 7px 10px;
     border-radius: 7px;
     cursor: pointer;
     transition: background 0.15s;
@@ -869,12 +870,12 @@ const styles = `
     font-size: 17px;
     color: var(--text);
   }
-  .tv-nav-section { padding: 12px 12px 0; }
+  .tv-nav-section { padding: 8px 10px 0; }
   .tv-nav-btn {
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 14px 14px;
+    padding: 10px 12px;
     border: none;
     background: none;
     color: rgba(var(--white-rgb),0.7);
@@ -893,7 +894,7 @@ const styles = `
   .tv-nav-btn.active { color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
   .tv-nav-icon { font-size: 14px; }
   .tv-canvas {
-    padding: 32px 36px;
+    padding: 20px 28px;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -906,8 +907,8 @@ const styles = `
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(var(--white-rgb),0.92);
-    padding-bottom: 18px;
-    margin-bottom: 28px;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -917,18 +918,18 @@ const styles = `
   .tv-metric-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-bottom: 32px;
+    gap: 10px;
+    margin-bottom: 20px;
   }
   .tv-metric-card {
     background: var(--bg);
     border: 1px solid var(--border);
     border-left: 4px solid var(--accent);
     border-radius: 10px;
-    padding: 18px 16px 18px 12px;
+    padding: 12px 14px 12px 10px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
   }
   .tv-metric-label {
     font-family: var(--mono);
@@ -955,7 +956,7 @@ const styles = `
   .tv-metric-delta.down { color: var(--danger); }
   .tv-metric-delta.flat { color: var(--muted); }
   /* ── Chart blocks ── */
-  .tv-chart-block { margin-bottom: 28px; }
+  .tv-chart-block { margin-bottom: 18px; }
   .tv-chart-label {
     font-family: var(--mono);
     font-size: 17px;
@@ -963,14 +964,14 @@ const styles = `
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(var(--white-rgb),0.82);
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     margin-top: 4px;
   }
   .tv-chart-box {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px 20px;
+    padding: 10px 14px;
   }
   /* ── Ratio table ── */
   .tv-ratio-table { width: 100%; border-collapse: collapse; }
@@ -1015,9 +1016,9 @@ const styles = `
     transition: width 0.3s;
   }
   /* ── Insights panel ── */
-  .tv-insights-panel { display: flex; flex-direction: column; gap: 16px; }
+  .tv-insights-panel { display: flex; flex-direction: column; gap: 12px; }
   .tv-iblock {
-    padding: 20px;
+    padding: 14px;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -1035,7 +1036,7 @@ const styles = `
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: rgba(var(--white-rgb),0.82);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     padding-left: 12px;
     border-left: 4px solid var(--accent);
   }
@@ -1058,14 +1059,14 @@ const styles = `
   .tv-signal-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   /* ── Analysis Insight Engine ── */
   .tv-insight-row {
-    margin-top: 20px;
-    padding: 20px 22px;
+    margin-top: 14px;
+    padding: 14px 18px;
     background: rgba(var(--accent-rgb),0.03);
     border: 1px solid rgba(var(--accent-rgb),0.1);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
   }
   .tv-insight-row-title {
     font-family: var(--mono);
@@ -1103,7 +1104,7 @@ const styles = `
   .tv-v-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 14px;
     align-items: start;
   }
   @media (max-width: 700px) {
@@ -2463,12 +2464,18 @@ export default function TaxToBook() {
   // ── Chart data ──
   const hChartData = filteredResults.map((r, i) => {
     const m = filteredMetrics[i];
+    const inc = r.income ?? {};
     return {
       year: String(r.year),
       totalIncome: r.summary?.totalIncome ?? 0,
       afterTax: m?.afterTaxIncome ?? 0,
       taxRate: +((m?.taxToIncome ?? 0) * 100).toFixed(2),
       effectiveTaxRate: +((m?.effectiveTaxRate ?? 0) * 100).toFixed(2),
+      wages:     Math.max(inc.wages ?? 0, 0),
+      capGains:  Math.max(inc.capitalGains ?? 0, 0),
+      dividends: Math.max(inc.dividends ?? 0, 0),
+      interest:  Math.max(inc.interest ?? 0, 0),
+      other:     Math.max(inc.additionalIncome ?? 0, 0),
     };
   });
 
@@ -3470,18 +3477,12 @@ export default function TaxToBook() {
                     </div>
                   ) : (
                     <>
-                      {/* After-Tax Income Trend (area) */}
+                      {/* After-Tax Income Trend (composed: stacked income breakdown + after-tax overlay) */}
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How much you kept after taxes — year over year">After-Tax Income Trend</Tip></div>
-                        <div ref={areaChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
+                        <div ref={areaChartRef} className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={200}>
-                            <AreaChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
-                              <defs>
-                                <linearGradient id="afterTaxGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%"   stopColor={cssVar("--chart-after-tax")} stopOpacity={0.14} />
-                                  <stop offset="100%" stopColor={cssVar("--chart-after-tax")} stopOpacity={0}    />
-                                </linearGradient>
-                              </defs>
+                            <ComposedChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
@@ -3491,19 +3492,25 @@ export default function TaxToBook() {
                               />
                               <Tooltip
                                 content={<ChartTooltip chartRef={areaChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
-                                cursor={{ stroke: cssVar("--chart-after-tax"), strokeWidth: 1, strokeOpacity: 0.3 }}
+                                cursor={{ stroke: cssVar("--accent"), strokeWidth: 1, strokeOpacity: 0.3 }}
                               />
-                              <Area type="monotone" dataKey="afterTax" stroke={cssVar("--chart-after-tax")} strokeWidth={metricStroke("afterTax", 2)}
-                                fill="url(#afterTaxGrad)" dot={{ r: 3, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }}
-                                activeDot={{ r: 5, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }} name="After-Tax Income"
-                                strokeOpacity={metricOpacity("afterTax")} fillOpacity={metricOpacity("afterTax") * 0.14} />
-                            </AreaChart>
+                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 13, paddingTop: 8, color: "var(--muted)" }} />
+                              <Bar dataKey="wages"     stackId="income" fill={cssVar("--chart-income")}     name="Wages"      isAnimationActive={false} />
+                              <Bar dataKey="capGains"  stackId="income" fill={cssVar("--chart-after-tax")}  name="Cap Gains"  isAnimationActive={false} />
+                              <Bar dataKey="dividends" stackId="income" fill={cssVar("--chart-pie-3")}      name="Dividends"  isAnimationActive={false} />
+                              <Bar dataKey="interest"  stackId="income" fill={cssVar("--chart-pie-4")}      name="Interest"   isAnimationActive={false} />
+                              <Bar dataKey="other"     stackId="income" fill={cssVar("--chart-pie-5")}      name="Other"      isAnimationActive={false} />
+                              <Line type="monotone" dataKey="afterTax"
+                                stroke={cssVar("--accent")} strokeWidth={metricStroke("afterTax", 3)} strokeOpacity={metricOpacity("afterTax")}
+                                dot={{ r: 4, fill: cssVar("--accent"), strokeWidth: 0 }} activeDot={{ r: 6 }}
+                                name="After-Tax Income" isAnimationActive={false} />
+                            </ComposedChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
 
                       {/* KPI callout row */}
-                      <div className="tv-metric-grid" style={{ marginBottom: 28 }}>
+                      <div className="tv-metric-grid" style={{ marginBottom: 18 }}>
                         <div className="tv-metric-card">
                           <div className="tv-metric-label"><Tip tip={_lowBase ? "How a base year below $10K can distort growth percentages — rate suppressed for accuracy" : "How your income changes over time from your first to latest year — (Last ÷ First)^(1/(n−1)) − 1"}>Income Growth Rate</Tip></div>
                           <div className="tv-metric-value" style={{ fontSize: 20, color: _lowBase ? "var(--muted)" : incomeCagr != null && incomeCagr >= 0 ? "var(--success)" : "var(--danger)" }}>
@@ -3545,7 +3552,7 @@ export default function TaxToBook() {
                       {/* Gross Income vs Take-Home Income (line) */}
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How earnings compare to what you kept after taxes">Gross Income vs Take-Home Income</Tip></div>
-                        <div ref={lineChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
+                        <div ref={lineChartRef} className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={200}>
                             <LineChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
@@ -3574,7 +3581,7 @@ export default function TaxToBook() {
                       {/* Tax Burden Comparison (bar) */}
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How much of your income went to taxes each year">Tax Burden Comparison</Tip></div>
-                        <div ref={barChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
+                        <div ref={barChartRef} className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={180}>
                             <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onBarMove} onMouseLeave={onBarLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
@@ -3645,7 +3652,7 @@ export default function TaxToBook() {
                         <div>
                           <div className="tv-chart-block" style={{ marginBottom: 0 }}>
                             <div className="tv-chart-label"><Tip tip="How your income breaks down by source — wages, investments, dividends, and other">Where Income Comes From</Tip></div>
-                            <div className="tv-chart-box" style={{ padding: "16px 8px 8px" }}>
+                            <div className="tv-chart-box" style={{ padding: "10px 6px 6px" }}>
                               {vPieData.length > 0 ? (
                                 <>
                                   <ResponsiveContainer width="100%" height={200}>
