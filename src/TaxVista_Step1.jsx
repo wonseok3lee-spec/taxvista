@@ -19,11 +19,15 @@ const styles = `
     --panel: #111418;
     --border: #1e2328;
     --accent: #c8f135;
-    --accent2: #3bf0a0;
+    --accent2: var(--success);
     --text: #e8eaed;
     --muted: #6b7280;
     --danger: #f87171;
     --success: #3bf0a0;
+    --card-hover-border: #2e3440;
+    --accent-hover: #d4f54a;
+    --surface-tooltip: #0e1117;
+    --surface-tip: #1c2128;
     --mono: 'Space Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
@@ -68,7 +72,7 @@ const styles = `
     width: 100% !important;
     max-width: 100% !important;
     border: none !important;
-    background: #0a0c0f !important;
+    background: var(--bg) !important;
     min-height: 100vh;
     text-align: left !important;
     display: block !important;
@@ -85,7 +89,7 @@ const styles = `
     background:
       radial-gradient(ellipse 60% 40% at 20% 10%, rgba(200,241,53,0.05) 0%, transparent 70%),
       radial-gradient(ellipse 50% 50% at 80% 90%, rgba(59,240,160,0.04) 0%, transparent 70%),
-      #0a0c0f;
+      var(--bg);
   }
 
   /* ── Header ── */
@@ -199,7 +203,7 @@ const styles = `
     margin-top: 6px;
     padding: 10px 30px;
     background: var(--accent);
-    color: #0a0c0f;
+    color: var(--bg);
     border: none;
     border-radius: 7px;
     font-family: var(--mono);
@@ -252,7 +256,7 @@ const styles = `
   }
   .tv-tip-box {
     position: fixed;
-    background: #1c2128;
+    background: var(--surface-tip);
     color: rgba(255,255,255,0.88);
     font-family: var(--sans);
     font-size: 11px;
@@ -324,7 +328,7 @@ const styles = `
     animation: tvSlideIn 0.2s ease;
     transition: border-color 0.2s;
   }
-  .tv-file-item:hover { border-color: #2e3440; }
+  .tv-file-item:hover { border-color: var(--card-hover-border); }
   @keyframes tvSlideIn {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -414,12 +418,12 @@ const styles = `
     font-weight: 700;
     transition: all 0.2s;
     background: var(--accent);
-    color: #0a0c0f;
+    color: var(--bg);
     position: relative;
     overflow: hidden;
   }
   .tv-cta-btn:hover:not(:disabled) {
-    background: #d4f54a;
+    background: var(--accent-hover);
     box-shadow: 0 0 32px rgba(200,241,53,0.18);
     transform: translateY(-1px);
   }
@@ -454,7 +458,7 @@ const styles = `
     gap: 16px;
     transition: border-color 0.2s;
   }
-  .tv-result-card:hover { border-color: #2e3440; }
+  .tv-result-card:hover { border-color: var(--card-hover-border); }
   .tv-result-year {
     font-family: var(--mono);
     font-size: 22px;
@@ -542,7 +546,7 @@ const styles = `
     gap: 16px;
     transition: border-color 0.2s;
   }
-  .tv-insight-card:hover { border-color: #2e3440; }
+  .tv-insight-card:hover { border-color: var(--card-hover-border); }
   .tv-insight-field { display: flex; flex-direction: column; gap: 4px; }
   .tv-insight-label {
     font-family: var(--mono);
@@ -675,7 +679,7 @@ const styles = `
     gap: 7px;
     transition: border-color 0.2s;
   }
-  .tv-info-card:hover { border-color: #2e3440; }
+  .tv-info-card:hover { border-color: var(--card-hover-border); }
   .tv-info-label {
     font-family: var(--mono);
     font-size: 10px;
@@ -720,7 +724,7 @@ const styles = `
     font-size: 10px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #0a0c0f;
+    color: var(--bg);
     background: var(--accent);
     padding: 5px 12px;
     border-radius: 5px;
@@ -940,7 +944,7 @@ const styles = `
     font-family: var(--mono);
     font-size: 10px;
     font-weight: 700;
-    color: #0a0c0f;
+    color: var(--bg);
     overflow: hidden;
     white-space: nowrap;
     transition: width 0.3s;
@@ -1180,9 +1184,9 @@ const styles = `
   }
   .tv-wiz-back:hover { border-color: var(--text) !important; color: var(--text); }
   .tv-wiz-next {
-    background: var(--accent); color: #0a0c0f;
+    background: var(--accent); color: var(--bg);
   }
-  .tv-wiz-next:hover { background: #d4f54a; }
+  .tv-wiz-next:hover { background: var(--accent-hover); }
   .tv-wiz-next:disabled { opacity: 0.3; cursor: not-allowed; }
   .tv-wiz-warn {
     font-family: var(--mono); font-size: 11px; color: var(--danger);
@@ -1567,7 +1571,7 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
   return (
     <div style={{
       position: "fixed", left, top, zIndex: 9999,
-      background: "#0e1117", border: "1px solid #252d38",
+      background: "var(--surface-tooltip)", border: "1px solid #252d38",
       borderRadius: 6, fontFamily: "Space Mono, monospace",
       fontSize: 11, padding: "10px 14px",
       pointerEvents: "none", maxWidth: W,
@@ -1581,10 +1585,10 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
       {payload.map((entry, i) => (
         <div key={i} style={{
           display: "flex", justifyContent: "space-between", gap: 12,
-          color: entry.color ?? entry.stroke ?? entry.fill ?? "#e8eaed",
+          color: entry.color ?? entry.stroke ?? entry.fill ?? "var(--text)",
           marginBottom: i < payload.length - 1 ? 4 : 0,
         }}>
-          <span style={{ color: "#6b7280" }}>{entry.name}</span>
+          <span style={{ color: "var(--muted)" }}>{entry.name}</span>
           <span>{fmtVal ? fmtVal(entry.value) : entry.value}</span>
         </div>
       ))}
@@ -3057,7 +3061,7 @@ export default function TaxToBook() {
                                 content={<ChartTooltip chartRef={lineChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
                                 cursor={{ stroke: "#ffffff", strokeWidth: 1, strokeOpacity: 0.08 }}
                               />
-                              <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "#6b7280" }} />
+                              <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
                               <Line type="monotone" dataKey="totalIncome" stroke="#b8c43a" strokeWidth={metricStroke("income", 2)}
                                 dot={{ r: 3, fill: "#b8c43a", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
                                 strokeOpacity={metricOpacity("income")} />
@@ -3086,7 +3090,7 @@ export default function TaxToBook() {
                                 content={<ChartTooltip chartRef={barChartRef} fmtVal={v => v.toFixed(1) + "%"} />}
                                 cursor={false}
                               />
-                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "#6b7280" }} />
+                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
                               <Bar dataKey="taxRate"          fill="#b85c5c" name="Tax / Income (total income)"      radius={[3,3,0,0]} isAnimationActive={false}>
                                 {hChartData.map((entry) => (
                                   <Cell key={entry.year} fill="#b85c5c" fillOpacity={
@@ -3162,7 +3166,7 @@ export default function TaxToBook() {
                                         ))}
                                       </Pie>
                                       <Tooltip
-                                        contentStyle={{ background: "#0e1117", border: "1px solid #252d38", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 11, padding: "8px 12px" }}
+                                        contentStyle={{ background: "var(--surface-tooltip)", border: "1px solid #252d38", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 11, padding: "8px 12px" }}
                                         formatter={(v, name) => [v.toFixed(1) + "%", name]}
                                         labelStyle={{ display: "none" }}
                                         itemStyle={{ color: "#8a95a0" }}
