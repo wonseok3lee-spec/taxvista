@@ -26,11 +26,19 @@ const styles = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
+    /* Theme-independent tokens */
+    --accent2: var(--success);
+    --black-rgb: 0, 0, 0;
+    --white-rgb: 255, 255, 255;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  [data-theme="dark"] {
     --bg: #0a0c0f;
     --panel: #111418;
     --border: #1e2328;
     --accent: #c8f135;
-    --accent2: var(--success);
     --text: #e8eaed;
     --muted: #6b7280;
     --danger: #f87171;
@@ -51,11 +59,37 @@ const styles = `
     --accent-rgb: 200, 241, 53;
     --accent2-rgb: 59, 240, 160;
     --danger-rgb: 248, 113, 113;
-    --black-rgb: 0, 0, 0;
-    --white-rgb: 255, 255, 255;
-    --mono: 'Space Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
   }
+
+  [data-theme="light"] {
+    --bg: #FFFFFF;
+    --panel: #F5F5F5;
+    --border: #E2E8F0;
+    --accent: #2D7A3E;
+    --text: #0F1419;
+    --muted: #4A5568;
+    --danger: #DC2626;
+    --success: #059669;
+    --card-hover-border: #CBD5E0;
+    --accent-hover: #1F5C2C;
+    --surface-tooltip: #FFFFFF;
+    --surface-tip: #F9FAFB;
+    --chart-after-tax: #16a34a;
+    --chart-income: #65a30d;
+    --chart-tax-ratio: #b91c1c;
+    --chart-effective-rate: #d97706;
+    --chart-pie-3: #2563eb;
+    --chart-pie-4: #db2777;
+    --chart-pie-5: #7c3aed;
+    --bg-rgb: 255, 255, 255;
+    --text-rgb: 15, 20, 25;
+    --accent-rgb: 45, 122, 62;
+    --accent2-rgb: 5, 150, 105;
+    --danger-rgb: 220, 38, 38;
+    --white-rgb: 15, 20, 25;
+  }
+
+  [data-theme="light"] .tv-logo { text-shadow: none; }
 
   * { user-select: none; -webkit-user-select: none; cursor: default; }
   input, button, select, textarea, .tv-drop-zone { cursor: pointer; }
@@ -176,7 +210,7 @@ const styles = `
 
   /* ── Drop zone ── */
   .tv-drop-zone {
-    border: 1.5px dashed #2a2f36;
+    border: 1.5px dashed var(--border);
     border-radius: 14px;
     padding: 52px 32px;
     display: flex;
@@ -388,8 +422,8 @@ const styles = `
     flex-wrap: wrap;
   }
   .tv-year-select {
-    background: #161a20;
-    border: 1px solid #2a2f38;
+    background: var(--panel);
+    border: 1px solid var(--border);
     border-radius: 5px;
     color: var(--accent);
     font-family: var(--mono);
@@ -536,7 +570,7 @@ const styles = `
     transition: color 0.15s, border-color 0.15s;
   }
   .tv-tab:hover { color: var(--text); }
-  .tv-tab.active { color: #ccff00; border-bottom: 2px solid #ccff00; }
+  .tv-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
   .tv-tab-panel {
     width: 100%;
     max-width: 700px;
@@ -1260,6 +1294,7 @@ const styles = `
     .tv-root > *:not(.tv-print-report) { display: none !important; }
     .tv-print-modal-overlay { display: none !important; }
     .tv-test-scenario-badge { display: none !important; }
+    .tv-theme-toggle { display: none !important; }
     body { background: white !important; margin: 0 !important; padding: 0 !important; }
 
     .tv-print-report {
@@ -1598,14 +1633,14 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
   return (
     <div style={{
       position: "fixed", left, top, zIndex: 9999,
-      background: "var(--surface-tooltip)", border: "1px solid #252d38",
+      background: "var(--surface-tooltip)", border: "1px solid var(--border)",
       borderRadius: 6, fontFamily: "Space Mono, monospace",
       fontSize: 11, padding: "10px 14px",
       pointerEvents: "none", maxWidth: W,
       boxShadow: "0 4px 14px rgba(var(--black-rgb),0.5)",
     }}>
       {label != null && (
-        <div style={{ color: "#8a95a0", marginBottom: 6, fontSize: 10, letterSpacing: "0.05em" }}>
+        <div style={{ color: "var(--muted)", marginBottom: 6, fontSize: 10, letterSpacing: "0.05em" }}>
           {label}
         </div>
       )}
@@ -1751,6 +1786,12 @@ export default function TaxToBook() {
   const [activeYear, setActiveYear] = useState(null);
   const [activeMetric, setActiveMetric] = useState(null);
   const [reportName, setReportName] = useState("");
+  const [theme, setTheme] = useState(() =>
+    typeof window !== "undefined"
+      ? document.documentElement.getAttribute("data-theme") || "light"
+      : "light"
+  );
+  const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
   const areaChartRef = useRef(null);
   const lineChartRef = useRef(null);
   const barChartRef  = useRef(null);
@@ -1771,6 +1812,12 @@ export default function TaxToBook() {
     link.setAttribute("data-taxtobook-font", "1");
     document.head.appendChild(link);
   }, []);
+
+  // Theme persistence — sync data-theme attribute + localStorage on change
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("taxtobook-theme", theme);
+  }, [theme]);
 
   // TEST SCENARIO SEED — delete this handler along with the constants above and the button JSX
   const loadTestScenario = (scenarioKey) => {
@@ -2571,6 +2618,36 @@ export default function TaxToBook() {
         </div>
       )}
 
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+        title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+        className="tv-theme-toggle"
+        style={{
+          position: "fixed",
+          top: "16px",
+          right: "16px",
+          zIndex: 9998,
+          width: 36,
+          height: 36,
+          border: "1px solid var(--border)",
+          borderRadius: "50%",
+          background: "transparent",
+          color: "var(--text)",
+          fontSize: 16,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "background 0.15s, border-color 0.15s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--card-hover-border)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+      >
+        {theme === "light" ? "🌙" : "☀️"}
+      </button>
+
       {/* Print instruction modal */}
       {showPrintModal && (
         <div className="tv-print-modal-overlay" onClick={() => setShowPrintModal(false)}>
@@ -3011,11 +3088,11 @@ export default function TaxToBook() {
                                   <stop offset="100%" stopColor={cssVar("--chart-after-tax")} stopOpacity={0}    />
                                 </linearGradient>
                               </defs>
-                              <CartesianGrid strokeDasharray="2 6" stroke="#1e2430" strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "#8a95a0", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
+                              <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
+                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
-                                tick={{ fill: "#8a95a0", fontFamily: "Space Mono, monospace", fontSize: 10 }}
+                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }}
                                 width={56}
                               />
                               <Tooltip
@@ -3077,16 +3154,16 @@ export default function TaxToBook() {
                         <div ref={lineChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={200}>
                             <LineChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
-                              <CartesianGrid strokeDasharray="2 6" stroke="#1e2430" strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "#8a95a0", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
+                              <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
+                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
-                                tick={{ fill: "#8a95a0", fontFamily: "Space Mono, monospace", fontSize: 10 }}
+                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }}
                                 width={56}
                               />
                               <Tooltip
                                 content={<ChartTooltip chartRef={lineChartRef} fmtVal={v => "$" + Number(v).toLocaleString()} />}
-                                cursor={{ stroke: "#ffffff", strokeWidth: 1, strokeOpacity: 0.08 }}
+                                cursor={{ stroke: cssVar("--muted"), strokeWidth: 1, strokeOpacity: 0.08 }}
                               />
                               <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 10, paddingTop: 10, color: "var(--muted)" }} />
                               <Line type="monotone" dataKey="totalIncome" stroke={cssVar("--chart-income")} strokeWidth={metricStroke("income", 2)}
@@ -3106,11 +3183,11 @@ export default function TaxToBook() {
                         <div ref={barChartRef} className="tv-chart-box" style={{ padding: "20px 4px 8px" }}>
                           <ResponsiveContainer width="100%" height={180}>
                             <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} barGap={3} barCategoryGap="32%" onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
-                              <CartesianGrid strokeDasharray="2 6" stroke="#1e2430" strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "#8a95a0", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
+                              <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
+                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }} />
                               <YAxis axisLine={false} tickLine={false}
                                 tickFormatter={v => v.toFixed(0) + "%"}
-                                tick={{ fill: "#8a95a0", fontFamily: "Space Mono, monospace", fontSize: 10 }}
+                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 10 }}
                                 width={38}
                               />
                               <Tooltip
@@ -3193,10 +3270,10 @@ export default function TaxToBook() {
                                         ))}
                                       </Pie>
                                       <Tooltip
-                                        contentStyle={{ background: "var(--surface-tooltip)", border: "1px solid #252d38", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 11, padding: "8px 12px" }}
+                                        contentStyle={{ background: "var(--surface-tooltip)", border: "1px solid var(--border)", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 11, padding: "8px 12px" }}
                                         formatter={(v, name) => [v.toFixed(1) + "%", name]}
                                         labelStyle={{ display: "none" }}
-                                        itemStyle={{ color: "#8a95a0" }}
+                                        itemStyle={{ color: "var(--muted)" }}
                                       />
                                     </PieChart>
                                   </ResponsiveContainer>
