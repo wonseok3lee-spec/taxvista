@@ -1583,7 +1583,7 @@ function ChartTooltip({ active, payload, label, coordinate, chartRef, fmtVal }) 
 // TEST SCENARIO SEED — DELETE THIS BLOCK TO REMOVE
 // Toggle TEST_SCENARIO_ENABLED to false to disable without deleting.
 // ═══════════════════════════════════════════════════════════════
-const TEST_SCENARIO_ENABLED = true;
+const TEST_SCENARIO_ENABLED = false;
 
 const TEST_SCENARIOS = {
   freelance: {
