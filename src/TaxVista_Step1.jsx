@@ -3543,7 +3543,7 @@ export default function TaxToBook() {
                         <div className="tv-chart-label"><Tip tip="How earnings compare to what you kept after taxes">Gross Income vs Take-Home Income</Tip></div>
                         <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
                           <ResponsiveContainer width="100%" height={200}>
-                            <LineChart data={hChartData} margin={{ top: 24, right: 28, bottom: 16, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
+                            <LineChart data={hChartData} margin={{ top: 24, right: 28, bottom: 16, left: 50 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
@@ -3553,14 +3553,14 @@ export default function TaxToBook() {
                               />
                               <Legend iconType="plainline" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 14, paddingTop: 10, color: "var(--muted)" }} />
                               <Line type="monotone" dataKey="totalIncome" stroke={cssVar("--chart-income")} strokeWidth={metricStroke("income", 2)}
-                                dot={{ r: 3, fill: cssVar("--chart-income"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="Total Income"
+                                dot={false} activeDot={false} name="Total Income"
                                 strokeOpacity={metricOpacity("income")} isAnimationActive={false}>
                                 <LabelList dataKey="totalIncome" position="top" offset={8}
                                   formatter={(v) => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"K")}
                                   fill={cssVar("--chart-income")} fontSize={11} fontFamily="Space Mono, monospace" isAnimationActive={false} />
                               </Line>
                               <Line type="monotone" dataKey="afterTax" stroke={cssVar("--chart-after-tax")} strokeWidth={metricStroke("afterTax", 2)}
-                                dot={{ r: 3, fill: cssVar("--chart-after-tax"), strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} name="After-Tax"
+                                dot={false} activeDot={false} name="After-Tax"
                                 strokeOpacity={metricOpacity("afterTax")} isAnimationActive={false}>
                                 <LabelList dataKey="afterTax" position="bottom" offset={8}
                                   formatter={(v) => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : Math.round(v/1000)+"K")}
