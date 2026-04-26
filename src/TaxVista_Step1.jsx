@@ -1049,9 +1049,9 @@ const styles = `
     color: var(--text);
     line-height: 1.7;
     margin: 0 0 8px;
-    transition: opacity 0.15s, color 0.15s;
-    cursor: default;
+    cursor: text;
   }
+  .tv-iblock p > * { pointer-events: none; }
   .tv-iblock p:last-child { margin-bottom: 0; }
   .tv-iblock p.tv-insight-active {
     color: var(--accent);
