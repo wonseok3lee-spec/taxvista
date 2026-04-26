@@ -1395,7 +1395,6 @@ const styles = `
 
     .tv-root > *:not(.tv-print-report) { display: none !important; }
     .tv-print-modal-overlay { display: none !important; }
-    .tv-test-scenario-badge { display: none !important; }
     .tv-theme-toggle { display: none !important; }
     body { background: white !important; margin: 0 !important; padding: 0 !important; }
 
@@ -1864,187 +1863,6 @@ function Tip({ children, tip }) {
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════
-// TEST SCENARIO SEED — DELETE THIS BLOCK TO REMOVE
-// Toggle TEST_SCENARIO_ENABLED to false to disable without deleting.
-// ═══════════════════════════════════════════════════════════════
-const TEST_SCENARIO_ENABLED = true;
-
-const TEST_SCENARIOS = {
-  freelance: {
-    label: "Freelance Consultant",
-    sublabel: "Income roller-coaster (self-employed, 2023–2025)",
-    emoji: "🎢",
-    years: [2023, 2024, 2025],
-    forms: { 2023: "1040", 2024: "1040", 2025: "1040" },
-    data: {
-      2023: {
-        wages: "0",
-        interest: "650",
-        dividends: "1800",
-        capitalGains: "8400",
-        otherIncome: "98000",
-        totalIncome: "108850",
-        adjustments: "9800",
-        agi: "99050",
-        deductions: "13850",
-        taxableIncome: "85200",
-        totalTax: "13680",
-      },
-      2024: {
-        wages: "0",
-        interest: "890",
-        dividends: "2100",
-        capitalGains: "-3000",
-        otherIncome: "42000",
-        totalIncome: "41990",
-        adjustments: "3200",
-        agi: "38790",
-        deductions: "14600",
-        taxableIncome: "24190",
-        totalTax: "2680",
-      },
-      2025: {
-        wages: "8500",
-        interest: "1240",
-        dividends: "3850",
-        capitalGains: "18500",
-        otherIncome: "142000",
-        totalIncome: "174090",
-        adjustments: "14200",
-        agi: "159890",
-        deductions: "15000",
-        taxableIncome: "144890",
-        totalTax: "38420",
-      },
-    },
-  },
-  tech_rsu: {
-    label: "Tech Engineer — RSU Ladder",
-    sublabel: "Job switch + RSU vest (W-2 dominant, 2023–2025)",
-    emoji: "🚀",
-    years: [2023, 2024, 2025],
-    forms: { 2023: "1040", 2024: "1040", 2025: "1040" },
-    data: {
-      2023: {
-        wages: "185000",
-        interest: "3200",
-        dividends: "4800",
-        capitalGains: "12500",
-        otherIncome: "0",
-        totalIncome: "205500",
-        adjustments: "0",
-        agi: "205500",
-        deductions: "13850",
-        taxableIncome: "191650",
-        totalTax: "39180",
-      },
-      2024: {
-        wages: "310000",
-        interest: "5800",
-        dividends: "6200",
-        capitalGains: "28000",
-        otherIncome: "0",
-        totalIncome: "350000",
-        adjustments: "0",
-        agi: "350000",
-        deductions: "14600",
-        taxableIncome: "335400",
-        totalTax: "82650",
-      },
-      2025: {
-        wages: "385000",
-        interest: "8400",
-        dividends: "9600",
-        capitalGains: "145000",
-        otherIncome: "0",
-        totalIncome: "548000",
-        adjustments: "0",
-        agi: "548000",
-        deductions: "15000",
-        taxableIncome: "533000",
-        totalTax: "138500",
-      },
-    },
-  },
-  chaotic_portfolio: {
-    label: "Chaotic Portfolio",
-    sublabel: "Multi-source income chaos (5 years, 2021–2025)",
-    emoji: "🎲",
-    years: [2021, 2022, 2023, 2024, 2025],
-    forms: { 2021: "1040", 2022: "1040", 2023: "1040", 2024: "1040", 2025: "1040" },
-    data: {
-      2021: {
-        wages: "62000",
-        interest: "180",
-        dividends: "420",
-        capitalGains: "3200",
-        otherIncome: "8500",
-        totalIncome: "74300",
-        adjustments: "1200",
-        agi: "73100",
-        deductions: "12550",
-        taxableIncome: "60550",
-        totalTax: "8240",
-      },
-      2022: {
-        wages: "118000",
-        interest: "850",
-        dividends: "2100",
-        capitalGains: "42000",
-        otherIncome: "15400",
-        totalIncome: "178350",
-        adjustments: "2300",
-        agi: "176050",
-        deductions: "12950",
-        taxableIncome: "163100",
-        totalTax: "31280",
-      },
-      2023: {
-        wages: "95000",
-        interest: "2400",
-        dividends: "1800",
-        capitalGains: "-3000",
-        otherIncome: "8200",
-        totalIncome: "104400",
-        adjustments: "4100",
-        agi: "100300",
-        deductions: "13850",
-        taxableIncome: "86450",
-        totalTax: "13950",
-      },
-      2024: {
-        wages: "108000",
-        interest: "3200",
-        dividends: "3400",
-        capitalGains: "87000",
-        otherIncome: "31000",
-        totalIncome: "232600",
-        adjustments: "5800",
-        agi: "226800",
-        deductions: "14600",
-        taxableIncome: "212200",
-        totalTax: "44120",
-      },
-      2025: {
-        wages: "0",
-        interest: "5400",
-        dividends: "6800",
-        capitalGains: "28000",
-        otherIncome: "215000",
-        totalIncome: "255200",
-        adjustments: "18500",
-        agi: "236700",
-        deductions: "15000",
-        taxableIncome: "221700",
-        totalTax: "47650",
-      },
-    },
-  },
-};
-// ═══════════════════════════════════════════════════════════════
-// END TEST SCENARIO SEED
-// ═══════════════════════════════════════════════════════════════
 
 export default function TaxToBook() {
   // ── Wizard state ──
@@ -2114,18 +1932,6 @@ export default function TaxToBook() {
     window.addEventListener("popstate", handlePop);
     return () => window.removeEventListener("popstate", handlePop);
   }, []);
-
-  // TEST SCENARIO SEED — delete this handler along with the constants above and the button JSX
-  const loadTestScenario = (scenarioKey) => {
-    const scenario = TEST_SCENARIOS[scenarioKey];
-    if (!scenario) return;
-    setWizYears(scenario.years);
-    setWizForms(scenario.forms);
-    setWizData(scenario.data);
-    setWizActiveYear(scenario.years[scenario.years.length - 1]);
-    setWizStep(3);
-    window.history.pushState({ step: "3" }, "", "#step-3");
-  };
 
   // ── Wizard helpers ──
   const toggleYear = (y) => {
@@ -2945,30 +2751,6 @@ export default function TaxToBook() {
     <>
       <style>{styles}</style>
 
-      {TEST_SCENARIO_ENABLED && (
-        <div
-          style={{
-            position: "fixed",
-            top: "8px",
-            right: "8px",
-            zIndex: 9999,
-            background: "#FFE55C",
-            color: "#000",
-            padding: "4px 10px",
-            fontSize: "11px",
-            fontFamily: "'Courier New', monospace",
-            fontWeight: "bold",
-            letterSpacing: "0.1em",
-            borderRadius: "3px",
-            boxShadow: "0 2px 6px rgba(var(--black-rgb),0.4)",
-            pointerEvents: "none",
-          }}
-          className="tv-test-scenario-badge"
-        >
-          TEST SCENARIO
-        </div>
-      )}
-
       {/* Theme toggle */}
       <button
         onClick={toggleTheme}
@@ -3167,43 +2949,6 @@ export default function TaxToBook() {
             <div className="tv-privacy" style={{ marginTop: 20 }}>
               🔒 <span style={{ color: "var(--accent)", fontWeight: 600 }}>Zero data risk.</span> You type only numbers — no SSN, no names, no addresses. Nothing is stored or transmitted. Everything runs in your browser.
             </div>
-
-            {/* TEST SCENARIO SEED — delete this block to remove the buttons */}
-            {wizStep === 1 && TEST_SCENARIO_ENABLED && (
-              <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px dashed rgba(var(--white-rgb),0.08)", textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, letterSpacing: "0.12em", fontFamily: "var(--mono)", textTransform: "uppercase" }}>
-                  🧪 Test Scenarios — skip manual entry
-                </div>
-                <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-                  {Object.entries(TEST_SCENARIOS).map(([key, scenario]) => (
-                    <button
-                      key={key}
-                      onClick={() => loadTestScenario(key)}
-                      style={{
-                        fontFamily: "var(--mono)",
-                        background: "transparent",
-                        border: "1px dashed rgba(var(--white-rgb),0.25)",
-                        borderRadius: 6,
-                        padding: "12px 18px",
-                        cursor: "pointer",
-                        transition: "all 0.15s",
-                        textAlign: "left",
-                        minWidth: 240,
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(var(--white-rgb),0.4)"; e.currentTarget.style.background = "rgba(var(--white-rgb),0.02)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(var(--white-rgb),0.25)"; e.currentTarget.style.background = "transparent"; }}
-                    >
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(var(--white-rgb),0.85)", letterSpacing: "0.04em" }}>
-                        {scenario.emoji} {scenario.label}
-                      </div>
-                      <div style={{ marginTop: 4, fontSize: 13, color: "var(--muted)", fontFamily: "var(--sans)", letterSpacing: 0 }}>
-                        {scenario.sublabel}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {error && <div className="tv-error">{error}</div>}
           </div>
