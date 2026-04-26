@@ -774,7 +774,8 @@ const styles = `
   .tv-strategy-bar {
     border-bottom: 1px solid var(--border);
     padding: 12px 140px 12px 24px;
-    min-height: 160px;
+    height: 200px;
+    overflow-y: auto;
     background: linear-gradient(90deg, rgba(var(--accent-rgb),0.05) 0%, transparent 60%);
     display: flex;
     align-items: center;
