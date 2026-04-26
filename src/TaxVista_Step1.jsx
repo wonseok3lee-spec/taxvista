@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { calculateMetrics } from "./utils/calculateMetrics";
 import {
   LineChart, Line, BarChart, Bar,
@@ -858,7 +858,6 @@ const styles = `
     transition: background 0.15s;
     user-select: none;
   }
-  .tv-year-pill > * { pointer-events: none; }
   .tv-year-pill:hover { background: rgba(var(--white-rgb),0.04); }
   .tv-year-dot {
     width: 11px; height: 11px;
@@ -2067,9 +2066,6 @@ export default function TaxToBook() {
   const [activeMetric, setActiveMetric] = useState(null);
   const [reportName, setReportName] = useState("");
   const [glossarySearch, setGlossarySearch] = useState("");
-  const [_isTrendPts, _setIsTrendPts] = useState([]);
-  const _isRowRef = useRef(null);
-  const _isBarTopRefs = useRef([]);
   const [theme, setTheme] = useState(() =>
     typeof window !== "undefined"
       ? document.documentElement.getAttribute("data-theme") || "light"
@@ -2371,22 +2367,6 @@ export default function TaxToBook() {
     .filter(r => selectedYears.includes(r.year))
     .sort((a, b) => a.year - b.year);
   const filteredMetrics = filteredResults.map(r => metricMap[r.year]).filter(Boolean);
-
-  // Measure Income Sources bar-top positions for the trend overlay polyline
-  useLayoutEffect(() => {
-    if (filteredResults.length < 2) { _setIsTrendPts([]); return; }
-    const container = _isRowRef.current;
-    if (!container) return;
-    const cRect = container.getBoundingClientRect();
-    const pts = [];
-    for (let i = 0; i < filteredResults.length; i++) {
-      const el = _isBarTopRefs.current[i];
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      pts.push({ x: r.left + r.width / 2 - cRect.left, y: r.top - cRect.top });
-    }
-    _setIsTrendPts(pts);
-  }, [filteredResults, activeTab]);
   // Descending order for year-card views (most recent first)
   const filteredResultsDesc = [...filteredResults].sort((a, b) => b.year - a.year);
   // Resolves to latest filtered year when not hovering, hovered year during hover
@@ -3473,19 +3453,15 @@ export default function TaxToBook() {
                             const _maxTotal = Math.max(..._yearsData.map(d => d.total), 1);
                             return (
                               <>
-                                <div ref={_isRowRef} style={{ position: "relative", display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 24, paddingBottom: 8, paddingTop: 24, overflowX: "auto" }}>
-                                  {_yearsData.map((d, i) => {
+                                <div style={{ display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 24, paddingBottom: 8, overflowX: "auto" }}>
+                                  {_yearsData.map(d => {
                                     const barHeight = (d.total / _maxTotal) * MAX_BAR_PX;
                                     const visibleText = d.segs.filter(s => s.amt >= 1000).sort((a, b) => b.amt - a.amt);
                                     return (
                                       <div key={d.year} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                                         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", height: MAX_BAR_PX }}>
-                                          <div style={{ width: 40, height: MAX_BAR_PX, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center" }}>
-                                            <div ref={el => { _isBarTopRefs.current[i] = el; }}
-                                              style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 700, color: cssVar("--accent"), marginBottom: 4 }}>
-                                              ${Math.round(d.total/1000)}K
-                                            </div>
-                                            <div style={{ height: barHeight, width: 40, display: "flex", flexDirection: "column-reverse", borderRadius: 4, overflow: "hidden" }}>
+                                          <div style={{ width: 40, height: MAX_BAR_PX, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                                            <div style={{ height: barHeight, display: "flex", flexDirection: "column-reverse", borderRadius: 4, overflow: "hidden" }}>
                                               {d.segs.map(s => {
                                                 const segH = d.total > 0 ? (s.amt / d.total) * barHeight : 0;
                                                 return s.amt > 0 ? <div key={s.key} style={{ height: segH, background: s.color }} /> : null;
@@ -3507,15 +3483,6 @@ export default function TaxToBook() {
                                       </div>
                                     );
                                   })}
-                                  {_isTrendPts.length >= 2 && (
-                                    <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", overflow: "visible" }}>
-                                      <polyline fill="none" stroke={cssVar("--accent")} strokeWidth={2} strokeOpacity={0.7}
-                                        points={_isTrendPts.map(p => `${p.x},${p.y}`).join(" ")} />
-                                      {_isTrendPts.map((p, i) => (
-                                        <circle key={i} cx={p.x} cy={p.y} r={3} fill={cssVar("--accent")} />
-                                      ))}
-                                    </svg>
-                                  )}
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "center", gap: 20, fontFamily: "var(--mono)", fontSize: 13, marginTop: 12, flexWrap: "wrap" }}>
                                   {_legend.map(c => (
