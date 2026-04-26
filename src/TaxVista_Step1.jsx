@@ -3460,8 +3460,11 @@ export default function TaxToBook() {
                                     return (
                                       <div key={d.year} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                                         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", height: MAX_BAR_PX }}>
-                                          <div style={{ width: 40, height: MAX_BAR_PX, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                                            <div style={{ height: barHeight, display: "flex", flexDirection: "column-reverse", borderRadius: 4, overflow: "hidden" }}>
+                                          <div style={{ width: 40, height: MAX_BAR_PX, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center" }}>
+                                            <div style={{ fontFamily: "var(--mono)", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 4, whiteSpace: "nowrap" }}>
+                                              ${Math.round(d.total/1000)}K <span style={{ color: "var(--muted)" }}>(100%)</span>
+                                            </div>
+                                            <div style={{ width: 40, height: barHeight, display: "flex", flexDirection: "column-reverse", borderRadius: 4, overflow: "hidden" }}>
                                               {d.segs.map(s => {
                                                 const segH = d.total > 0 ? (s.amt / d.total) * barHeight : 0;
                                                 return s.amt > 0 ? <div key={s.key} style={{ height: segH, background: s.color }} /> : null;
