@@ -2418,32 +2418,12 @@ export default function TaxToBook() {
   // ── Chart data ──
   const hChartData = filteredResults.map((r, i) => {
     const m = filteredMetrics[i];
-    const inc = r.income ?? {};
-    const w  = Math.max(inc.wages ?? 0, 0);
-    const cg = Math.max(inc.capitalGains ?? 0, 0);
-    const dv = Math.max(inc.dividends ?? 0, 0);
-    const it = Math.max(inc.interest ?? 0, 0);
-    const ot = Math.max(inc.additionalIncome ?? 0, 0);
-    const incomeTotal = w + cg + dv + it + ot;
-    const wagesPct     = incomeTotal > 0 ? (w  / incomeTotal) * 100 : 0;
-    const capGainsPct  = incomeTotal > 0 ? (cg / incomeTotal) * 100 : 0;
-    const dividendsPct = incomeTotal > 0 ? (dv / incomeTotal) * 100 : 0;
-    const interestPct  = incomeTotal > 0 ? (it / incomeTotal) * 100 : 0;
-    const otherPct     = incomeTotal > 0 ? (ot / incomeTotal) * 100 : 0;
-    const fmtSeg = (amt, pct) => pct >= 8 ? `$${Math.round(amt/1000)}K (${pct.toFixed(0)}%)` : "";
     return {
       year: String(r.year),
       totalIncome: r.summary?.totalIncome ?? 0,
       afterTax: m?.afterTaxIncome ?? 0,
       taxRate: +((m?.taxToIncome ?? 0) * 100).toFixed(2),
       effectiveTaxRate: +((m?.effectiveTaxRate ?? 0) * 100).toFixed(2),
-      wages: w, capGains: cg, dividends: dv, interest: it, other: ot,
-      wagesPct, capGainsPct, dividendsPct, interestPct, otherPct,
-      wagesLabel:     fmtSeg(w,  wagesPct),
-      capGainsLabel:  fmtSeg(cg, capGainsPct),
-      dividendsLabel: fmtSeg(dv, dividendsPct),
-      interestLabel:  fmtSeg(it, interestPct),
-      otherLabel:     fmtSeg(ot, otherPct),
     };
   });
 
@@ -3445,37 +3425,76 @@ export default function TaxToBook() {
                     </div>
                   ) : (
                     <>
-                      {/* Income Sources (multi-year stacked bars matching Vertical donut categories) */}
+                      {/* Income Sources — custom multi-year column layout (pure derived JSX, no recharts) */}
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How your income breaks down by source over time — multi-year companion to the Vertical donut">Income Sources</Tip></div>
-                        <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
-                          <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={hChartData} margin={{ top: 4, right: 28, bottom: 4, left: 8 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
-                              <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
-                              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
-                              <YAxis axisLine={false} tickLine={false}
-                                tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
-                                tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
-                                width={56}
-                              />
-                              <Legend iconType="square" wrapperStyle={{ fontFamily: "Space Mono, monospace", fontSize: 13, paddingTop: 8, color: "var(--muted)" }} />
-                              <Bar dataKey="wages"     stackId="income" fill={cssVar("--chart-income")}     name="Wages"      isAnimationActive={false}>
-                                <LabelList dataKey="wagesLabel"     position="center" fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
-                              </Bar>
-                              <Bar dataKey="capGains"  stackId="income" fill={cssVar("--chart-after-tax")}  name="Cap Gains"  isAnimationActive={false}>
-                                <LabelList dataKey="capGainsLabel"  position="center" fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
-                              </Bar>
-                              <Bar dataKey="dividends" stackId="income" fill={cssVar("--chart-pie-3")}      name="Dividends"  isAnimationActive={false}>
-                                <LabelList dataKey="dividendsLabel" position="center" fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
-                              </Bar>
-                              <Bar dataKey="interest"  stackId="income" fill={cssVar("--chart-pie-4")}      name="Interest"   isAnimationActive={false}>
-                                <LabelList dataKey="interestLabel"  position="center" fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
-                              </Bar>
-                              <Bar dataKey="other"     stackId="income" fill={cssVar("--chart-pie-5")}      name="Other"      isAnimationActive={false}>
-                                <LabelList dataKey="otherLabel"     position="center" fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
+                        <div className="tv-chart-box" style={{ padding: "16px 16px 12px" }}>
+                          {(() => {
+                            const MAX_BAR_PX = 200;
+                            const _legend = [
+                              { key: "wages",     name: "Wages",     color: cssVar("--chart-income") },
+                              { key: "capGains",  name: "Cap Gains", color: cssVar("--chart-after-tax") },
+                              { key: "dividends", name: "Dividends", color: cssVar("--chart-pie-3") },
+                              { key: "interest",  name: "Interest",  color: cssVar("--chart-pie-4") },
+                              { key: "other",     name: "Other",     color: cssVar("--chart-pie-5") },
+                            ];
+                            const _yearsData = filteredResults.map(r => {
+                              const inc = r.income ?? {};
+                              const segs = [
+                                { key: "wages",     amt: Math.max(inc.wages ?? 0, 0),            color: cssVar("--chart-income") },
+                                { key: "capGains",  amt: Math.max(inc.capitalGains ?? 0, 0),     color: cssVar("--chart-after-tax") },
+                                { key: "dividends", amt: Math.max(inc.dividends ?? 0, 0),        color: cssVar("--chart-pie-3") },
+                                { key: "interest",  amt: Math.max(inc.interest ?? 0, 0),         color: cssVar("--chart-pie-4") },
+                                { key: "other",     amt: Math.max(inc.additionalIncome ?? 0, 0), color: cssVar("--chart-pie-5") },
+                              ];
+                              const total = segs.reduce((s, x) => s + x.amt, 0);
+                              return { year: r.year, segs, total };
+                            });
+                            const _maxTotal = Math.max(..._yearsData.map(d => d.total), 1);
+                            return (
+                              <>
+                                <div style={{ display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 24, paddingBottom: 8, overflowX: "auto" }}>
+                                  {_yearsData.map(d => {
+                                    const barHeight = (d.total / _maxTotal) * MAX_BAR_PX;
+                                    const visibleText = d.segs.filter(s => s.amt >= 1000).sort((a, b) => b.amt - a.amt);
+                                    return (
+                                      <div key={d.year} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                                        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", height: MAX_BAR_PX }}>
+                                          <div style={{ width: 40, height: MAX_BAR_PX, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                                            <div style={{ height: barHeight, display: "flex", flexDirection: "column-reverse", borderRadius: 4, overflow: "hidden" }}>
+                                              {d.segs.map(s => {
+                                                const segH = d.total > 0 ? (s.amt / d.total) * barHeight : 0;
+                                                return s.amt > 0 ? <div key={s.key} style={{ height: segH, background: s.color }} /> : null;
+                                              })}
+                                            </div>
+                                          </div>
+                                          <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 4 }}>
+                                            {visibleText.map(s => {
+                                              const pct = d.total > 0 ? (s.amt / d.total) * 100 : 0;
+                                              return (
+                                                <div key={s.key} style={{ color: s.color, fontFamily: "var(--mono)", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                                  ${Math.round(s.amt/1000)}K ({pct.toFixed(0)}%)
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                        <div style={{ fontFamily: "var(--mono)", fontSize: 14, color: "var(--muted)" }}>{d.year}</div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "center", gap: 20, fontFamily: "var(--mono)", fontSize: 13, marginTop: 12, flexWrap: "wrap" }}>
+                                  {_legend.map(c => (
+                                    <span key={c.key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ width: 10, height: 10, background: c.color, display: "inline-block", borderRadius: 2 }} />
+                                      <span style={{ color: c.color }}>{c.name}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
 
