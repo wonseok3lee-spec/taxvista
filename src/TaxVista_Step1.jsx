@@ -2099,6 +2099,22 @@ export default function TaxToBook() {
     localStorage.setItem("taxtobook-theme", theme);
   }, [theme]);
 
+  // Browser back/forward navigation between wizard steps + analysis
+  // (empty deps array — runs ONCE on mount, do not re-register listener)
+  useEffect(() => {
+    window.history.replaceState({ step: "1" }, "", "#step-1");
+    const handlePop = (e) => {
+      const s = e.state?.step;
+      if (s === "1")        { setWizStep(1); setResults([]); setMetrics([]); }
+      else if (s === "2")   { setWizStep(2); setResults([]); setMetrics([]); }
+      else if (s === "3")   { setWizStep(3); setResults([]); setMetrics([]); }
+      else if (s === "analysis") { /* analysis already loaded — no-op */ }
+      else                  { setWizStep(1); setResults([]); setMetrics([]); }
+    };
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
+
   // TEST SCENARIO SEED — delete this handler along with the constants above and the button JSX
   const loadTestScenario = (scenarioKey) => {
     const scenario = TEST_SCENARIOS[scenarioKey];
@@ -2108,6 +2124,7 @@ export default function TaxToBook() {
     setWizData(scenario.data);
     setWizActiveYear(scenario.years[scenario.years.length - 1]);
     setWizStep(3);
+    window.history.pushState({ step: "3" }, "", "#step-3");
   };
 
   // ── Wizard helpers ──
@@ -2215,6 +2232,7 @@ export default function TaxToBook() {
     setSelectedYears(years);
     setVerticalYear(years.length > 0 ? Math.max(...years) : null);
     setActiveTab("overview");
+    window.history.pushState({ step: "analysis" }, "", "#analysis");
     setTimeout(() => {
       document.querySelector(".tv-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
@@ -3052,7 +3070,7 @@ export default function TaxToBook() {
                   ))}
                 </div>
                 <div className="tv-wiz-nav">
-                  <button className="tv-wiz-next" disabled={wizYears.length === 0} onClick={() => { setWizStep(2); setWizActiveYear(wizYears[wizYears.length - 1]); }}>
+                  <button className="tv-wiz-next" disabled={wizYears.length === 0} onClick={() => { setWizStep(2); setWizActiveYear(wizYears[wizYears.length - 1]); window.history.pushState({ step: "2" }, "", "#step-2"); }}>
                     Next &rarr;
                   </button>
                 </div>              </>
@@ -3078,8 +3096,8 @@ export default function TaxToBook() {
                   </div>
                 ))}
                 <div className="tv-wiz-nav">
-                  <button className="tv-wiz-back" onClick={() => setWizStep(1)}>&larr; Back</button>
-                  <button className="tv-wiz-next" onClick={() => setWizStep(3)}>Next &rarr;</button>
+                  <button className="tv-wiz-back" onClick={() => window.history.back()}>&larr; Back</button>
+                  <button className="tv-wiz-next" onClick={() => { setWizStep(3); window.history.pushState({ step: "3" }, "", "#step-3"); }}>Next &rarr;</button>
                 </div>
               </>
             )}
@@ -3137,7 +3155,7 @@ export default function TaxToBook() {
                   )}
 
                   <div className="tv-wiz-nav">
-                    <button className="tv-wiz-back" onClick={() => setWizStep(2)}>&larr; Back</button>
+                    <button className="tv-wiz-back" onClick={() => window.history.back()}>&larr; Back</button>
                     <button className="tv-wiz-next" disabled={!canAnalyze} onClick={() => { runValidation(); handleAnalyze(); }}>
                       Analyze My Returns &rarr;
                     </button>
@@ -3197,7 +3215,7 @@ export default function TaxToBook() {
 
             <button
               className="tv-edit-data-btn"
-              onClick={() => { setResults([]); setMetrics([]); }}
+              onClick={() => window.history.back()}
             >
               ← Edit Data
             </button>
