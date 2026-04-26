@@ -3222,7 +3222,7 @@ export default function TaxToBook() {
             </button>
 
             {/* ── Strategy Detected bar ── */}
-            {strategyPhase && (
+            {strategyPhase && ["overview", "horizontal", "vertical"].includes(activeTab) && (
               <div className="tv-strategy-bar">
                 {(() => {
                   const ps = resolvedActiveYear && metricMap[resolvedActiveYear]?.primarySignal;
