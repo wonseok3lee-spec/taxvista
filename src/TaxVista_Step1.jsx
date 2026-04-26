@@ -858,6 +858,7 @@ const styles = `
     transition: background 0.15s;
     user-select: none;
   }
+  .tv-year-pill > * { pointer-events: none; }
   .tv-year-pill:hover { background: rgba(var(--white-rgb),0.04); }
   .tv-year-dot {
     width: 11px; height: 11px;
