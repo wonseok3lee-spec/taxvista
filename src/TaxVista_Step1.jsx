@@ -997,12 +997,17 @@ const styles = `
   }
 
   /* ── Edit Data button (analysis screens, top-right of dashboard) ── */
-  /* right offset cleared to sit outside the fixed theme toggle (top:16/right:16/36px wide,
-     plus the 24px .tv-root side padding) so the two never overlap */
+  /* position:fixed at a screen-relative offset — same containing block as the theme
+     toggle (top:16/right:16/36px wide) — instead of position:absolute relative to
+     .tv-dashboard. .tv-dashboard's rendered width (and therefore an absolute child's
+     right edge) shifts slightly per tab depending on page height / scrollbar presence,
+     which caused this button to drift into the toggle on some tabs (e.g. Glossary) even
+     though it cleared it on others. Anchoring both to the viewport removes that variable
+     entirely instead of re-tuning the right-offset number. */
   .tv-edit-data-btn {
-    position: absolute;
-    top: 10px;
-    right: 56px;
+    position: fixed;
+    top: 16px;
+    right: 64px;
     z-index: 5;
     font-family: var(--mono);
     font-size: 12px;
@@ -1519,9 +1524,9 @@ function fmtInput(v) {
 // Glossary-style definitions for dynamic Signal Quality / Strategy badge values.
 const FLAG_TOOLTIPS = {
   FALSE_EFFICIENCY:    "How an apparently low tax rate is driven by income loss rather than active sheltering",
-  LOSS_DISTORTION:     "How capital losses temporarily inflate the deduction efficiency reading",
+  LOSS_DISTORTION:     "How capital losses temporarily inflate the below-AGI deduction ratio reading",
   INCOME_COLLAPSE:     "How a sharp income drop reshapes the tax picture compared to prior years",
-  DEDUCTION_ILLUSION:  "How high deduction efficiency reflects shrunken income, not optimization",
+  DEDUCTION_ILLUSION:  "How a high below-AGI deduction ratio reflects shrunken income, not optimization",
   TRUE_OPTIMIZATION:   "How sustained efficiency confirms genuine tax planning across multiple years",
   ONE_TIME_EVENT:      "How a single non-recurring event (sale, bonus, windfall) skews this year's metrics",
 };
@@ -1596,8 +1601,8 @@ const GLOSSARY_TERMS = [
   { category: "DEDUCTION", term: "Pre-tax Contributions", line: null,
     def: "Money contributed to qualified accounts (401k, traditional IRA, HSA, FSA) that reduces taxable income in the contribution year — 2025 limits: 401k $23,500, IRA $7,000, HSA $4,300 single / $8,550 family",
     formula: null, value: null, fmt: null },
-  { category: "DEDUCTION", term: "Deduction Efficiency", line: null,
-    def: "How much your deductions reduce your gross income — measures whether your deduction strategy scales with income",
+  { category: "DEDUCTION", term: "Below-AGI Deduction Ratio", line: null,
+    def: "How much your standard or itemized deduction shelters your total income — this does not include above-the-line adjustments (IRA, HSA, student loan interest), which reduce AGI separately and don't move this ratio",
     formula: "(AGI − Taxable Income) ÷ Total Income", value: (r, m) => m?.deductionEfficiency, fmt: "percent" },
 
   // ── GROWTH (3) ──
@@ -1660,7 +1665,7 @@ const GLOSSARY_TERMS = [
     def: "Two related but different rates: ETR uses taxable income (post-deduction) as denominator; Tax/Income uses total income (pre-deduction). ETR is always higher because deductions shrink the denominator",
     formula: "ETR ≥ Tax/Income (always, since Taxable ≤ Total Income)", value: null, fmt: null },
   { category: "APP-SPECIFIC", term: "Peak-Risk Year", line: null,
-    def: "The year identified as most tax-exposed in your history — peak income, highest effective tax rate, and lowest deduction efficiency. Highest leverage for retroactive optimization review",
+    def: "The year identified as most tax-exposed in your history — peak income, highest effective tax rate, and lowest below-AGI deduction ratio. Highest leverage for retroactive optimization review",
     formula: null, value: null, fmt: null },
 ];
 
@@ -1774,6 +1779,18 @@ const DEMO_CASES = [
       { offset: 2, form: "1040", fields: { wages: "135000", interest: "400", dividends: "500", capitalGains: "85000", otherIncome: "0", totalIncome: "220900", adjustments: "0", agi: "220900", deductions: "14600", taxableIncome: "206300", totalTax: "45000" } },
       { offset: 1, form: "1040", fields: { wages: "140000", interest: "450", dividends: "600", capitalGains: "6000", otherIncome: "0", totalIncome: "147050", adjustments: "0", agi: "147050", deductions: "14600", taxableIncome: "132450", totalTax: "26500" } },
       { offset: 0, form: "1040", fields: { wages: "148000", interest: "500", dividends: "700", capitalGains: "5000", otherIncome: "0", totalIncome: "154200", adjustments: "0", agi: "154200", deductions: "14600", taxableIncome: "139600", totalTax: "28200" } },
+    ]
+  ),
+  buildDemoCase(
+    "re-investor",
+    "W-2 + Real Estate Investor",
+    "W-2 earner adds rental properties over 5 years — depreciation losses, then cash flow turns positive",
+    [
+      { offset: 4, form: "1040", fields: { wages: "95000", interest: "300", dividends: "200", capitalGains: "0", otherIncome: "0", totalIncome: "95500", adjustments: "0", agi: "95500", deductions: "13850", taxableIncome: "81650", totalTax: "13000" } },
+      { offset: 3, form: "1040", fields: { wages: "98000", interest: "350", dividends: "250", capitalGains: "0", otherIncome: "-8000", totalIncome: "90600", adjustments: "0", agi: "90600", deductions: "14600", taxableIncome: "76000", totalTax: "11800" } },
+      { offset: 2, form: "1040", fields: { wages: "101000", interest: "400", dividends: "300", capitalGains: "0", otherIncome: "-15000", totalIncome: "86700", adjustments: "0", agi: "86700", deductions: "14600", taxableIncome: "72100", totalTax: "10900" } },
+      { offset: 1, form: "1040", fields: { wages: "104000", interest: "450", dividends: "350", capitalGains: "0", otherIncome: "-6000", totalIncome: "98800", adjustments: "0", agi: "98800", deductions: "14600", taxableIncome: "84200", totalTax: "13600" } },
+      { offset: 0, form: "1040", fields: { wages: "107000", interest: "500", dividends: "400", capitalGains: "0", otherIncome: "5000", totalIncome: "112900", adjustments: "0", agi: "112900", deductions: "14600", taxableIncome: "98300", totalTax: "16700" } },
     ]
   ),
 ];
@@ -2204,8 +2221,8 @@ export default function TaxToBook() {
       year: String(r.year),
       totalIncome: r.summary?.totalIncome ?? 0,
       afterTax: m?.afterTaxIncome ?? 0,
-      taxRate: +((m?.taxToIncome ?? 0) * 100).toFixed(2),
-      effectiveTaxRate: +((m?.effectiveTaxRate ?? 0) * 100).toFixed(2),
+      taxRate: (m?.taxToIncome ?? 0) * 100,
+      effectiveTaxRate: (m?.effectiveTaxRate ?? 0) * 100,
     };
   });
 
@@ -2369,21 +2386,21 @@ export default function TaxToBook() {
       }
     }
 
-    // Insight 3: Deduction efficiency
+    // Insight 3: Below-AGI deduction ratio
     if (vMetric.deductionEfficiency != null) {
       const de    = vMetric.deductionEfficiency;
       const dePct = (de * 100).toFixed(1) + "%";
       if (de < 0.1) {
         ins.push([
-          { text: "Deduction efficiency: " },
+          { text: "Below-AGI deduction ratio: " },
           { text: dePct, accent: true },
-          { text: " — limited tax base reduction; 401k / HSA / IRA contributions are highest-leverage next actions" },
+          { text: " — a small share of total income is sheltered by the standard/itemized deduction; this ratio doesn't reflect IRA, HSA, or 401k contributions, which live above AGI" },
         ]);
       } else if (de < 0.2) {
         ins.push([
-          { text: "Deduction efficiency: " },
+          { text: "Below-AGI deduction ratio: " },
           { text: dePct, accent: true },
-          { text: " — moderate; retirement account contributions not yet maxed — additional pre-tax funding would improve this further" },
+          { text: " — reflects your standard/itemized deduction relative to total income" },
         ]);
       } else {
         const collapseOverride = (vHasIncomeCollapse || vHasFalseEfficiency)
@@ -2393,9 +2410,9 @@ export default function TaxToBook() {
           ? " (note: this high efficiency partly reflects the lower income base — it may not persist as income scales)"
           : "";
         ins.push([
-          { text: "Deduction efficiency: " },
+          { text: "Below-AGI deduction ratio: " },
           { text: dePct, accent: true },
-          { text: collapseOverride ?? ` — strong tax base reduction; structure is working — maintain as income scales${lowIncomeCaveat}` },
+          { text: collapseOverride ?? ` — a large share of total income is sheltered by the standard/itemized deduction${lowIncomeCaveat}` },
         ]);
       }
     }
@@ -2418,7 +2435,7 @@ export default function TaxToBook() {
       characteristics = [
         "Rapid income growth from a low base",
         "Increasing tax exposure as income enters taxable brackets",
-        latestDE != null && latestDE < 0.1 ? "Low deduction utilization — pre-tax accounts not yet engaged" : "Deduction structure beginning to take shape",
+        latestDE != null && latestDE < 0.1 ? "Below-AGI deduction ratio is low at this stage" : "Below-AGI deduction ratio beginning to build",
       ];
       implication = "This phase offers the highest leverage for tax optimization decisions. Habits formed now compound over the entire career arc.";
       note = "Income is transitioning from a near-zero base into meaningful taxable territory. The growth rate itself is distorted by the low starting point, but the structural pattern is clear: earnings are scaling while tax strategy has not yet been established.";
@@ -2434,7 +2451,7 @@ export default function TaxToBook() {
         characteristics = [
           "Strong long-term income growth above 12% annualized",
           `Peak income in ${peakYear} ($${Math.round(peakIncome).toLocaleString()}) followed by a pullback in ${_tdN?.year}`,
-          latestDE != null && latestDE < 0.1 ? "Deduction efficiency remains low — optimization headroom available" : "Deduction strategy is operational",
+          latestDE != null && latestDE < 0.1 ? "Below-AGI deduction ratio remains low relative to total income" : "Below-AGI deduction ratio is in a typical range",
         ];
         implication = "Your multi-year trend shows strong growth, but the most recent year reflects a significant correction. Tax planning should account for volatility, not just the long-term trajectory.";
         note = `Your ${years}-year trend shows strong long-term growth, but ${_tdN?.year} reflects a significant correction${_mN?.insights?.hasCapitalLoss ? " driven by investment losses" : ""}. This is a growth-with-volatility story, not a linear acceleration.`;
@@ -2443,7 +2460,7 @@ export default function TaxToBook() {
       characteristics = [
         "Sustained high income growth above 12% annualized",
         taxRateDelta != null && taxRateDelta > 0.02 ? "Tax burden scaling with income — rising effective rate" : "Tax burden managed within growth pace",
-        latestDE != null && latestDE < 0.1 ? "Deduction efficiency remains low — significant optimization headroom" : "Deduction strategy is operational",
+        latestDE != null && latestDE < 0.1 ? "Below-AGI deduction ratio remains low relative to total income" : "Below-AGI deduction ratio is in a typical range",
       ];
       implication = "Rapid growth creates urgency: tax optimization decisions made now will protect a compounding income base. Delay increases cumulative tax leakage.";
       note = "Income is expanding at an accelerated pace. Without proportional deduction scaling, a growing share of each incremental dollar will be taxed at progressively higher marginal rates.";
@@ -2454,9 +2471,9 @@ export default function TaxToBook() {
       characteristics = [
         `${cagrPct}% annualized growth — moderate, above-inflation income expansion`,
         taxRateDelta != null ? `Effective tax rate shifted by ${(taxRateDelta * 100).toFixed(1)} percentage points — ${Math.abs(taxRateDelta) < 0.02 ? "stable exposure" : taxRateDelta > 0 ? "gradual upward pressure" : "improving efficiency"}` : "Tax exposure data insufficient for trend comparison",
-        latestDE != null ? `Deduction efficiency at ${(latestDE * 100).toFixed(1)}% — ${latestDE > 0.15 ? "operational" : "room to increase pre-tax contributions"}` : "Deduction data unavailable",
+        latestDE != null ? `Below-AGI deduction ratio at ${(latestDE * 100).toFixed(1)}% — ${latestDE > 0.15 ? "typical range" : "reflects a smaller standard/itemized deduction relative to income"}` : "Deduction data unavailable",
       ];
-      implication = `At ${cagrPct}% annualized growth, steady expansion provides the most predictable environment for tax planning. Incremental improvements in deduction efficiency compound reliably at this pace.`;
+      implication = `At ${cagrPct}% annualized growth, steady expansion provides the most predictable environment for tax planning. Incremental tax-planning improvements compound reliably at this pace.`;
       note = `Growth is consistent at ${cagrPct}% annualized without dramatic shifts. This stability is ideal for establishing automated pre-tax contributions and reviewing deduction coverage systematically.`;
     } else if (cagr >= 0.02) {
       phase = "Stable Growth";
@@ -2465,10 +2482,10 @@ export default function TaxToBook() {
       characteristics = [
         `${cagrPct}% annualized growth — consistent, positive trajectory`,
         latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "strong after-tax performance" : "moderate after-tax performance"}` : "After-tax margin data unavailable",
-        latestDE != null ? `Deduction efficiency at ${(latestDE * 100).toFixed(1)}% — ${latestDE < 0.1 ? "optimization opportunity available" : "maintained at current level"}` : "Deduction data unavailable",
+        latestDE != null ? `Below-AGI deduction ratio at ${(latestDE * 100).toFixed(1)}% — ${latestDE < 0.1 ? "smaller share of income sheltered by deductions" : "maintained at current level"}` : "Deduction data unavailable",
       ];
-      implication = `At ${cagrPct}% annualized growth, income is expanding steadily. This is a reliable environment for systematic tax planning — incremental deduction improvements compound predictably at this pace.`;
-      note = `Income is growing consistently at ${cagrPct}% annualized — healthy, positive trajectory. Focus shifts to deduction efficiency and income mix optimization to ensure after-tax growth keeps pace.`;
+      implication = `At ${cagrPct}% annualized growth, income is expanding steadily. This is a reliable environment for systematic tax planning.`;
+      note = `Income is growing consistently at ${cagrPct}% annualized — healthy, positive trajectory. Focus shifts to deduction strategy and income mix optimization to ensure after-tax growth keeps pace.`;
     } else if (cagr >= 0) {
       phase = "Income Plateau";
       const cagrPct = (cagr * 100).toFixed(1);
@@ -2476,7 +2493,7 @@ export default function TaxToBook() {
       characteristics = [
         `${cagrPct}% annualized growth — effectively flat or below inflation`,
         latestATM != null ? `After-tax margin at ${(latestATM * 100).toFixed(1)}% — ${latestATM > 0.8 ? "after-tax income stable but not improving" : "tax drag is compressing take-home income"}` : "After-tax margin data unavailable",
-        latestDE != null ? `Deduction efficiency at ${(latestDE * 100).toFixed(1)}% — ${latestDE < 0.1 ? "optimization here is the primary lever for after-tax growth" : "maintained at current level"}` : "Deduction data unavailable",
+        latestDE != null ? `Below-AGI deduction ratio at ${(latestDE * 100).toFixed(1)}% — ${latestDE < 0.1 ? "smaller share of income sheltered by deductions" : "maintained at current level"}` : "Deduction data unavailable",
       ];
       implication = `With income growing at only ${cagrPct}% annualized, after-tax growth must come from efficiency gains — reducing taxable income through deductions and income mix optimization.`;
       note = `Income has leveled off at ${cagrPct}% annualized growth. If after-tax growth is a priority, the path runs through deduction strategy and income diversification rather than income growth alone.`;
@@ -2596,7 +2613,7 @@ export default function TaxToBook() {
     const atiColor  = atiGrowth != null && atiGrowth < -0.05 ? "var(--danger)" : "var(--success)";
     const atiGlow   = atiGrowth != null && atiGrowth > 0.1 ? "0 0 8px rgba(var(--accent2-rgb),0.25)" : null;
 
-    // Deduction efficiency — low deductions flagged as opportunity (red)
+    // Below-AGI deduction ratio — low deductions flagged as opportunity (red)
     const dePct    = de != null ? (de * 100).toFixed(1) + "%" : null;
     const deIsHighIncome = ti != null && ti > HIGH_INCOME_THRESHOLD;
     const tiPriorForDe = rPrior?.summary?.totalIncome ?? null;
@@ -2610,9 +2627,9 @@ export default function TaxToBook() {
       : de > 0.1 && deIsContracting
         ? `${dePct} — elevated by income contraction, not optimization`
       : de > 0.1
-        ? `${dePct}, moderate — room to increase pre-tax contributions`
+        ? `${dePct}, moderate share of income sheltered by the standard/itemized deduction`
       : deIsHighIncome
-        ? `${dePct} (standard deduction is flat — pre-tax 401k/HSA/IRA are the levers at this income)`
+        ? `${dePct} (standard deduction is flat at this income — this ratio isn't moved by IRA/HSA/401k contributions)`
       : `${dePct}, limited — most income taxed without offsets`;
     const deColor   = de == null ? "var(--accent)"
       : de > 0.2 && deIsContracting ? "var(--muted)"
@@ -2660,13 +2677,13 @@ export default function TaxToBook() {
         : `income +${g}% YoY — deductions didn't scale proportionally`);
     }
 
-    // Deduction efficiency: low = problem, high = strength
+    // Below-AGI deduction ratio: low = problem, high = strength
     if (de != null && de < 0.08) {
       bullets.push(whyIsHighIncome
-        ? `deduction efficiency ${(de * 100).toFixed(1)}% — expected at this income level; focus on pre-tax contribution caps, not ratios`
-        : `deduction efficiency ${(de * 100).toFixed(1)}% — taxable income close to gross`);
+        ? `below-AGI deduction ratio ${(de * 100).toFixed(1)}% — expected at this income level; focus on pre-tax contribution caps, not ratios`
+        : `below-AGI deduction ratio ${(de * 100).toFixed(1)}% — taxable income close to gross`);
     } else if (de != null && de > 0.2 && bullets.length < 2) {
-      bullets.push(`deduction efficiency ${(de * 100).toFixed(1)}% — strong tax base reduction`);
+      bullets.push(`below-AGI deduction ratio ${(de * 100).toFixed(1)}% — strong tax base reduction`);
     }
 
     // Wage-heavy income mix (ordinary rates apply — only when meaningful)
@@ -2674,9 +2691,9 @@ export default function TaxToBook() {
       bullets.push(`${(wagesPct * 100).toFixed(0)}% W-2 wages — ordinary income rates apply`);
     }
 
-    // Minimal pre-tax adjustments (filler if < 2 bullets)
+    // No above-the-line adjustments (filler if < 2 bullets)
     if (agiRatio != null && agiRatio > 0.94 && bullets.length < 2) {
-      bullets.push(`Adjusted gross income is ${(agiRatio * 100).toFixed(0)}% of gross income — minimal pre-tax reductions applied`);
+      bullets.push(`No above-the-line adjustments reported between total income and AGI — ${(agiRatio * 100).toFixed(0)}% of gross income carries through unchanged`);
     }
 
     // Positive: strong after-tax retention (filler for low-tax years)
@@ -2687,7 +2704,7 @@ export default function TaxToBook() {
     return bullets.slice(0, 3);
   })();
 
-  // Peak-risk year: highest income + highest ETR + lowest deduction efficiency
+  // Peak-risk year: highest income + highest ETR + lowest below-AGI deduction ratio
   const peakRiskYear = (() => {
     if (results.length < 3) return null;
     const peakIncYear = results.reduce((a, b) => (b.summary?.totalIncome ?? 0) > (a.summary?.totalIncome ?? 0) ? b : a).year;
@@ -3006,7 +3023,7 @@ export default function TaxToBook() {
                         </>
                       )}
                       {yearInsight.deLabel && (
-                        <>{" · "}<Tip tip="How effectively your deductions reduced gross income — qualitative band based on Deduction Efficiency">Deductions</Tip>:{" "}
+                        <>{" · "}<Tip tip="How much of total income the standard/itemized deduction shelters — qualitative band based on the Below-AGI Deduction Ratio">Deductions</Tip>:{" "}
                           <strong style={{ color: yearInsight.deColor, textShadow: yearInsight.deGlow ?? "none" }}>
                             {yearInsight.deLabel}
                           </strong>
@@ -3184,15 +3201,22 @@ export default function TaxToBook() {
                             ];
                             const _yearsData = filteredResults.map(r => {
                               const inc = r.income ?? {};
-                              const segs = [
-                                { key: "wages",     amt: Math.max(inc.wages ?? 0, 0),            color: cssVar("--chart-income") },
-                                { key: "capGains",  amt: Math.max(inc.capitalGains ?? 0, 0),     color: cssVar("--chart-after-tax") },
-                                { key: "dividends", amt: Math.max(inc.dividends ?? 0, 0),        color: cssVar("--chart-pie-3") },
-                                { key: "interest",  amt: Math.max(inc.interest ?? 0, 0),         color: cssVar("--chart-pie-4") },
-                                { key: "other",     amt: Math.max(inc.additionalIncome ?? 0, 0), color: cssVar("--chart-pie-5") },
+                              const rawAmts = [
+                                { key: "wages",     amt: inc.wages ?? 0,            color: cssVar("--chart-income") },
+                                { key: "capGains",  amt: inc.capitalGains ?? 0,     color: cssVar("--chart-after-tax") },
+                                { key: "dividends", amt: inc.dividends ?? 0,        color: cssVar("--chart-pie-3") },
+                                { key: "interest",  amt: inc.interest ?? 0,         color: cssVar("--chart-pie-4") },
+                                { key: "other",     amt: inc.additionalIncome ?? 0, color: cssVar("--chart-pie-5") },
                               ];
+                              const segs = rawAmts.map(s => ({ ...s, amt: Math.max(s.amt, 0) }));
                               const total = segs.reduce((s, x) => s + x.amt, 0);
-                              return { year: r.year, segs, total };
+                              // Negative components (e.g. a rental loss) are clipped to 0 above so the
+                              // bar/composition % stay sane — but that means this bar's own total can
+                              // silently diverge from the year's real reported total income. Surface
+                              // that reconciliation instead of hiding it.
+                              const lossTotal = rawAmts.reduce((s, x) => s + Math.max(-x.amt, 0), 0);
+                              const reportedTotal = r.summary?.totalIncome ?? (total - lossTotal);
+                              return { year: r.year, segs, total, lossTotal, reportedTotal };
                             });
                             const _maxTotal = Math.max(..._yearsData.map(d => d.total), 1);
                             return (
@@ -3227,6 +3251,13 @@ export default function TaxToBook() {
                                           </div>
                                         </div>
                                         <div style={{ fontFamily: "var(--mono)", fontSize: 14, color: "var(--muted)" }}>{d.year}</div>
+                                        {d.lossTotal > 0 && (
+                                          <Tip tip={`Positive income $${Math.round(d.total).toLocaleString()} − losses $${Math.round(d.lossTotal).toLocaleString()} = reported total $${Math.round(d.reportedTotal).toLocaleString()}`}>
+                                            <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--danger)", whiteSpace: "nowrap" }}>
+                                              ${Math.round(d.total/1000)}K − ${Math.round(d.lossTotal/1000)}K = ${Math.round(d.reportedTotal/1000)}K
+                                            </div>
+                                          </Tip>
+                                        )}
                                       </div>
                                     );
                                   })}
@@ -3460,7 +3491,7 @@ export default function TaxToBook() {
                                     { label: "Taxable / Adjusted Gross", val: pf(vMetric.taxableRatio),               accent: false, tip: "How much of your adjusted income ends up being taxed — Taxable Income ÷ AGI" },
                                     { label: "Effective Tax Rate",   val: pf(vMetric.effectiveTaxRate),               accent: false, tip: "How your true tax rate is calculated — Total Tax ÷ Taxable Income" },
                                     { label: "After-Tax Margin",     val: pf(vMetric.afterTaxMargin),                 accent: true,  tip: "How much of your total income you actually keep — (Total Income − Total Tax) ÷ Total Income" },
-                                    { label: "Deduction Efficiency", val: pf(vMetric.deductionEfficiency),            accent: false, tip: "How much your deductions reduce your gross income — (AGI − Taxable Income) ÷ Total Income" },
+                                    { label: "Below-AGI Deduction Ratio", val: pf(vMetric.deductionEfficiency),            accent: false, tip: "How much of total income the standard/itemized deduction shelters — (AGI − Taxable Income) ÷ Total Income. Doesn't include above-the-line adjustments like IRA/HSA contributions" },
                                   ].map(row => (
                                     <tr key={row.label}>
                                       <td>{row.tip ? <Tip tip={row.tip}>{row.label}</Tip> : row.label}</td>
@@ -3622,7 +3653,7 @@ export default function TaxToBook() {
                           ))}
                           {peakRiskYear === r.year && (
                             <p style={{ color: "var(--danger)", fontSize: 15 }}>
-                              {r.year} was your most tax-exposed year: peak income, highest effective tax rate, and lowest deduction efficiency across all years analyzed. This is the highest-leverage year for retroactive optimization review.
+                              {r.year} was your most tax-exposed year: peak income, highest effective tax rate, and lowest below-AGI deduction ratio across all years analyzed. This is the highest-leverage year for retroactive optimization review.
                             </p>
                           )}
                           {nrTransitionYear === r.year && (
@@ -3739,7 +3770,7 @@ export default function TaxToBook() {
           }
           else if (incomeCagr != null && incomeCagr < -0.05) _tags.push({ text: "Income Declining", cls: "neg" });
           if (taxRateDelta != null && taxRateDelta > 0.02) _tags.push({ text: "Rising Tax", cls: "neg" });
-          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _tags.push({ text: "Low Efficiency", cls: "warn" });
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _tags.push({ text: "Low Deduction Ratio", cls: "warn" });
           else if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency > 0.2) _tags.push({ text: "Strong Deductions", cls: "pos" });
           if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) _tags.push({ text: "Strong Take-Home", cls: "pos" });
 
@@ -3749,7 +3780,7 @@ export default function TaxToBook() {
             if (incomeCagr != null && incomeCagr > 0.12 && taxRateDelta != null && taxRateDelta > 0.02) return "Income rising fast, but tax efficiency is not keeping pace.";
             if (incomeCagr != null && incomeCagr > 0.12) return "Income growing rapidly — early optimization has the highest lifetime impact.";
             if (taxRateDelta != null && taxRateDelta > 0.02) return "Tax burden increasing — more income is being lost to taxes.";
-            if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) return "Deductions underutilized — taxable income is close to total income.";
+            if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) return "Below-AGI deduction ratio is low — taxable income is close to total income.";
             if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.8) return "Strong after-tax performance — most of total income preserved after tax.";
             return "Review your income structure and tax efficiency below.";
           })();
@@ -3764,9 +3795,8 @@ export default function TaxToBook() {
           // Priority actions
           const _actions = [];
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15 && _latestR?.summary?.totalIncome) {
-            const _deGap = 0.20 - _latestM.deductionEfficiency;
-            const _shelterAmt = Math.round(_deGap * _latestR.summary.totalIncome);
-            _actions.push({ action: "Maximize pre-tax contributions (401k, IRA, HSA)", reason: `Your deduction efficiency is ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — a gap of ${(_deGap * 100).toFixed(1)}pp from the 20% optimization threshold. This represents approximately $${_shelterAmt.toLocaleString()} of additional income that could be sheltered through pre-tax contributions. ${_latestM.deductionEfficiency < 0.08 ? "Each dollar contributed pre-tax reduces taxable income dollar-for-dollar at your current marginal rate." : "Increasing 401k/IRA/HSA contributions is the highest-leverage action to close this gap."}` });
+            const _dePct = (_latestM.deductionEfficiency * 100).toFixed(1);
+            _actions.push({ action: "Review whether itemizing would beat the standard deduction", reason: `Your below-AGI deduction ratio is ${_dePct}% of total income, reflecting the standard deduction. This ratio only moves with itemized deductions (mortgage interest, SALT, charitable giving, medical) — above-the-line moves like 401k, IRA, and HSA contributions reduce your overall tax bill but don't change this specific ratio, since they're already subtracted before AGI is calculated.` });
           }
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _actions.push({ action: "Reduce taxable income exposure", reason: `Beyond retirement, evaluate HSA eligibility, student loan interest deduction, and above-the-line adjustments.` });
           if (taxRateDelta != null && taxRateDelta > 0.02) _actions.push({ action: "Review tax withholding accuracy", reason: `Effective tax rate increased by ${(taxRateDelta * 100).toFixed(1)} percentage points. Verify W-4 reflects current income.` });
@@ -3781,7 +3811,7 @@ export default function TaxToBook() {
               _proseParts.push(`Over ${_first.year}–${_last.year}, your effective tax rate ${taxRateDelta > 0 ? "increased" : "decreased"} by ${Math.abs(taxRateDelta * 100).toFixed(1)} percentage points${_lb ? " as income moved from a near-zero base into taxable brackets" : ""}.`);
             }
             if (_latestM.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) {
-              _proseParts.push(`Deduction efficiency is low at ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — the primary lever for improving after-tax income is increasing pre-tax contributions.`);
+              _proseParts.push(`Below-AGI deduction ratio is low at ${(_latestM.deductionEfficiency * 100).toFixed(1)}% — this reflects the standard/itemized deduction only; it doesn't move with above-the-line contributions like 401k, IRA, or HSA.`);
             }
           }
 
@@ -3825,18 +3855,18 @@ export default function TaxToBook() {
           }
 
           // Deductions (condensed: latest + trend delta only)
-          if (_mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency; _dedBullets.push(`${_last.year}: ${_fmtP(d)} of total income offset by deductions — ${d > 0.2 ? "strong sheltering" : d > 0.1 ? "moderate, room to increase" : "low, pre-tax accounts are primary lever"}.`); }
-          if (_multi && _mFirst?.deductionEfficiency != null && _mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency - _mFirst.deductionEfficiency; if (Math.abs(d) > 0.03) _dedBullets.push(`Efficiency ${d > 0 ? "improved" : "declined"} by ${Math.abs(d * 100).toFixed(1)}pp over ${_first.year}–${_last.year}.`); }
+          if (_mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency; _dedBullets.push(`${_last.year}: ${_fmtP(d)} of total income offset by the standard/itemized deduction — ${d > 0.2 ? "strong sheltering" : d > 0.1 ? "moderate" : "low; this ratio isn't moved by 401k, IRA, or HSA contributions"}.`); }
+          if (_multi && _mFirst?.deductionEfficiency != null && _mLast?.deductionEfficiency != null) { const d = _mLast.deductionEfficiency - _mFirst.deductionEfficiency; if (Math.abs(d) > 0.03) _dedBullets.push(`Below-AGI deduction ratio ${d > 0 ? "increased" : "decreased"} by ${Math.abs(d * 100).toFixed(1)}pp over ${_first.year}–${_last.year}.`); }
 
           // Summary
-          if (_multi) { if (_lb && incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) _summaryBullets.push("Income transitioned from minimal base into taxable territory. Window for establishing tax-efficient habits is now."); else if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) _summaryBullets.push("Income growing aggressively but tax burden growing disproportionately."); else if (incomeCagr != null && incomeCagr < 0) _summaryBullets.push("Income contracting — shift to defensive optimization."); if (_mLast?.deductionEfficiency != null && _mLast.deductionEfficiency < 0.08) _summaryBullets.push(`Deduction efficiency of ${_fmtP(_mLast.deductionEfficiency)} is the single largest optimization opportunity.`); if (_mLast?.afterTaxMargin != null) _summaryBullets.push(`Retention: ${_fmtP(_mLast.afterTaxMargin)} — $${(_mLast.afterTaxMargin).toFixed(2)} kept per $1.00 earned.`); }
+          if (_multi) { if (_lb && incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) _summaryBullets.push("Income transitioned from minimal base into taxable territory. Window for establishing tax-efficient habits is now."); else if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.03) _summaryBullets.push("Income growing aggressively but tax burden growing disproportionately."); else if (incomeCagr != null && incomeCagr < 0) _summaryBullets.push("Income contracting — shift to defensive optimization."); if (_mLast?.deductionEfficiency != null && _mLast.deductionEfficiency < 0.08) _summaryBullets.push(`Below-AGI deduction ratio of ${_fmtP(_mLast.deductionEfficiency)} is the largest gap between total income and taxable income this year.`); if (_mLast?.afterTaxMargin != null) _summaryBullets.push(`Retention: ${_fmtP(_mLast.afterTaxMargin)} — $${(_mLast.afterTaxMargin).toFixed(2)} kept per $1.00 earned.`); }
 
           // What This Means
           const _wtmBullets = [];
           if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.01) _wtmBullets.push(`Effective tax rate rising ${(taxRateDelta * 100).toFixed(1)}pp while income grows — entering higher tax exposure phase.`);
           else if (incomeCagr != null && incomeCagr > 0.1) _wtmBullets.push(`Income at ${_latestR ? _fmtD(_latestR.summary?.totalIncome) : "current level"} — tax drag will compound without deduction scaling.`);
           if (taxRateDelta != null && taxRateDelta > 0.02) _wtmBullets.push(`The ${(taxRateDelta * 100).toFixed(1)}pp rate increase means take-home margin will continue to compress without structural changes.`);
-          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _wtmBullets.push(`At ${(_latestM.deductionEfficiency * 100).toFixed(1)}% deduction efficiency, early optimization has the highest lifetime impact.`);
+          if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _wtmBullets.push(`At ${(_latestM.deductionEfficiency * 100).toFixed(1)}% below-AGI deduction ratio, itemizing (if eligible) is the only lever that moves this specific ratio.`);
           if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.85) _wtmBullets.push(`${(_latestM.afterTaxMargin * 100).toFixed(1)}% after-tax margin is strong — priority is protecting this margin as income scales.`);
           if (_wtmBullets.length === 0 && _latestM?.effectiveTaxRate != null) _wtmBullets.push(`Current rate ${_fmtP(_latestM.effectiveTaxRate)} — review deduction strategy annually.`);
           // Closing directive — always present
@@ -3844,8 +3874,8 @@ export default function TaxToBook() {
             _wtmBullets.push("You are entering a higher tax exposure phase. Without changes, a growing share of your income will be taxed at higher marginal rates.");
             _wtmBullets.push("What to do next: (1) Increase pre-tax contributions immediately. (2) Review withholding and deduction strategy. (3) Shift future income toward tax-advantaged sources.");
           } else if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.15) {
-            _wtmBullets.push("Pre-tax contribution capacity remains underused — this is the single largest optimization lever available.");
-            _wtmBullets.push("What to do next: (1) Increase pre-tax contributions immediately. (2) Evaluate HSA and above-the-line adjustments. (3) Review deduction strategy annually as income scales.");
+            _wtmBullets.push("Below-AGI deduction ratio is low — that specifically reflects the standard/itemized deduction, not above-the-line contributions.");
+            _wtmBullets.push("What to do next: (1) Evaluate whether itemizing would beat the standard deduction. (2) Separately, review 401k, HSA, and IRA contribution levels — these reduce your overall tax bill but won't change this ratio. (3) Review deduction strategy annually as income scales.");
           }
 
           const _deepSections = [
@@ -3854,7 +3884,7 @@ export default function TaxToBook() {
             { title: "Tax Drag & Lost Efficiency", items: _dragBullets },
             { title: "After-Tax Performance", items: _afterTaxBullets },
             { title: "Income Structure & Composition", items: _compBullets },
-            { title: "Deduction Efficiency Analysis", items: _dedBullets },
+            { title: "Below-AGI Deduction Ratio Analysis", items: _dedBullets },
             { title: "Financial Trajectory — Summary", items: _summaryBullets },
           ].filter(s => s.items.length > 0);
 
@@ -3940,7 +3970,7 @@ export default function TaxToBook() {
               <div className="tv-pr-section">
                 <div className="tv-pr-section-title">Multi-Year Summary</div>
                 <table className="tv-pr-table">
-                  <thead><tr>{["Year", "Gross Income", "After-Tax", "Tax / Income", "Eff. Tax Rate", "Deduction Eff."].map(h => <th key={h}>{h}</th>)}</tr></thead>
+                  <thead><tr>{["Year", "Gross Income", "After-Tax", "Tax / Income", "Eff. Tax Rate", "Ded. Ratio"].map(h => <th key={h}>{h}</th>)}</tr></thead>
                   <tbody>
                     {[...results].sort((a, b) => b.year - a.year).map(r => { const m = metricMap[r.year]; return (
                       <tr key={r.year}>
@@ -4023,7 +4053,7 @@ export default function TaxToBook() {
                         { l: "Taxable / AGI", v: pf(m.taxableRatio) },
                         { l: "Eff. Tax Rate", v: pf(m.effectiveTaxRate) },
                         { l: "After-Tax Margin", v: pf(m.afterTaxMargin) },
-                        { l: "Deduction Eff.", v: pf(m.deductionEfficiency) },
+                        { l: "Ded. Ratio", v: pf(m.deductionEfficiency) },
                       ].map(row => (
                         <div className="tv-pr-year-row" key={row.l}>
                           <span className="tv-pr-year-row-label">{row.l}</span>

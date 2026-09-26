@@ -207,7 +207,7 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
     }
   }
 
-  // Line 2: deduction efficiency — must include comparison
+  // Line 2: below-AGI deduction ratio — must include comparison
   if (deductionEfficiency != null) {
     const dePct = (deductionEfficiency * 100).toFixed(1);
     let compText = "";
@@ -225,21 +225,19 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
     }
     if (deduction?.level === "low") {
       const lowAction = isHighIncome
-        ? `Standard Deduction is a fixed IRS amount — at this income level it naturally covers only ${dePct}% of gross. Lowering taxable income requires above-the-line moves: 401k, HSA, IRA, Mega Backdoor Roth`
-        : `only ${dePct}% of total income offset by deductions, leaving ${(100 - Number(dePct)).toFixed(1)}% fully taxable`;
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${lowAction}`, metric: "deduction" });
+        ? `the Standard Deduction is a fixed IRS amount — at this income level it naturally covers only ${dePct}% of gross. This ratio only rises with itemized deductions; 401k, HSA, IRA, and Mega Backdoor Roth reduce your overall tax bill but don't move this specific number`
+        : `only ${dePct}% of total income offset by the standard/itemized deduction, leaving ${(100 - Number(dePct)).toFixed(1)}% fully taxable`;
+      items.push({ text: `Below-AGI deduction ratio: ${dePct}%${compText} — ${lowAction}`, metric: "deduction" });
     } else if (deduction?.level === "high") {
       const highAction = isContracting
-        ? `${dePct}% reflects income contraction outpacing flat deductions, not active sheltering`
-        : `${dePct}% of total income sheltered from taxation through deductions and pre-tax contributions`;
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${highAction}`, metric: "deduction" });
+        ? `${dePct}% reflects income contraction outpacing a flat standard deduction, not active sheltering`
+        : `${dePct}% of total income sheltered by the standard/itemized deduction`;
+      items.push({ text: `Below-AGI deduction ratio: ${dePct}%${compText} — ${highAction}`, metric: "deduction" });
     } else {
       const midAction = isContracting
-        ? "moderate sheltering; hold current contribution pace — income contraction makes liquidity the higher priority"
-        : isHighIncome
-        ? "moderate sheltering — at this income level, Mega Backdoor Roth and Deferred Compensation often outrank simple 401k increases for marginal tax reduction"
-        : "moderate sheltering; increasing pre-tax contributions would raise this ratio";
-      items.push({ text: `Deduction efficiency: ${dePct}%${compText} — ${midAction}`, metric: "deduction" });
+        ? "moderate — reflects the standard/itemized deduction; income contraction makes liquidity the higher priority right now"
+        : "moderate — reflects the standard/itemized deduction relative to total income; this ratio doesn't move with 401k, IRA, or HSA contributions";
+      items.push({ text: `Below-AGI deduction ratio: ${dePct}%${compText} — ${midAction}`, metric: "deduction" });
     }
   }
 
@@ -249,21 +247,21 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
     const atmPct = (afterTaxMargin * 100).toFixed(1);
     let deAction;
     if (isContracting) {
-      deAction = "deduction efficiency rose mechanically due to income contraction, not optimization — prioritize liquidity; avoid increasing pre-tax contributions until income recovers";
+      deAction = "this ratio rose mechanically due to income contraction, not optimization — prioritize liquidity; it doesn't move with pre-tax contributions either way";
     } else if (isHighIncome && deductionEfficiency < 0.06) {
-      deAction = "At this income level, Standard Deduction alone won't move the needle. Highest-leverage moves: max 401k ($23,500 in 2025), HSA if eligible ($4,300 single), and Backdoor Roth IRA. Above ~$350K total income, also consider Mega Backdoor Roth and Deferred Compensation if available through employer.";
+      deAction = "this ratio only rises with itemized deductions and won't move from pre-tax contributions. Separately, at this income level: max 401k ($23,500 in 2025), HSA if eligible ($4,300 single), and Backdoor Roth IRA reduce your overall tax bill even though they don't appear here.";
     } else if (isHighIncome && deductionEfficiency <= 0.10) {
-      deAction = "Pre-tax contributions reduce taxable income dollar-for-dollar. At this income level, prioritize: 401k max, HSA (if eligible), Backdoor Roth, then Mega Backdoor Roth if plan allows after-tax contributions.";
+      deAction = "this ratio only rises with itemized deductions. Separately, pre-tax contributions (401k, HSA, Backdoor Roth) reduce taxable income dollar-for-dollar without changing this specific number.";
     } else if (deductionEfficiency < 0.06) {
-      deAction = "401k / IRA contributions have near-zero competition for tax reduction — this is the highest-leverage action";
+      deAction = "this ratio only rises with itemized deductions. Separately, 401k / IRA contributions are a high-leverage way to reduce taxable income, even though they won't move this ratio.";
     } else if (deductionEfficiency <= 0.10) {
-      deAction = "pre-tax contributions are the primary lever — 401k and IRA reduce taxable income dollar-for-dollar";
+      deAction = "this ratio only rises with itemized deductions. Separately, pre-tax contributions reduce taxable income dollar-for-dollar without changing this number.";
     } else if (incomeYoY != null && incomeYoY <= 0.05) {
-      deAction = "deductions are active — maintain current pre-tax contribution pace";
+      deAction = "reflects the standard/itemized deduction; maintain current pre-tax contribution pace for overall tax efficiency (won't change this specific ratio)";
     } else {
-      deAction = "deductions are active — continue scaling pre-tax contributions as income grows";
+      deAction = "reflects the standard/itemized deduction; continue scaling pre-tax contributions for overall tax efficiency as income grows (won't change this specific ratio)";
     }
-    items.push({ text: `At ${dePct}% deduction efficiency vs ${atmPct}% after-tax retention — ${deAction}`, metric: "deduction" });
+    items.push({ text: `At ${dePct}% below-AGI deduction ratio vs ${atmPct}% after-tax retention — ${deAction}`, metric: "deduction" });
   } else if (effectiveTaxRate != null && afterTaxMargin != null) {
     const etrPct = (effectiveTaxRate * 100).toFixed(1);
     const atmPct = (afterTaxMargin * 100).toFixed(1);
