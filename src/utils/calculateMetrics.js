@@ -1,20 +1,29 @@
+// Shared "high income" cutoff — several narrative branches (here and in TaxVista_Step1.jsx)
+// change their advice above this line, so it's centralized instead of hardcoded per site.
+export const HIGH_INCOME_THRESHOLD = 250000;
+
 export function calculateMetrics(data, compare) {
   const { income, summary } = data;
   const { totalIncome, totalTax } = summary;
 
+  // Clip each component to >= 0 before summing/dividing — matches vPieData and the
+  // "Income Sources" chart, so a capital loss can't blow the composition % past 100%
+  // or negative (a loss can't shrink another source's share of the pie below zero).
+  const wagesClipped      = Math.max(income.wages ?? 0, 0);
+  const capitalGainsClipped = Math.max(income.capitalGains ?? 0, 0);
+  const interestClipped   = Math.max(income.interest ?? 0, 0);
+  const dividendsClipped  = Math.max(income.dividends ?? 0, 0);
+  const additionalClipped = Math.max(income.additionalIncome ?? 0, 0);
+
   const totalIncomeFromParts =
-    (income.wages ?? 0) +
-    (income.capitalGains ?? 0) +
-    (income.interest ?? 0) +
-    (income.dividends ?? 0) +
-    (income.additionalIncome ?? 0);
+    wagesClipped + capitalGainsClipped + interestClipped + dividendsClipped + additionalClipped;
 
-  const pct = (val) => (totalIncomeFromParts ? (val ?? 0) / totalIncomeFromParts : null);
+  const pct = (val) => (totalIncomeFromParts ? val / totalIncomeFromParts : null);
 
-  const wagesPct       = pct(income.wages);
-  const capitalGainsPct = pct(income.capitalGains);
-  const interestPct    = pct(income.interest);
-  const dividendsPct   = pct(income.dividends);
+  const wagesPct       = pct(wagesClipped);
+  const capitalGainsPct = pct(capitalGainsClipped);
+  const interestPct    = pct(interestClipped);
+  const dividendsPct   = pct(dividendsClipped);
 
   const knownPct = [wagesPct, capitalGainsPct, interestPct, dividendsPct]
     .reduce((sum, v) => sum + (v ?? 0), 0);
@@ -131,7 +140,7 @@ function generateInsights({ agiRatio, effectiveTaxRate, deductionEfficiency, aft
   }
 
   if (afterTaxMargin != null) {
-    if (afterTaxMargin > 0.75)      signals.margin = { label: "Strong take-home",   level: "high" };
+    if (afterTaxMargin > 0.8)       signals.margin = { label: "Strong take-home",   level: "high" };
     else if (afterTaxMargin > 0.6)  signals.margin = { label: "Moderate take-home", level: "mid"  };
     else                            signals.margin = { label: "High tax drag",       level: "low"  };
   }
@@ -159,7 +168,7 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
   const items = [];
   const c = compare || {};
   const isContracting = incomeYoY != null && incomeYoY < -0.05;
-  const isHighIncome  = totalIncome != null && totalIncome > 250000;
+  const isHighIncome  = totalIncome != null && totalIncome > HIGH_INCOME_THRESHOLD;
 
   // False signal override — must appear first when severity is CRITICAL or HIGH
   if (primarySignal && (primarySignal.severity === "CRITICAL" || primarySignal.severity === "HIGH")) {
@@ -258,7 +267,7 @@ function buildSummary({ agi, tax, deduction, margin, effectiveTaxRate, deduction
   } else if (effectiveTaxRate != null && afterTaxMargin != null) {
     const etrPct = (effectiveTaxRate * 100).toFixed(1);
     const atmPct = (afterTaxMargin * 100).toFixed(1);
-    const marginAction = afterTaxMargin > 0.85
+    const marginAction = margin?.level === "high"
       ? (isContracting
         ? "high retention this year reflects reduced income rather than optimization — preserve liquidity until income recovers"
         : "protect this margin by routing growth through tax-advantaged accounts")

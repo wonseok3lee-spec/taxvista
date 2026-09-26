@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { calculateMetrics } from "./utils/calculateMetrics";
+import { calculateMetrics, HIGH_INCOME_THRESHOLD } from "./utils/calculateMetrics";
 import {
   LineChart, Line, BarChart, Bar,
   AreaChart, Area,
@@ -92,7 +92,7 @@ const styles = `
   [data-theme="light"] .tv-logo { text-shadow: none; }
 
   * { user-select: none; -webkit-user-select: none; cursor: default; }
-  input, button, select, textarea, .tv-drop-zone { cursor: pointer; }
+  input, button, select, textarea { cursor: pointer; }
   input, textarea { user-select: text; -webkit-user-select: text; cursor: text; }
 
   /* ── Content selection: allow copy/paste on analysis screens ── */
@@ -204,106 +204,57 @@ const styles = `
     line-height: 1.55;
   }
 
-  /* ── Upload wrapper ── */
-  .tv-upload-wrapper { width: 100%; max-width: 840px; }
-
-  /* ── Drop zone ── */
-  .tv-drop-zone {
-    border: 1.5px dashed var(--border);
-    border-radius: 14px;
-    padding: 52px 32px;
+  /* ── Demo case picker ── */
+  .tv-demo-case {
+    margin-top: 18px;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s, transform 0.15s;
-    background: var(--panel);
+    justify-content: center;
+    gap: 10px;
   }
-  .tv-drop-zone:hover {
-    border-color: var(--accent);
-    background: rgba(var(--accent-rgb),0.025);
-    transform: translateY(-1px);
-  }
-  .tv-drop-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(var(--accent-rgb),0.05);
-    border-style: solid;
-  }
-  .tv-drop-zone.full {
-    cursor: default;
-    opacity: 0.5;
-  }
-  .tv-drop-icon {
-    width: 56px; height: 56px;
-    background: rgba(var(--accent-rgb),0.08);
-    border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    margin-bottom: 4px;
-  }
-  .tv-drop-title {
+  .tv-demo-case label {
     font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text);
-    letter-spacing: 0.08em;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(var(--accent-rgb), 0.3);
   }
-  .tv-drop-sub {
-    font-size: 13px;
-    color: rgba(var(--white-rgb),0.6);
-    text-align: center;
-    line-height: 1.7;
+  .tv-demo-case select {
+    font-family: var(--mono);
+    font-size: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
   }
-  .tv-drop-sub em {
-    color: var(--accent2);
-    font-style: normal;
-  }
-  .tv-drop-btn {
-    margin-top: 6px;
-    padding: 10px 30px;
+  .tv-demo-case select:focus { border-color: var(--accent); }
+  .tv-demo-case-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 9px 20px;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
     background: var(--accent);
     color: var(--bg);
-    border: none;
-    border-radius: 7px;
+    transition: background 0.15s;
+  }
+  .tv-demo-case-btn:hover { background: var(--accent-hover); }
+  .tv-demo-case-summary {
+    width: 100%;
     font-family: var(--mono);
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-  .tv-drop-btn:hover:not(:disabled) {
-    opacity: 0.88;
-    transform: translateY(-1px);
-  }
-  .tv-drop-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-  .tv-input-hidden { display: none; }
-
-  /* ── Limit bar ── */
-  .tv-limit-bar {
-    margin-top: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: rgba(var(--white-rgb),0.5);
-  }
-  .tv-limit-track {
-    flex: 1;
-    height: 3px;
-    background: var(--border);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .tv-limit-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 99px;
-    transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+    color: var(--muted);
+    margin-top: 2px;
   }
 
   /* ── Tooltips ── */
@@ -357,17 +308,6 @@ const styles = `
     font-size: 12px;
     color: rgba(var(--white-rgb),0.45);
     letter-spacing: 0.02em;
-  }
-
-  /* ── Error / status ── */
-  .tv-error {
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--danger);
-    font-family: var(--mono);
-    display: flex;
-    align-items: center;
-    gap: 6px;
   }
 
   /* ── File list ── */
@@ -433,63 +373,6 @@ const styles = `
     transition: border-color 0.15s;
   }
   .tv-year-select:focus { border-color: var(--accent); }
-  .tv-remove-btn {
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    color: #3a3f48;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 6px;
-    border-radius: 5px;
-    transition: color 0.15s, background 0.15s;
-    line-height: 1;
-  }
-  .tv-remove-btn:hover { color: var(--danger); background: rgba(var(--danger-rgb),0.08); }
-
-  /* ── Parsing status per file ── */
-  .tv-parse-status {
-    font-size: 11px;
-    font-family: var(--mono);
-    padding: 2px 7px;
-    border-radius: 4px;
-    letter-spacing: 0.05em;
-  }
-  .tv-parse-status.parsing { color: var(--accent); background: rgba(var(--accent-rgb),0.08); }
-  .tv-parse-status.done    { color: var(--success); background: rgba(var(--accent2-rgb),0.08); }
-  .tv-parse-status.error   { color: var(--danger);  background: rgba(var(--danger-rgb),0.08); }
-
-  /* ── CTA ── */
-  .tv-cta {
-    margin-top: 24px;
-    width: 100%;
-    max-width: 840px;
-  }
-  .tv-cta-btn {
-    width: 100%;
-    padding: 17px;
-    border: none;
-    border-radius: 11px;
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-weight: 700;
-    transition: all 0.2s;
-    background: var(--accent);
-    color: var(--bg);
-    position: relative;
-    overflow: hidden;
-  }
-  .tv-cta-btn:hover:not(:disabled) {
-    background: var(--accent-hover);
-    box-shadow: 0 0 32px rgba(var(--accent-rgb),0.18);
-    transform: translateY(-1px);
-  }
-  .tv-cta-btn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
-  .tv-cta-btn.loading { opacity: 0.7; cursor: wait; }
-
   /* ── Results ── */
   .tv-results {
     margin-top: 32px;
@@ -526,50 +409,6 @@ const styles = `
     color: var(--accent);
     line-height: 1;
   }
-  .tv-result-field { display: flex; flex-direction: column; gap: 4px; }
-  .tv-result-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: rgba(var(--white-rgb),0.55);
-  }
-  .tv-result-value {
-    font-family: var(--mono);
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-  }
-  .tv-result-value.null { color: var(--muted); font-weight: 400; }
-  .tv-result-value.error-val { color: var(--danger); font-size: 12px; font-weight: 400; }
-
-  /* ── Tabs ── */
-  .tv-tabs {
-    margin-top: 32px;
-    width: 100%;
-    max-width: 840px;
-    display: flex;
-    gap: 8px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 0;
-  }
-  .tv-tab {
-    font-family: var(--mono);
-    font-size: 14px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 12px 24px;
-    border: none;
-    background: none;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .tv-tab:hover { color: var(--text); }
-  .tv-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
   .tv-tab-panel {
     width: 100%;
     max-width: 840px;
@@ -1158,10 +997,12 @@ const styles = `
   }
 
   /* ── Edit Data button (analysis screens, top-right of dashboard) ── */
+  /* right offset cleared to sit outside the fixed theme toggle (top:16/right:16/36px wide,
+     plus the 24px .tv-root side padding) so the two never overlap */
   .tv-edit-data-btn {
     position: absolute;
     top: 10px;
-    right: 12px;
+    right: 56px;
     z-index: 5;
     font-family: var(--mono);
     font-size: 12px;
@@ -1332,7 +1173,6 @@ const styles = `
     outline: none; transition: border-color 0.15s;
   }
   .tv-wiz-input:focus { border-color: var(--accent); }
-  .tv-wiz-input.invalid { border-color: var(--danger); }
   .tv-wiz-nav {
     display: flex; gap: 10px; margin-top: 24px; justify-content: center;
   }
@@ -1615,7 +1455,6 @@ const _curYear = _today.getFullYear();
 const _march1 = new Date(_curYear, 2, 1);
 const MOST_RECENT_TAX_YEAR = _today >= _march1 ? _curYear - 1 : _curYear - 2;
 const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => MOST_RECENT_TAX_YEAR - i);
-const MAX_FILES = 5;
 
 // ─── WIZARD FIELD DEFINITIONS ────────────────────────────────────────────────
 // Fields in IRS line-number order. Only lines that feed calculateMetrics().
@@ -1862,6 +1701,83 @@ function Tip({ children, tip }) {
   );
 }
 
+// ─── DEMO CASES ───────────────────────────────────────────────────────────────
+// offset 4 = oldest year (MOST_RECENT_TAX_YEAR - 4), offset 0 = newest (MOST_RECENT_TAX_YEAR)
+function buildDemoCase(id, label, summary, entries) {
+  const forms = {};
+  const data = {};
+  entries.forEach(({ offset, form, fields }) => {
+    const y = MOST_RECENT_TAX_YEAR - offset;
+    forms[y] = form;
+    data[y] = fields;
+  });
+  const years = entries.map(e => MOST_RECENT_TAX_YEAR - e.offset).sort((a, b) => a - b);
+  return { id, label, summary, years, forms, data };
+}
+
+const DEMO_CASES = [
+  buildDemoCase(
+    "w2-employee",
+    "W-2 Employee",
+    "Steady single-income W-2 earner, 5-year growth",
+    [
+      { offset: 4, form: "1040", fields: { wages: "55000", interest: "100", dividends: "200", capitalGains: "0", otherIncome: "0", totalIncome: "55300", adjustments: "0", agi: "55300", deductions: "13850", taxableIncome: "41450", totalTax: "4700" } },
+      { offset: 3, form: "1040", fields: { wages: "58000", interest: "120", dividends: "220", capitalGains: "0", otherIncome: "0", totalIncome: "58340", adjustments: "0", agi: "58340", deductions: "14600", taxableIncome: "43740", totalTax: "4950" } },
+      { offset: 2, form: "1040", fields: { wages: "61000", interest: "140", dividends: "240", capitalGains: "0", otherIncome: "0", totalIncome: "61380", adjustments: "0", agi: "61380", deductions: "14600", taxableIncome: "46780", totalTax: "5350" } },
+      { offset: 1, form: "1040", fields: { wages: "65000", interest: "160", dividends: "260", capitalGains: "0", otherIncome: "0", totalIncome: "65420", adjustments: "0", agi: "65420", deductions: "14600", taxableIncome: "50820", totalTax: "5850" } },
+      { offset: 0, form: "1040", fields: { wages: "70000", interest: "180", dividends: "300", capitalGains: "0", otherIncome: "0", totalIncome: "70480", adjustments: "0", agi: "70480", deductions: "14600", taxableIncome: "55880", totalTax: "6500" } },
+    ]
+  ),
+  buildDemoCase(
+    "intl-student",
+    "International Student → US Job",
+    "F-1 grad school → OPT → H-1B/resident, 1040-NR to 1040 transition",
+    [
+      { offset: 4, form: "1040-NR", fields: { wages: "4000", treatyExempt: "10000", interest: "50", dividends: "0", capitalGains: "0", otherIncome: "0", totalIncome: "4050", adjustments: "0", agi: "4050", deductions: "0", taxableIncome: "4050", necTax: "0", totalTax: "100" } },
+      { offset: 3, form: "1040-NR", fields: { wages: "28000", treatyExempt: "3000", interest: "80", dividends: "0", capitalGains: "0", otherIncome: "0", totalIncome: "28080", adjustments: "0", agi: "28080", deductions: "0", taxableIncome: "28080", necTax: "0", totalTax: "2400" } },
+      { offset: 2, form: "1040-NR", fields: { wages: "62000", treatyExempt: "0", interest: "150", dividends: "100", capitalGains: "0", otherIncome: "0", totalIncome: "62250", adjustments: "0", agi: "62250", deductions: "0", taxableIncome: "62250", necTax: "0", totalTax: "7800" } },
+      { offset: 1, form: "1040", fields: { wages: "78000", interest: "200", dividends: "150", capitalGains: "0", otherIncome: "0", totalIncome: "78350", adjustments: "0", agi: "78350", deductions: "14600", taxableIncome: "63750", totalTax: "9800" } },
+      { offset: 0, form: "1040", fields: { wages: "92000", interest: "300", dividends: "200", capitalGains: "500", otherIncome: "0", totalIncome: "93000", adjustments: "0", agi: "93000", deductions: "14600", taxableIncome: "78400", totalTax: "12800" } },
+    ]
+  ),
+  buildDemoCase(
+    "retiree",
+    "Retiree (Year 3 Transition)",
+    "Working years 1-2, retires in year 3, pension + Social Security after",
+    [
+      { offset: 4, form: "1040", fields: { wages: "85000", interest: "500", dividends: "1200", capitalGains: "0", otherIncome: "0", totalIncome: "86700", adjustments: "0", agi: "86700", deductions: "14600", taxableIncome: "72100", totalTax: "9600" } },
+      { offset: 3, form: "1040", fields: { wages: "88000", interest: "550", dividends: "1300", capitalGains: "0", otherIncome: "0", totalIncome: "89850", adjustments: "0", agi: "89850", deductions: "14600", taxableIncome: "75250", totalTax: "10100" } },
+      { offset: 2, form: "1040", fields: { wages: "40000", interest: "700", dividends: "1800", capitalGains: "2000", otherIncome: "8000", socialSec: "6000", totalIncome: "58500", adjustments: "0", agi: "58500", deductions: "15700", taxableIncome: "42800", totalTax: "4700" } },
+      { offset: 1, form: "1040", fields: { wages: "0", interest: "900", dividends: "2200", capitalGains: "1000", otherIncome: "24000", socialSec: "22000", totalIncome: "50100", adjustments: "0", agi: "50100", deductions: "15700", taxableIncome: "34400", totalTax: "3600" } },
+      { offset: 0, form: "1040", fields: { wages: "0", interest: "950", dividends: "2300", capitalGains: "500", otherIncome: "25000", socialSec: "23000", totalIncome: "51750", adjustments: "0", agi: "51750", deductions: "15700", taxableIncome: "36050", totalTax: "3750" } },
+    ]
+  ),
+  buildDemoCase(
+    "freelancer",
+    "Freelancer / 1099",
+    "Side hustle to full-time self-employment over 5 years",
+    [
+      { offset: 4, form: "1040", fields: { wages: "45000", interest: "50", dividends: "0", capitalGains: "0", otherIncome: "8000", totalIncome: "53050", adjustments: "600", agi: "52450", deductions: "13850", taxableIncome: "38600", totalTax: "4300" } },
+      { offset: 3, form: "1040", fields: { wages: "10000", interest: "60", dividends: "0", capitalGains: "0", otherIncome: "32000", totalIncome: "42060", adjustments: "2200", agi: "39860", deductions: "14600", taxableIncome: "25260", totalTax: "2600" } },
+      { offset: 2, form: "1040", fields: { wages: "0", interest: "40", dividends: "0", capitalGains: "0", otherIncome: "38000", totalIncome: "38040", adjustments: "2600", agi: "35440", deductions: "14600", taxableIncome: "20840", totalTax: "2100" } },
+      { offset: 1, form: "1040", fields: { wages: "0", interest: "80", dividends: "0", capitalGains: "0", otherIncome: "62000", totalIncome: "62080", adjustments: "4300", agi: "57780", deductions: "14600", taxableIncome: "43180", totalTax: "5700" } },
+      { offset: 0, form: "1040", fields: { wages: "0", interest: "120", dividends: "0", capitalGains: "0", otherIncome: "85000", totalIncome: "85120", adjustments: "5900", agi: "79220", deductions: "14600", taxableIncome: "64620", totalTax: "9200" } },
+    ]
+  ),
+  buildDemoCase(
+    "equity-comp",
+    "Tech Employee — Stock Sale Year",
+    "W-2 + RSUs, with one large one-time capital-gains spike",
+    [
+      { offset: 4, form: "1040", fields: { wages: "120000", interest: "300", dividends: "400", capitalGains: "3000", otherIncome: "0", totalIncome: "123700", adjustments: "0", agi: "123700", deductions: "13850", taxableIncome: "109850", totalTax: "19800" } },
+      { offset: 3, form: "1040", fields: { wages: "128000", interest: "350", dividends: "450", capitalGains: "4000", otherIncome: "0", totalIncome: "132800", adjustments: "0", agi: "132800", deductions: "14600", taxableIncome: "118200", totalTax: "21600" } },
+      { offset: 2, form: "1040", fields: { wages: "135000", interest: "400", dividends: "500", capitalGains: "85000", otherIncome: "0", totalIncome: "220900", adjustments: "0", agi: "220900", deductions: "14600", taxableIncome: "206300", totalTax: "45000" } },
+      { offset: 1, form: "1040", fields: { wages: "140000", interest: "450", dividends: "600", capitalGains: "6000", otherIncome: "0", totalIncome: "147050", adjustments: "0", agi: "147050", deductions: "14600", taxableIncome: "132450", totalTax: "26500" } },
+      { offset: 0, form: "1040", fields: { wages: "148000", interest: "500", dividends: "700", capitalGains: "5000", otherIncome: "0", totalIncome: "154200", adjustments: "0", agi: "154200", deductions: "14600", taxableIncome: "139600", totalTax: "28200" } },
+    ]
+  ),
+];
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function TaxToBook() {
@@ -1872,7 +1788,8 @@ export default function TaxToBook() {
   const [wizData, setWizData]   = useState({});    // { 2025: { totalIncome: "80000", ... } }
   const [wizActiveYear, setWizActiveYear] = useState(null);
   const [wizWarnings, setWizWarnings] = useState([]);
-  const [error, setError] = useState("");
+  const [selectedDemoCase, setSelectedDemoCase] = useState(DEMO_CASES[0]?.id ?? "");
+  const activeDemoCase = DEMO_CASES.find(c => c.id === selectedDemoCase);
 
   // ── Dashboard state ──
   const [results, setResults] = useState([]);
@@ -1956,6 +1873,7 @@ export default function TaxToBook() {
   const handleBlur = (year, key, val) => {
     const formatted = fmtInput(val);
     if (formatted !== val) setFieldVal(year, key, formatted);
+    runValidation();
   };
 
   // ── Cross-validation ──
@@ -1971,17 +1889,42 @@ export default function TaxToBook() {
       if (ti != null && agi != null && Math.abs(ti - adj - agi) > 1) {
         warns.push(`${y}: Total Income ($${ti?.toLocaleString()}) - Adjustments ($${adj.toLocaleString()}) ≠ AGI ($${agi?.toLocaleString()}). Check your entries.`);
       }
+
+      // Taxable Income can never exceed AGI
+      const taxableIncome = parseNum(d.taxableIncome);
+      if (agi != null && taxableIncome != null && taxableIncome > agi) {
+        warns.push(`${y}: Taxable Income ($${taxableIncome.toLocaleString()}) is greater than AGI ($${agi.toLocaleString()}) — taxable income can never exceed AGI. Check your entries.`);
+      }
+
+      // Total Tax can never be negative
+      const totalTax = parseNum(d.totalTax);
+      if (totalTax != null && totalTax < 0) {
+        warns.push(`${y}: Total Tax ($${totalTax.toLocaleString()}) is negative. Check your entries.`);
+      }
+
+      // These income fields can't legitimately be negative (unlike Capital Gain/Loss)
+      const nonNegativeFields = [
+        ["wages", "W-2 Wages"],
+        ["interest", "Taxable Interest"],
+        ["dividends", "Ordinary Dividends"],
+        ["otherIncome", "Other Income"],
+      ];
+      for (const [key, label] of nonNegativeFields) {
+        const v = parseNum(d[key]);
+        if (v != null && v < 0) {
+          warns.push(`${y}: ${label} ($${v.toLocaleString()}) can't be negative. Check your entries.`);
+        }
+      }
     }
     setWizWarnings(warns);
     return warns;
   };
 
-  // ── Analyze (from wizard data) ──
-  const handleAnalyze = () => {
-    const warns = runValidation();
-    const collected = wizYears.map(y => {
-      const d = wizData[y] ?? {};
-      const isNR = wizForms[y] === "1040-NR";
+  // ── Analyze (shared core: builds collected/computedMetrics from years/forms/data and updates dashboard state) ──
+  const runAnalysis = (years, forms, data) => {
+    const collected = years.map(y => {
+      const d = data[y] ?? {};
+      const isNR = forms[y] === "1040-NR";
       return {
         year: y,
         isNR,
@@ -2034,14 +1977,30 @@ export default function TaxToBook() {
     })));
     setResults(collected);
     setMetrics(computedMetrics);
-    const years = collected.map(r => r.year);
-    setSelectedYears(years);
-    setVerticalYear(years.length > 0 ? Math.max(...years) : null);
+    const resultYears = collected.map(r => r.year);
+    setSelectedYears(resultYears);
+    setVerticalYear(resultYears.length > 0 ? Math.max(...resultYears) : null);
     setActiveTab("overview");
     window.history.pushState({ step: "analysis" }, "", "#analysis");
     setTimeout(() => {
       document.querySelector(".tv-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+  };
+
+  // ── Analyze (from wizard data) ──
+  const handleAnalyze = () => {
+    runValidation();
+    runAnalysis(wizYears, wizForms, wizData);
+  };
+
+  // ── Analyze (from a demo case) ──
+  const loadDemoCase = (caseId) => {
+    const demoCase = DEMO_CASES.find(c => c.id === caseId);
+    if (!demoCase) return;
+    setWizYears(demoCase.years);
+    setWizForms(demoCase.forms);
+    setWizData(demoCase.data);
+    runAnalysis(demoCase.years, demoCase.forms, demoCase.data);
   };
 
   // Check if required fields are filled for all years
@@ -2113,7 +2072,7 @@ export default function TaxToBook() {
     if (taxGrowth != null && incomeGrowth != null && taxGrowth > incomeGrowth + 0.05 && !lowBase) {
       const incPct = (incomeGrowth * 100).toFixed(0);
       const taxPct = (taxGrowth * 100).toFixed(0);
-      const lastIsHighIncome = last.totalIncome != null && last.totalIncome > 250000;
+      const lastIsHighIncome = last.totalIncome != null && last.totalIncome > HIGH_INCOME_THRESHOLD;
       items.push({ text: lastIsHighIncome
         ? `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets — Standard Deduction is flat by design, so reducing the taxable base requires pre-tax contribution growth (401k, HSA, Mega Backdoor Roth).`
         : `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`,
@@ -2192,8 +2151,6 @@ export default function TaxToBook() {
     .filter(r => selectedYears.includes(r.year))
     .sort((a, b) => a.year - b.year);
   const filteredMetrics = filteredResults.map(r => metricMap[r.year]).filter(Boolean);
-  // Descending order for year-card views (most recent first)
-  const filteredResultsDesc = [...filteredResults].sort((a, b) => b.year - a.year);
   // Resolves to latest filtered year when not hovering, hovered year during hover
   const latestFilteredYear  = filteredResults[filteredResults.length - 1]?.year ?? null;
   const resolvedActiveYear  = activeYear ?? latestFilteredYear;
@@ -2256,10 +2213,16 @@ export default function TaxToBook() {
   const _td0 = trendData[0];
   const _tdN = trendData[trendData.length - 1];
   const _tdYrs = trendData.length - 1;
-  const incomeCagr = _tdYrs > 0 && _td0?.totalIncome && _tdN?.totalIncome
-    ? Math.pow(_tdN.totalIncome / _td0.totalIncome, 1 / _tdYrs) - 1 : null;
-  const afterTaxCagr = _tdYrs > 0 && _td0?.afterTaxIncome && _tdN?.afterTaxIncome
-    ? Math.pow(_tdN.afterTaxIncome / _td0.afterTaxIncome, 1 / _tdYrs) - 1 : null;
+  // Both endpoints must be positive — a negative base (or endpoint) makes the ratio
+  // negative, and Math.pow(negative, fractional exponent) is NaN in JS. Number.isFinite
+  // guards the result too, in case of some other non-finite edge case.
+  const safeCagr = (first, last, yrs) => {
+    if (!(yrs > 0) || !(first > 0) || !(last > 0)) return null;
+    const result = Math.pow(last / first, 1 / yrs) - 1;
+    return Number.isFinite(result) ? result : null;
+  };
+  const incomeCagr = safeCagr(_td0?.totalIncome, _tdN?.totalIncome, _tdYrs);
+  const afterTaxCagr = safeCagr(_td0?.afterTaxIncome, _tdN?.afterTaxIncome, _tdYrs);
   const _m0 = _td0 ? metricMap[_td0.year] : null;
   const _mN = _tdN ? metricMap[_tdN.year] : null;
   const taxRateDelta = _m0?.effectiveTaxRate != null && _mN?.effectiveTaxRate != null
@@ -2635,7 +2598,7 @@ export default function TaxToBook() {
 
     // Deduction efficiency — low deductions flagged as opportunity (red)
     const dePct    = de != null ? (de * 100).toFixed(1) + "%" : null;
-    const deIsHighIncome = ti != null && ti > 250000;
+    const deIsHighIncome = ti != null && ti > HIGH_INCOME_THRESHOLD;
     const tiPriorForDe = rPrior?.summary?.totalIncome ?? null;
     const deIncomeYoY  = ti != null && tiPriorForDe ? (ti - tiPriorForDe) / tiPriorForDe : null;
     const deIsContracting = deIncomeYoY != null && deIncomeYoY < -0.05;
@@ -2687,7 +2650,7 @@ export default function TaxToBook() {
     const atm      = m.afterTaxMargin;
 
     const bullets = [];
-    const whyIsHighIncome = ti != null && ti > 250000;
+    const whyIsHighIncome = ti != null && ti > HIGH_INCOME_THRESHOLD;
 
     // Income grew but deductions didn't keep pace (only when rate is rising)
     if (ti && tiPrior && etrDelta != null && etrDelta > 0.01) {
@@ -2761,7 +2724,7 @@ export default function TaxToBook() {
           position: "fixed",
           top: "16px",
           right: "16px",
-          zIndex: 9998,
+          zIndex: 9999,
           width: 36,
           height: 36,
           border: "1px solid var(--border)",
@@ -2820,6 +2783,25 @@ export default function TaxToBook() {
             }}>
               Download your Financial Story Report.
             </p>
+
+            <div className="tv-demo-case">
+              <label htmlFor="tv-demo-select">Try a sample case ▾</label>
+              <select
+                id="tv-demo-select"
+                value={selectedDemoCase}
+                onChange={(e) => setSelectedDemoCase(e.target.value)}
+              >
+                {DEMO_CASES.map(c => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+              <button className="tv-demo-case-btn" onClick={() => loadDemoCase(selectedDemoCase)}>
+                Preview &rarr;
+              </button>
+              {activeDemoCase && (
+                <div className="tv-demo-case-summary">{activeDemoCase.summary}</div>
+              )}
+            </div>
           </div>
         )}
 
@@ -2947,10 +2929,8 @@ export default function TaxToBook() {
             })()}
 
             <div className="tv-privacy" style={{ marginTop: 20 }}>
-              🔒 <span style={{ color: "var(--accent)", fontWeight: 600 }}>Zero data risk.</span> You type only numbers — no SSN, no names, no addresses. Nothing is stored or transmitted. Everything runs in your browser.
+              🔒 <span style={{ color: "var(--accent)", fontWeight: 600 }}>Your tax numbers never leave your browser.</span> You type only numbers — no SSN, no names, no addresses, and nothing is stored. (Basic, anonymous page-view analytics only — no tax data is ever sent.)
             </div>
-
-            {error && <div className="tv-error">{error}</div>}
           </div>
         )}
 
@@ -3142,7 +3122,7 @@ export default function TaxToBook() {
                     </div>
                   ) : (
                     <div className="tv-metric-grid">
-                      {filteredResultsDesc.map((r) => {
+                      {filteredResults.map((r) => {
                         const m = metricMap[r.year];
                         return (
                           <div className="tv-metric-card" key={r.year}>
@@ -3309,11 +3289,12 @@ export default function TaxToBook() {
                       <div className="tv-chart-block">
                         <div className="tv-chart-label"><Tip tip="How earnings compare to what you kept after taxes">Gross Income vs Take-Home Income</Tip></div>
                         <div className="tv-chart-box" style={{ padding: "12px 4px 6px" }}>
-                          <ResponsiveContainer width="100%" height={200}>
+                          <ResponsiveContainer width="100%" height={290}>
                             <LineChart data={hChartData} margin={{ top: 24, right: 28, bottom: 16, left: 50 }} onMouseMove={onChartMove} onMouseLeave={onChartLeave}>
                               <CartesianGrid strokeDasharray="2 6" stroke={cssVar("--border")} strokeOpacity={0.7} vertical={false} />
                               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }} />
                               <YAxis axisLine={false} tickLine={false}
+                                domain={[(dataMin) => Math.max(0, dataMin * 0.9), 'auto']}
                                 tickFormatter={v => "$" + (Math.abs(v) >= 1_000_000 ? (v/1_000_000).toFixed(1)+"M" : (v/1000).toFixed(0)+"K")}
                                 tick={{ fill: "var(--muted)", fontFamily: "Space Mono, monospace", fontSize: 14 }}
                                 width={56}
@@ -3623,7 +3604,7 @@ export default function TaxToBook() {
                       <div style={{ color: "var(--muted)", fontFamily: "var(--mono)", fontSize: 16, padding: 32, textAlign: "center" }}>
                         Select years from the sidebar to view insights.
                       </div>
-                    ) : filteredResultsDesc.map((r) => {
+                    ) : filteredResults.map((r) => {
                       const m = metricMap[r.year];
                       if (!m?.insights) return null;
                       return (
