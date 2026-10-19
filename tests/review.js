@@ -293,6 +293,12 @@ function reviewNarrative(c, p) {
     for (const t of p.overriddenInsights.map(x => x.text)) {
       if (t.startsWith("Tax obligation is growing in line with income") && ((incomeGrowth != null && incomeGrowth < 0) || (taxGrowth != null && taxGrowth < 0))) F("N4-growing-when-declining", `trend text says tax is "growing in line with income" but income change is ${fmtP(incomeGrowth)} and tax change is ${fmtP(taxGrowth)}`, "trendInsights");
       if (t.startsWith("After-tax income is growing slower than gross income") && incomeGrowth != null && incomeGrowth < 0) F("N4-growing-when-declining", `trend text says after-tax income is "growing slower" but gross income fell ${fmtP(incomeGrowth)}`, "trendInsights");
+      if (incomeGrowth != null && incomeGrowth < 0 && (/income grew -?\d/.test(t) || /entered higher marginal brackets/.test(t))) F("N4-growing-when-declining", `trend text says "income grew" / "entered higher marginal brackets" but income change is ${fmtP(incomeGrowth)}: "${t.slice(0, 100)}"`, "trendInsights");
+    }
+    // N13 — "leakage will compound" printed for a trivial absorption share (< 5% of income growth)
+    for (const t of p.strategyTab?.dragBullets ?? []) {
+      const mAbs = t.match(/Taxes absorbed .*? of income growth \((-?\d+)%\)\. Without optimization/);
+      if (mAbs && Number(mAbs[1]) < 5) F("N13-tiny-absorption-overclaim", `"leakage will compound" printed for ${mAbs[1]}% absorption: "${t.slice(0, 110)}"`, "strategy.dragBullets");
     }
     if (p.strategyPhase) {
       const ph = p.strategyPhase.phase;
@@ -301,7 +307,7 @@ function reviewNarrative(c, p) {
       if (p.lowBase) for (const t of [...p.strategyPhase.characteristics, p.strategyPhase.note, p.strategyPhase.implication]) if (/\d+(\.\d+)?% annualized/.test(t)) F("N5-lowbase-percent-leak", `growth % shown in strategy text despite low-base suppression: "${t.slice(0, 90)}"`, "strategyPhase");
     }
     for (const t of p.strategyTab?.dragBullets ?? []) if (/\$-|\(-\d|-\d+%/.test(t)) F("N6-negative-absorption", `drag bullet with negative absorbed amount: "${t.slice(0, 120)}"`, "strategy.dragBullets");
-    if (p.strategyTab) for (const t of p.strategyTab.incomeBullets) if (p.lowBase === false && /Year-over-year/.test(t) && results.some(r => r.summary.totalIncome <= 0)) F("N7-yoy-on-nonpositive-base", `YoY % computed through a zero/negative income year: "${t.slice(0, 120)}"`, "strategy.incomeBullets");
+    // (N7 retired: a "—" for a non-positive prior year, and a real % for a positive→loss step, is now the intended behaviour.)
   }
   // N8 — advice that cannot apply to the case type
   const joined = texts.join("\n");

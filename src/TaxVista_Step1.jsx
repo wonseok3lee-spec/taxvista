@@ -2086,7 +2086,7 @@ export default function TaxToBook() {
     }
 
     // Sentence 2: tax efficiency vs income (with WHY explanation)
-    if (taxGrowth != null && incomeGrowth != null && taxGrowth > incomeGrowth + 0.05 && !lowBase) {
+    if (taxGrowth != null && incomeGrowth != null && incomeGrowth > 0 && taxGrowth > incomeGrowth + 0.05 && !lowBase) {
       const incPct = (incomeGrowth * 100).toFixed(0);
       const taxPct = (taxGrowth * 100).toFixed(0);
       const lastIsHighIncome = last.totalIncome != null && last.totalIncome > HIGH_INCOME_THRESHOLD;
@@ -2094,7 +2094,7 @@ export default function TaxToBook() {
         ? `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets — Standard Deduction is flat by design, so reducing the taxable base requires pre-tax contribution growth (401k, HSA, Mega Backdoor Roth).`
         : `Over ${first.year}–${last.year}, income grew ${incPct}% cumulatively while taxes grew ${taxPct}% over the same period, as earnings entered higher marginal brackets with limited deduction scaling — resulting in a shrinking share of each additional dollar retained after tax.`,
         metric: "tax", type: "tax_efficiency" });
-    } else if (afterTaxGrowth != null && incomeGrowth != null && afterTaxGrowth < incomeGrowth - 0.05 && !lowBase) {
+    } else if (afterTaxGrowth != null && incomeGrowth != null && incomeGrowth > 0 && afterTaxGrowth < incomeGrowth - 0.05 && !lowBase) {
       items.push({ text: `After-tax income is growing slower than gross income, indicating rising tax drag. A portion of income growth is being absorbed by higher marginal rates without corresponding tax optimization.`, metric: "afterTax", type: "tax_efficiency" });
     } else if (lowBase && taxGrowth != null && taxGrowth > 1) {
       items.push({ text: `Tax burden increased sharply as income moved from near-zero into taxable brackets. This is a natural transition, not a structural inefficiency — but it creates the highest-leverage window for tax optimization.`, metric: "tax", type: "tax_efficiency" });
@@ -2102,7 +2102,14 @@ export default function TaxToBook() {
       const lastMetric = metrics[metrics.length - 1];
       if (lastMetric?.isLossDriven) {
         items.push({ text: `Tax burden decreased primarily due to capital losses, not improved deduction structure. This reduction is not expected to repeat without similar losses.`, metric: "tax", type: "tax_efficiency" });
-      } else {
+      } else if (incomeGrowth < 0) {
+        // Plain contraction sentence — a decline must never read as "income grew" or "entered higher brackets".
+        const taxPart = taxGrowth != null ? ` and total tax ${taxGrowth < 0 ? "fell" : "rose"} ${Math.abs(taxGrowth * 100).toFixed(0)}%` : "";
+        items.push({ text: `Over ${first.year}–${last.year}, gross income fell ${Math.abs(incomeGrowth * 100).toFixed(0)}%${taxPart}.`, metric: "tax", type: "tax_efficiency" });
+      } else if (incomeGrowth > 0 && taxGrowth != null && taxGrowth < 0) {
+        items.push({ text: `Over ${first.year}–${last.year}, gross income rose ${(incomeGrowth * 100).toFixed(0)}% while total tax fell ${Math.abs(taxGrowth * 100).toFixed(0)}% — after-tax income grew faster than gross income.`, metric: "tax", type: "tax_efficiency" });
+      } else if (incomeGrowth > 0 && taxGrowth != null && taxGrowth > 0) {
+        // Only claim "growing in line" when both income and tax actually grew.
         items.push({ text: `Tax obligation is growing in line with income — no compression of take-home margin detected. Current deduction structure is keeping pace with income growth.`, metric: "tax", type: "tax_efficiency" });
       }
     }
@@ -2221,8 +2228,9 @@ export default function TaxToBook() {
       year: String(r.year),
       totalIncome: r.summary?.totalIncome ?? 0,
       afterTax: m?.afterTaxIncome ?? 0,
-      taxRate: (m?.taxToIncome ?? 0) * 100,
-      effectiveTaxRate: (m?.effectiveTaxRate ?? 0) * 100,
+      // null (not 0) when the ratio is undefined (loss / zero-income year) so no "0.0%" bar is drawn
+      taxRate: m?.taxToIncome != null ? m.taxToIncome * 100 : null,
+      effectiveTaxRate: m?.effectiveTaxRate != null ? m.effectiveTaxRate * 100 : null,
     };
   });
 
@@ -2618,7 +2626,8 @@ export default function TaxToBook() {
     const dePct    = de != null ? (de * 100).toFixed(1) + "%" : null;
     const deIsHighIncome = ti != null && ti > HIGH_INCOME_THRESHOLD;
     const tiPriorForDe = rPrior?.summary?.totalIncome ?? null;
-    const deIncomeYoY  = ti != null && tiPriorForDe ? (ti - tiPriorForDe) / tiPriorForDe : null;
+    // Prior-year income must be positive (a zero/negative base flips the sign) — same rule as the engine's incomeYoY.
+    const deIncomeYoY  = ti != null && tiPriorForDe > 0 ? (ti - tiPriorForDe) / tiPriorForDe : null;
     const deIsContracting = deIncomeYoY != null && deIncomeYoY < -0.05;
     const deLabel  = de == null ? null
       : de > 0.2 && deIsContracting
@@ -3372,7 +3381,7 @@ export default function TaxToBook() {
                                   } />
                                 ))}
                                 <LabelList dataKey="taxRate" position="top" offset={4}
-                                  formatter={(v) => v.toFixed(1) + "%"}
+                                  formatter={(v) => v == null ? "" : v.toFixed(1) + "%"}
                                   fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
                               </Bar>
                               <Bar dataKey="effectiveTaxRate" fill={cssVar("--chart-effective-rate")} name="Effective Tax Rate (taxable income)" radius={[3,3,0,0]} isAnimationActive={false}>
@@ -3382,7 +3391,7 @@ export default function TaxToBook() {
                                   } />
                                 ))}
                                 <LabelList dataKey="effectiveTaxRate" position="top" offset={4}
-                                  formatter={(v) => v.toFixed(1) + "%"}
+                                  formatter={(v) => v == null ? "" : v.toFixed(1) + "%"}
                                   fill={cssVar("--text")} fontSize={11} fontFamily="Space Mono, monospace" />
                               </Bar>
                             </BarChart>
@@ -3447,7 +3456,7 @@ export default function TaxToBook() {
                                       </Pie>
                                       <Tooltip
                                         contentStyle={{ background: "var(--surface-tooltip)", border: "1px solid var(--border)", borderRadius: 6, fontFamily: "Space Mono, monospace", fontSize: 14, padding: "8px 12px" }}
-                                        formatter={(v, name) => [v.toFixed(1) + "%", name]}
+                                        formatter={(v, name) => [v == null ? "—" : v.toFixed(1) + "%", name]}
                                         labelStyle={{ display: "none" }}
                                         itemStyle={{ color: "var(--muted)" }}
                                       />
@@ -3760,6 +3769,9 @@ export default function TaxToBook() {
           const _fmtD = (v) => v != null ? "$" + Math.round(v).toLocaleString() : "—";
           const _fmtP = (v) => v != null ? (v * 100).toFixed(1) + "%" : "—";
           const _lb = _first.summary?.totalIncome != null && _first.summary.totalIncome < 10000;
+          // Income rose first→last while total tax fell: "tax drag" messaging does not apply.
+          const _incomeRoseTaxFell = _first.summary?.totalIncome != null && _last.summary?.totalIncome != null && _last.summary.totalIncome > _first.summary.totalIncome
+            && _first.summary?.totalTax != null && _last.summary?.totalTax != null && _last.summary.totalTax < _first.summary.totalTax;
 
           // Signal tags
           const _latestM = _tdN ? metricMap[_tdN.year] : null;
@@ -3830,6 +3842,7 @@ export default function TaxToBook() {
             else if (_lb) _incomeBullets.push(`Low-base distortion: ${_first.year} income of ${_fmtD(_first.summary?.totalIncome)} suppresses percentage-based metrics.`);
             const incs = _sorted.map(r => r.summary?.totalIncome).filter(v => v != null);
             // A prior-year income <= 0 has no meaningful % change (NaN/Infinity or flipped sign) — show "—" for that step.
+            // A positive year followed by a loss year is a real decline and prints its percentage.
             if (incs.length >= 3) { const yoy = incs.slice(1).map((v, i) => `${_sorted[i].year}→${_sorted[i+1].year}: ${incs[i] > 0 ? ((v - incs[i]) / incs[i] * 100).toFixed(0) + "%" : "—"}`).join("; "); _incomeBullets.push(`Year-over-year: ${yoy}.`); }
           } else if (_first.summary?.totalIncome) _incomeBullets.push(`Single-year total income: ${_fmtD(_first.summary.totalIncome)}.`);
 
@@ -3841,7 +3854,7 @@ export default function TaxToBook() {
           } else if (_mFirst?.effectiveTaxRate != null) _taxBullets.push(`Effective tax rate: ${_fmtP(_mFirst.effectiveTaxRate)}.`);
 
           // Tax drag
-          if (_multi) { const fa = _mFirst?.afterTaxIncome, la = _mLast?.afterTaxIncome, fi2 = _first.summary?.totalIncome, li2 = _last.summary?.totalIncome; if (fa && la && fi2 && li2 && fi2 > 0 && fa > 0) { const id = li2 - fi2, ad = la - fa; if (id > 0) { const mr = (id - ad) / id; _dragBullets.push(`Over ${_first.year}–${_last.year}: income +${_fmtD(id)}, after-tax +${_fmtD(ad)}. Taxes absorbed ${_fmtD(id - ad)} of income growth (${(mr * 100).toFixed(0)}%). Without optimization, this leakage will compound as income rises.`); _dragBullets.push(`Per $1.00 earned: $${mr.toFixed(2)} to taxes, $${(1 - mr).toFixed(2)} retained (${(mr * 100).toFixed(0)}% absorption rate).`); } } const ms = _sorted.map(r => ({ y: r.year, m: metricMap[r.year]?.afterTaxMargin })).filter(x => x.m != null); if (ms.length >= 2) { const d = ms[ms.length-1].m - ms[0].m; if (Math.abs(d) > 0.02) _dragBullets.push(`After-tax margin ${d > 0 ? "improved" : "declined"} from ${_fmtP(ms[0].m)} to ${_fmtP(ms[ms.length-1].m)}.`); } }
+          if (_multi) { const fa = _mFirst?.afterTaxIncome, la = _mLast?.afterTaxIncome, fi2 = _first.summary?.totalIncome, li2 = _last.summary?.totalIncome; if (fa && la && fi2 && li2 && fi2 > 0 && fa > 0) { const id = li2 - fi2, ad = la - fa; if (id > 0 && ad < 0) { _dragBullets.push(`Over ${_first.year}–${_last.year}: gross income rose ${_fmtD(id)} but after-tax income fell ${_fmtD(-ad)} — taxes grew faster than income over the period.`); } else if (id > 0 && ad > id) { _dragBullets.push(`Over ${_first.year}–${_last.year}: gross income rose ${_fmtD(id)} and total tax fell ${_fmtD(ad - id)}, so after-tax income grew by more than gross income.`); } else if (id > 0 && (id - ad) / id >= 0.05) { const mr = (id - ad) / id; _dragBullets.push(`Over ${_first.year}–${_last.year}: income +${_fmtD(id)}, after-tax +${_fmtD(ad)}. Taxes absorbed ${_fmtD(id - ad)} of income growth (${(mr * 100).toFixed(0)}%). Without optimization, this leakage will compound as income rises.`); _dragBullets.push(`Per $1.00 earned: $${mr.toFixed(2)} to taxes, $${(1 - mr).toFixed(2)} retained (${(mr * 100).toFixed(0)}% absorption rate).`); } } const ms = _sorted.map(r => ({ y: r.year, m: metricMap[r.year]?.afterTaxMargin })).filter(x => x.m != null); if (ms.length >= 2) { const d = ms[ms.length-1].m - ms[0].m; if (Math.abs(d) > 0.02) _dragBullets.push(`After-tax margin ${d > 0 ? "improved" : "declined"} from ${_fmtP(ms[0].m)} to ${_fmtP(ms[ms.length-1].m)}.`); } }
 
           // After-tax (condensed: first→last + latest margin only)
           if (_multi) {
@@ -3866,7 +3879,7 @@ export default function TaxToBook() {
           // What This Means
           const _wtmBullets = [];
           if (incomeCagr != null && incomeCagr > 0.1 && taxRateDelta != null && taxRateDelta > 0.01) _wtmBullets.push(`Effective tax rate rising ${(taxRateDelta * 100).toFixed(1)}pp while income grows — entering higher tax exposure phase.`);
-          else if (incomeCagr != null && incomeCagr > 0.1) _wtmBullets.push(`Income at ${_latestR ? _fmtD(_latestR.summary?.totalIncome) : "current level"} — tax drag will compound without deduction scaling.`);
+          else if (incomeCagr != null && incomeCagr > 0.1 && !_incomeRoseTaxFell) _wtmBullets.push(`Income at ${_latestR ? _fmtD(_latestR.summary?.totalIncome) : "current level"} — tax drag will compound without deduction scaling.`);
           if (taxRateDelta != null && taxRateDelta > 0.02) _wtmBullets.push(`The ${(taxRateDelta * 100).toFixed(1)}pp rate increase means take-home margin will continue to compress without structural changes.`);
           if (_latestM?.deductionEfficiency != null && _latestM.deductionEfficiency < 0.1) _wtmBullets.push(`At ${(_latestM.deductionEfficiency * 100).toFixed(1)}% below-AGI deduction ratio, itemizing (if eligible) is the only lever that moves this specific ratio.`);
           if (_latestM?.afterTaxMargin != null && _latestM.afterTaxMargin > 0.85) _wtmBullets.push(`${(_latestM.afterTaxMargin * 100).toFixed(1)}% after-tax margin is strong — priority is protecting this margin as income scales.`);

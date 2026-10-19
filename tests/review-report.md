@@ -1,6 +1,22 @@
 # TaxVista — Robustness Fuzz and Plausibility Review
 
-**Date:** 2026-10-18 · **Code under review:** commit `75511ba` (`src/utils/calculateMetrics.js`, multi-year logic in `src/TaxVista_Step1.jsx`) · **Nothing was fixed.**
+**Date:** 2026-10-18 · **Code under review:** commit `75511ba` (`src/utils/calculateMetrics.js`, multi-year logic in `src/TaxVista_Step1.jsx`) · Findings below describe the state at `75511ba`; **Section 0 records what has since been fixed.**
+
+---
+
+## 0. Fix status (updated as batches land)
+
+| Finding | Status | Where |
+|---|---|---|
+| F1 `NaN%` year-over-year bullet | **Fixed** — Batch 1 (`64dcc4f`); Batch 2 prints "—" only for a non-positive prior year, a positive→loss step prints its real % | `TaxVista_Step1.jsx` YoY bullet |
+| F2 collapse/efficiency signals after a loss year | **Fixed** — Batch 2: `incomeYoY` needs a positive prior year; same for the year-insight deduction label | `calculateMetrics.js:53`, `TaxVista_Step1.jsx` deIncomeYoY |
+| F3 loss year scored as strong | **Fixed (ratios)** — Batch 2: agiRatio, taxToIncome, deductionEfficiency, afterTaxMargin null unless total income > 0; taxableRatio null unless AGI > 0; chart draws no bar. **Open:** no explicit "loss year" label in the UI | `calculateMetrics.js:35–42`, chart data |
+| F5 "growing in line" under decline | **Fixed** — Batch 2: requires income and tax growth > 0; a decline now gets a plain contraction sentence; the "entered higher marginal brackets" branch and the "growing slower" branch require income growth > 0 | tax-efficiency chain |
+| F6 negative absorption bullets | **Fixed** — Batch 2: drag bullets only when absorbed share ≥ 5 %; plain sentences for "after-tax fell" and "tax fell"; the "tax drag will compound" bullet is suppressed when tax fell | strategy-tab drag/WTM bullets |
+| F15 `atiGrowth` NaN/Infinity | **Fixed** — Batch 1 | `TaxVista_Step1.jsx` yearInsight |
+| F4 demo data | Open — Batch 3 | |
+| F7, F8, F9, F13 narrative accuracy | Open — Batch 4 | |
+| F10, F11, F12, F14, F16–F23 | Open — not scheduled | |
 
 Commands run:
 

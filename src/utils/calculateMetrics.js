@@ -32,12 +32,14 @@ export function calculateMetrics(data, compare) {
   const { adjustedGrossIncome: agi, taxableIncome } = summary;
 
   const afterTaxIncome    = totalIncome != null && totalTax != null ? totalIncome - totalTax : null;
-  const agiRatio          = totalIncome && agi != null        ? agi / totalIncome : null;
-  const taxableRatio      = agi          && taxableIncome != null ? taxableIncome / agi : null;
+  // Ratios over total income are only meaningful when total income is positive. A loss year
+  // (negative Line 9) would otherwise flip signs and read as 100% deductions / 100% margin.
+  const agiRatio          = totalIncome > 0 && agi != null        ? agi / totalIncome : null;
+  const taxableRatio      = agi > 0      && taxableIncome != null ? taxableIncome / agi : null;
   const effectiveTaxRate  = taxableIncome && totalTax != null  ? totalTax / taxableIncome : null;
-  const taxToIncome       = totalIncome  && totalTax != null   ? totalTax / totalIncome : null;
-  const deductionEfficiency = totalIncome && agi != null && taxableIncome != null ? (agi - taxableIncome) / totalIncome : null;
-  const afterTaxMargin    = totalIncome  && afterTaxIncome != null ? afterTaxIncome / totalIncome : null;
+  const taxToIncome       = totalIncome > 0 && totalTax != null   ? totalTax / totalIncome : null;
+  const deductionEfficiency = totalIncome > 0 && agi != null && taxableIncome != null ? (agi - taxableIncome) / totalIncome : null;
+  const afterTaxMargin    = totalIncome > 0 && afterTaxIncome != null ? afterTaxIncome / totalIncome : null;
 
   const cg = income.capitalGains ?? 0;
   const hasCapitalLoss = cg < 0;
@@ -46,7 +48,9 @@ export function calculateMetrics(data, compare) {
   // === FALSE SIGNAL DETECTION ===
   const c = compare || {};
   const priorIncome = c.priorIncome ?? null;
-  const incomeYoY = priorIncome ? (totalIncome - priorIncome) / priorIncome : null;
+  // A zero/negative prior year has no meaningful % change (and flips the sign), so the YoY-based
+  // signals (INCOME_COLLAPSE, FALSE_EFFICIENCY, DEDUCTION_ILLUSION, TRUE_OPTIMIZATION) stay quiet.
+  const incomeYoY = priorIncome > 0 ? (totalIncome - priorIncome) / priorIncome : null;
   const etrYoY = c.priorETR != null && effectiveTaxRate != null ? effectiveTaxRate - c.priorETR : null;
   const deductionYoY = c.priorDE != null && deductionEfficiency != null ? deductionEfficiency - c.priorDE : null;
 

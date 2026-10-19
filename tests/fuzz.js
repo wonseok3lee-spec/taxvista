@@ -364,12 +364,13 @@ export function checkYear(d, m, tier) {
     if (denomIsZero) { if (value !== null) F("A3-null", `${name} should be null (denominator 0) but is ${value}`); }
     else if (typeof value !== "number") F("A3-null", `${name} should be a number but is ${JSON.stringify(value)}`);
   };
-  nullIff("agiRatio", m.agiRatio, !totalIncome);
-  nullIff("taxableRatio", m.taxableRatio, !agi);
+  // Contract (since the loss-year fix): ratios over total income are null unless totalIncome > 0.
+  nullIff("agiRatio", m.agiRatio, !(totalIncome > 0));
+  nullIff("taxableRatio", m.taxableRatio, !(agi > 0));
   nullIff("effectiveTaxRate", m.effectiveTaxRate, !taxableIncome);
-  nullIff("taxToIncome", m.taxToIncome, !totalIncome);
-  nullIff("deductionEfficiency", m.deductionEfficiency, !totalIncome);
-  nullIff("afterTaxMargin", m.afterTaxMargin, !totalIncome);
+  nullIff("taxToIncome", m.taxToIncome, !(totalIncome > 0));
+  nullIff("deductionEfficiency", m.deductionEfficiency, !(totalIncome > 0));
+  nullIff("afterTaxMargin", m.afterTaxMargin, !(totalIncome > 0));
   if (typeof m.afterTaxIncome !== "number") F("A3-null", `afterTaxIncome should be a number (inputs non-null) but is ${m.afterTaxIncome}`);
   if (!Object.is(m.taxRate, m.taxToIncome)) F("A3-shape", `taxRate (${m.taxRate}) !== taxToIncome (${m.taxToIncome})`);
   for (const k of ["wagesPct", "capitalGainsPct", "interestPct", "dividendsPct", "otherPct"]) nullIff(`incomeBreakdown.${k}`, m.incomeBreakdown?.[k], partsSum === 0);
@@ -400,11 +401,11 @@ export function checkYear(d, m, tier) {
   const exp = {
     afterTaxIncome: totalIncome - totalTax,
     effectiveTaxRate: taxableIncome ? totalTax / taxableIncome : null,
-    taxToIncome: totalIncome ? totalTax / totalIncome : null,
-    afterTaxMargin: totalIncome ? (totalIncome - totalTax) / totalIncome : null,
-    agiRatio: totalIncome ? agi / totalIncome : null,
-    taxableRatio: agi ? taxableIncome / agi : null,
-    deductionEfficiency: totalIncome ? (agi - taxableIncome) / totalIncome : null,
+    taxToIncome: totalIncome > 0 ? totalTax / totalIncome : null,
+    afterTaxMargin: totalIncome > 0 ? (totalIncome - totalTax) / totalIncome : null,
+    agiRatio: totalIncome > 0 ? agi / totalIncome : null,
+    taxableRatio: agi > 0 ? taxableIncome / agi : null,
+    deductionEfficiency: totalIncome > 0 ? (agi - taxableIncome) / totalIncome : null,
   };
   for (const [k, e] of Object.entries(exp)) {
     const a = m[k];
