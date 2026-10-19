@@ -1726,11 +1726,11 @@ const DEMO_CASES = [
     "W-2 Employee",
     "Steady single-income W-2 earner, 5-year growth",
     [
-      { offset: 4, form: "1040", fields: { wages: "55000", interest: "100", dividends: "200", capitalGains: "0", otherIncome: "0", totalIncome: "55300", adjustments: "0", agi: "55300", deductions: "13850", taxableIncome: "41450", totalTax: "4700" } },
-      { offset: 3, form: "1040", fields: { wages: "58000", interest: "120", dividends: "220", capitalGains: "0", otherIncome: "0", totalIncome: "58340", adjustments: "0", agi: "58340", deductions: "14600", taxableIncome: "43740", totalTax: "4950" } },
-      { offset: 2, form: "1040", fields: { wages: "61000", interest: "140", dividends: "240", capitalGains: "0", otherIncome: "0", totalIncome: "61380", adjustments: "0", agi: "61380", deductions: "14600", taxableIncome: "46780", totalTax: "5350" } },
-      { offset: 1, form: "1040", fields: { wages: "65000", interest: "160", dividends: "260", capitalGains: "0", otherIncome: "0", totalIncome: "65420", adjustments: "0", agi: "65420", deductions: "14600", taxableIncome: "50820", totalTax: "5850" } },
-      { offset: 0, form: "1040", fields: { wages: "70000", interest: "180", dividends: "300", capitalGains: "0", otherIncome: "0", totalIncome: "70480", adjustments: "0", agi: "70480", deductions: "14600", taxableIncome: "55880", totalTax: "6500" } },
+      { offset: 4, form: "1040", fields: { wages: "55000", interest: "100", dividends: "200", capitalGains: "0", otherIncome: "0", totalIncome: "55300", adjustments: "0", agi: "55300", deductions: "12550", taxableIncome: "42750", totalTax: "5140" } },
+      { offset: 3, form: "1040", fields: { wages: "58000", interest: "120", dividends: "220", capitalGains: "0", otherIncome: "0", totalIncome: "58340", adjustments: "0", agi: "58340", deductions: "12950", taxableIncome: "45390", totalTax: "5587" } },
+      { offset: 2, form: "1040", fields: { wages: "61000", interest: "140", dividends: "240", capitalGains: "0", otherIncome: "0", totalIncome: "61380", adjustments: "0", agi: "61380", deductions: "13850", taxableIncome: "47530", totalTax: "5747" } },
+      { offset: 1, form: "1040", fields: { wages: "65000", interest: "160", dividends: "260", capitalGains: "0", otherIncome: "0", totalIncome: "65420", adjustments: "0", agi: "65420", deductions: "14600", taxableIncome: "50820", totalTax: "6215" } },
+      { offset: 0, form: "1040", fields: { wages: "70000", interest: "180", dividends: "300", capitalGains: "0", otherIncome: "0", totalIncome: "70480", adjustments: "0", agi: "70480", deductions: "15750", taxableIncome: "54730", totalTax: "6934" } },
     ]
   ),
   buildDemoCase(
@@ -1738,11 +1738,11 @@ const DEMO_CASES = [
     "International Student → US Job",
     "F-1 grad school → OPT → H-1B/resident, 1040-NR to 1040 transition",
     [
-      { offset: 4, form: "1040-NR", fields: { wages: "4000", treatyExempt: "10000", interest: "50", dividends: "0", capitalGains: "0", otherIncome: "0", totalIncome: "4050", adjustments: "0", agi: "4050", deductions: "0", taxableIncome: "4050", necTax: "0", totalTax: "100" } },
-      { offset: 3, form: "1040-NR", fields: { wages: "28000", treatyExempt: "3000", interest: "80", dividends: "0", capitalGains: "0", otherIncome: "0", totalIncome: "28080", adjustments: "0", agi: "28080", deductions: "0", taxableIncome: "28080", necTax: "0", totalTax: "2400" } },
-      { offset: 2, form: "1040-NR", fields: { wages: "62000", treatyExempt: "0", interest: "150", dividends: "100", capitalGains: "0", otherIncome: "0", totalIncome: "62250", adjustments: "0", agi: "62250", deductions: "0", taxableIncome: "62250", necTax: "0", totalTax: "7800" } },
-      { offset: 1, form: "1040", fields: { wages: "78000", interest: "200", dividends: "150", capitalGains: "0", otherIncome: "0", totalIncome: "78350", adjustments: "0", agi: "78350", deductions: "14600", taxableIncome: "63750", totalTax: "9800" } },
-      { offset: 0, form: "1040", fields: { wages: "92000", interest: "300", dividends: "200", capitalGains: "500", otherIncome: "0", totalIncome: "93000", adjustments: "0", agi: "93000", deductions: "14600", taxableIncome: "78400", totalTax: "12800" } },
+      { offset: 4, form: "1040-NR", fields: { wages: "4000", treatyExempt: "10000", interest: "50", dividends: "0", capitalGains: "0", otherIncome: "0", totalIncome: "4050", adjustments: "0", agi: "4050", deductions: "0", taxableIncome: "4050", necTax: "0", totalTax: "405" } },
+      { offset: 3, form: "1040-NR", fields: { wages: "28000", treatyExempt: "3000", interest: "80", dividends: "0", capitalGains: "0", otherIncome: "0", totalIncome: "28080", adjustments: "0", agi: "28080", deductions: "0", taxableIncome: "28080", necTax: "0", totalTax: "3164" } },
+      { offset: 2, form: "1040-NR", fields: { wages: "62000", treatyExempt: "0", interest: "150", dividends: "100", capitalGains: "0", otherIncome: "0", totalIncome: "62250", adjustments: "0", agi: "62250", deductions: "0", taxableIncome: "62250", necTax: "0", totalTax: "8996" } },
+      { offset: 1, form: "1040", fields: { wages: "78000", interest: "200", dividends: "150", capitalGains: "0", otherIncome: "0", totalIncome: "78350", adjustments: "0", agi: "78350", deductions: "14600", taxableIncome: "63750", totalTax: "9068" } },
+      { offset: 0, form: "1040", fields: { wages: "92000", interest: "300", dividends: "200", capitalGains: "500", otherIncome: "0", totalIncome: "93000", adjustments: "0", agi: "93000", deductions: "15750", taxableIncome: "77250", totalTax: "11860" } },
     ]
   ),
   buildDemoCase(
@@ -1750,11 +1750,11 @@ const DEMO_CASES = [
     "Retiree (Year 3 Transition)",
     "Working years 1-2, retires in year 3, pension + Social Security after",
     [
-      { offset: 4, form: "1040", fields: { wages: "85000", interest: "500", dividends: "1200", capitalGains: "0", otherIncome: "0", totalIncome: "86700", adjustments: "0", agi: "86700", deductions: "14600", taxableIncome: "72100", totalTax: "9600" } },
-      { offset: 3, form: "1040", fields: { wages: "88000", interest: "550", dividends: "1300", capitalGains: "0", otherIncome: "0", totalIncome: "89850", adjustments: "0", agi: "89850", deductions: "14600", taxableIncome: "75250", totalTax: "10100" } },
-      { offset: 2, form: "1040", fields: { wages: "40000", interest: "700", dividends: "1800", capitalGains: "2000", otherIncome: "8000", socialSec: "6000", totalIncome: "58500", adjustments: "0", agi: "58500", deductions: "15700", taxableIncome: "42800", totalTax: "4700" } },
-      { offset: 1, form: "1040", fields: { wages: "0", interest: "900", dividends: "2200", capitalGains: "1000", otherIncome: "24000", socialSec: "22000", totalIncome: "50100", adjustments: "0", agi: "50100", deductions: "15700", taxableIncome: "34400", totalTax: "3600" } },
-      { offset: 0, form: "1040", fields: { wages: "0", interest: "950", dividends: "2300", capitalGains: "500", otherIncome: "25000", socialSec: "23000", totalIncome: "51750", adjustments: "0", agi: "51750", deductions: "15700", taxableIncome: "36050", totalTax: "3750" } },
+      { offset: 4, form: "1040", fields: { wages: "85000", interest: "500", dividends: "1200", capitalGains: "0", otherIncome: "0", totalIncome: "86700", adjustments: "0", agi: "86700", deductions: "12550", taxableIncome: "74150", totalTax: "11978" } },
+      { offset: 3, form: "1040", fields: { wages: "88000", interest: "550", dividends: "1300", capitalGains: "0", otherIncome: "0", totalIncome: "89850", adjustments: "0", agi: "89850", deductions: "12950", taxableIncome: "76900", totalTax: "12444" } },
+      { offset: 2, form: "1040", fields: { wages: "40000", interest: "700", dividends: "1800", capitalGains: "2000", otherIncome: "8000", socialSec: "6000", totalIncome: "58500", adjustments: "0", agi: "58500", deductions: "15700", taxableIncome: "42800", totalTax: "4460" } },
+      { offset: 1, form: "1040", fields: { wages: "0", interest: "900", dividends: "2200", capitalGains: "1000", otherIncome: "24000", socialSec: "22000", totalIncome: "50100", adjustments: "0", agi: "50100", deductions: "16550", taxableIncome: "33550", totalTax: "3410" } },
+      { offset: 0, form: "1040", fields: { wages: "0", interest: "950", dividends: "2300", capitalGains: "500", otherIncome: "25000", socialSec: "23000", totalIncome: "51750", adjustments: "0", agi: "51750", deductions: "17750", taxableIncome: "34000", totalTax: "3506" } },
     ]
   ),
   buildDemoCase(
@@ -1762,11 +1762,11 @@ const DEMO_CASES = [
     "Freelancer / 1099",
     "Side hustle to full-time self-employment over 5 years",
     [
-      { offset: 4, form: "1040", fields: { wages: "45000", interest: "50", dividends: "0", capitalGains: "0", otherIncome: "8000", totalIncome: "53050", adjustments: "600", agi: "52450", deductions: "13850", taxableIncome: "38600", totalTax: "4300" } },
-      { offset: 3, form: "1040", fields: { wages: "10000", interest: "60", dividends: "0", capitalGains: "0", otherIncome: "32000", totalIncome: "42060", adjustments: "2200", agi: "39860", deductions: "14600", taxableIncome: "25260", totalTax: "2600" } },
-      { offset: 2, form: "1040", fields: { wages: "0", interest: "40", dividends: "0", capitalGains: "0", otherIncome: "38000", totalIncome: "38040", adjustments: "2600", agi: "35440", deductions: "14600", taxableIncome: "20840", totalTax: "2100" } },
-      { offset: 1, form: "1040", fields: { wages: "0", interest: "80", dividends: "0", capitalGains: "0", otherIncome: "62000", totalIncome: "62080", adjustments: "4300", agi: "57780", deductions: "14600", taxableIncome: "43180", totalTax: "5700" } },
-      { offset: 0, form: "1040", fields: { wages: "0", interest: "120", dividends: "0", capitalGains: "0", otherIncome: "85000", totalIncome: "85120", adjustments: "5900", agi: "79220", deductions: "14600", taxableIncome: "64620", totalTax: "9200" } },
+      { offset: 4, form: "1040", fields: { wages: "45000", interest: "50", dividends: "0", capitalGains: "0", otherIncome: "8000", totalIncome: "53050", adjustments: "565", agi: "52485", deductions: "12550", taxableIncome: "39935", totalTax: "5724" } },
+      { offset: 3, form: "1040", fields: { wages: "10000", interest: "60", dividends: "0", capitalGains: "0", otherIncome: "32000", totalIncome: "42060", adjustments: "2261", agi: "39799", deductions: "12950", taxableIncome: "26849", totalTax: "7538" } },
+      { offset: 2, form: "1040", fields: { wages: "0", interest: "40", dividends: "0", capitalGains: "0", otherIncome: "38000", totalIncome: "38040", adjustments: "2685", agi: "35355", deductions: "13850", taxableIncome: "21505", totalTax: "7730" } },
+      { offset: 1, form: "1040", fields: { wages: "0", interest: "80", dividends: "0", capitalGains: "0", otherIncome: "62000", totalIncome: "62080", adjustments: "4380", agi: "57700", deductions: "14600", taxableIncome: "43100", totalTax: "13700" } },
+      { offset: 0, form: "1040", fields: { wages: "0", interest: "120", dividends: "0", capitalGains: "0", otherIncome: "85000", totalIncome: "85120", adjustments: "6005", agi: "79115", deductions: "15750", taxableIncome: "63365", totalTax: "20864" } },
     ]
   ),
   buildDemoCase(
@@ -1774,11 +1774,11 @@ const DEMO_CASES = [
     "Tech Employee — Stock Sale Year",
     "W-2 + RSUs, with one large one-time capital-gains spike",
     [
-      { offset: 4, form: "1040", fields: { wages: "120000", interest: "300", dividends: "400", capitalGains: "3000", otherIncome: "0", totalIncome: "123700", adjustments: "0", agi: "123700", deductions: "13850", taxableIncome: "109850", totalTax: "19800" } },
-      { offset: 3, form: "1040", fields: { wages: "128000", interest: "350", dividends: "450", capitalGains: "4000", otherIncome: "0", totalIncome: "132800", adjustments: "0", agi: "132800", deductions: "14600", taxableIncome: "118200", totalTax: "21600" } },
-      { offset: 2, form: "1040", fields: { wages: "135000", interest: "400", dividends: "500", capitalGains: "85000", otherIncome: "0", totalIncome: "220900", adjustments: "0", agi: "220900", deductions: "14600", taxableIncome: "206300", totalTax: "45000" } },
-      { offset: 1, form: "1040", fields: { wages: "140000", interest: "450", dividends: "600", capitalGains: "6000", otherIncome: "0", totalIncome: "147050", adjustments: "0", agi: "147050", deductions: "14600", taxableIncome: "132450", totalTax: "26500" } },
-      { offset: 0, form: "1040", fields: { wages: "148000", interest: "500", dividends: "700", capitalGains: "5000", otherIncome: "0", totalIncome: "154200", adjustments: "0", agi: "154200", deductions: "14600", taxableIncome: "139600", totalTax: "28200" } },
+      { offset: 4, form: "1040", fields: { wages: "120000", interest: "300", dividends: "400", capitalGains: "3000", otherIncome: "0", totalIncome: "123700", adjustments: "0", agi: "123700", deductions: "12550", taxableIncome: "111150", totalTax: "20391" } },
+      { offset: 3, form: "1040", fields: { wages: "128000", interest: "350", dividends: "450", capitalGains: "4000", otherIncome: "0", totalIncome: "132800", adjustments: "0", agi: "132800", deductions: "12950", taxableIncome: "119850", totalTax: "22199" } },
+      { offset: 2, form: "1040", fields: { wages: "135000", interest: "400", dividends: "500", capitalGains: "85000", otherIncome: "0", totalIncome: "220900", adjustments: "0", agi: "220900", deductions: "13850", taxableIncome: "207050", totalTax: "36191" } },
+      { offset: 1, form: "1040", fields: { wages: "140000", interest: "450", dividends: "600", capitalGains: "6000", otherIncome: "0", totalIncome: "147050", adjustments: "0", agi: "147050", deductions: "14600", taxableIncome: "132450", totalTax: "24237" } },
+      { offset: 0, form: "1040", fields: { wages: "148000", interest: "500", dividends: "700", capitalGains: "5000", otherIncome: "0", totalIncome: "154200", adjustments: "0", agi: "154200", deductions: "15750", taxableIncome: "138450", totalTax: "25562" } },
     ]
   ),
   buildDemoCase(
@@ -1786,11 +1786,11 @@ const DEMO_CASES = [
     "W-2 + Real Estate Investor",
     "W-2 earner adds rental properties over 5 years — depreciation losses, then cash flow turns positive",
     [
-      { offset: 4, form: "1040", fields: { wages: "95000", interest: "300", dividends: "200", capitalGains: "0", otherIncome: "0", totalIncome: "95500", adjustments: "0", agi: "95500", deductions: "13850", taxableIncome: "81650", totalTax: "13000" } },
-      { offset: 3, form: "1040", fields: { wages: "98000", interest: "350", dividends: "250", capitalGains: "0", otherIncome: "-8000", totalIncome: "90600", adjustments: "0", agi: "90600", deductions: "14600", taxableIncome: "76000", totalTax: "11800" } },
-      { offset: 2, form: "1040", fields: { wages: "101000", interest: "400", dividends: "300", capitalGains: "0", otherIncome: "-15000", totalIncome: "86700", adjustments: "0", agi: "86700", deductions: "14600", taxableIncome: "72100", totalTax: "10900" } },
-      { offset: 1, form: "1040", fields: { wages: "104000", interest: "450", dividends: "350", capitalGains: "0", otherIncome: "-6000", totalIncome: "98800", adjustments: "0", agi: "98800", deductions: "14600", taxableIncome: "84200", totalTax: "13600" } },
-      { offset: 0, form: "1040", fields: { wages: "107000", interest: "500", dividends: "400", capitalGains: "0", otherIncome: "5000", totalIncome: "112900", adjustments: "0", agi: "112900", deductions: "14600", taxableIncome: "98300", totalTax: "16700" } },
+      { offset: 4, form: "1040", fields: { wages: "95000", interest: "300", dividends: "200", capitalGains: "0", otherIncome: "0", totalIncome: "95500", adjustments: "0", agi: "95500", deductions: "12550", taxableIncome: "82950", totalTax: "13984" } },
+      { offset: 3, form: "1040", fields: { wages: "98000", interest: "350", dividends: "250", capitalGains: "0", otherIncome: "-8000", totalIncome: "90600", adjustments: "0", agi: "90600", deductions: "12950", taxableIncome: "77650", totalTax: "12683" } },
+      { offset: 2, form: "1040", fields: { wages: "101000", interest: "400", dividends: "300", capitalGains: "0", otherIncome: "-15000", totalIncome: "86700", adjustments: "0", agi: "86700", deductions: "13850", taxableIncome: "72850", totalTax: "11314" } },
+      { offset: 1, form: "1040", fields: { wages: "104000", interest: "450", dividends: "350", capitalGains: "0", otherIncome: "-6000", totalIncome: "98800", adjustments: "0", agi: "98800", deductions: "14600", taxableIncome: "84200", totalTax: "13553" } },
+      { offset: 0, form: "1040", fields: { wages: "107000", interest: "500", dividends: "400", capitalGains: "0", otherIncome: "5000", totalIncome: "112900", adjustments: "0", agi: "112900", deductions: "15750", taxableIncome: "97150", totalTax: "16259" } },
     ]
   ),
 ];
@@ -1919,12 +1919,12 @@ export default function TaxToBook() {
         warns.push(`${y}: Total Tax ($${totalTax.toLocaleString()}) is negative. Check your entries.`);
       }
 
-      // These income fields can't legitimately be negative (unlike Capital Gain/Loss)
+      // These income fields can't legitimately be negative. Capital Gain/Loss and Other Income can:
+      // Other Income (Line 8 / Schedule 1) carries rental, partnership, and business losses.
       const nonNegativeFields = [
         ["wages", "W-2 Wages"],
         ["interest", "Taxable Interest"],
         ["dividends", "Ordinary Dividends"],
-        ["otherIncome", "Other Income"],
       ];
       for (const [key, label] of nonNegativeFields) {
         const v = parseNum(d[key]);

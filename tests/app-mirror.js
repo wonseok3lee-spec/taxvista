@@ -69,7 +69,7 @@ export function runValidation(years, forms, data) {
     if (agi != null && taxableIncome != null && taxableIncome > agi) warns.push(`${y}: Taxable Income > AGI`);
     const totalTax = parseNum(d.totalTax);
     if (totalTax != null && totalTax < 0) warns.push(`${y}: Total Tax negative`);
-    for (const [key, label] of [["wages", "W-2 Wages"], ["interest", "Taxable Interest"], ["dividends", "Ordinary Dividends"], ["otherIncome", "Other Income"]]) {
+    for (const [key, label] of [["wages", "W-2 Wages"], ["interest", "Taxable Interest"], ["dividends", "Ordinary Dividends"]]) {
       const v = parseNum(d[key]);
       if (v != null && v < 0) warns.push(`${y}: ${label} (${v}) can't be negative`);
     }

@@ -36,6 +36,7 @@ export const SOURCES = {
   tc751: { doc: "Topic No. 751 — Social Security and Medicare withholding rates (6.2% / 1.45% / Additional Medicare 0.9% over $200,000)", url: "https://www.irs.gov/taxtopics/tc751" },
   tc409: { doc: "Topic No. 409 — Capital gains and losses ($3,000 net capital loss limit; 0%/15%/20% thresholds)", url: "https://www.irs.gov/taxtopics/tc409" },
   tc554: { doc: "Topic No. 554 — Self-employment tax (12.4% + 2.9% on 92.35% of net earnings; one-half deductible)", url: "https://www.irs.gov/taxtopics/tc554" },
+  tc559: { doc: "Topic No. 559 — Net Investment Income Tax: 3.8% of the lesser of net investment income or MAGI over $200,000 (single/HoH); NII = interest, dividends, annuities, royalties, rents, net gains on property", url: "https://www.irs.gov/taxtopics/tc559" },
   p15_2021: { doc: "Publication 15 (2021) — social security wage base limit $142,800", url: "https://www.irs.gov/pub/irs-prior/p15--2021.pdf" },
   p15_2022: { doc: "Publication 15 (2022) — social security wage base limit $147,000", url: "https://www.irs.gov/pub/irs-prior/p15--2022.pdf" },
   p15_2023: { doc: "Publication 15 (2023) — social security wage base limit $160,200", url: "https://www.irs.gov/pub/irs-prior/p15--2023.pdf" },
