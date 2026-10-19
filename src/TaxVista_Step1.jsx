@@ -2609,7 +2609,8 @@ export default function TaxToBook() {
 
     // After-tax income — green unless falling vs prior year
     const atiPrior  = mPrior?.afterTaxIncome ?? null;
-    const atiGrowth = ati != null && atiPrior != null ? (ati - atiPrior) / atiPrior : null;
+    // Prior after-tax income must be positive — a zero/negative base gives NaN/Infinity or a flipped sign.
+    const atiGrowth = ati != null && atiPrior != null && atiPrior > 0 ? (ati - atiPrior) / atiPrior : null;
     const atiColor  = atiGrowth != null && atiGrowth < -0.05 ? "var(--danger)" : "var(--success)";
     const atiGlow   = atiGrowth != null && atiGrowth > 0.1 ? "0 0 8px rgba(var(--accent2-rgb),0.25)" : null;
 
@@ -3828,7 +3829,8 @@ export default function TaxToBook() {
             if (incomeCagr != null && !_lb) _incomeBullets.push(`Annualized growth rate: ${(incomeCagr * 100).toFixed(1)}%. ${incomeCagr > 0.2 ? "Exceptionally fast — sustainability should be monitored." : incomeCagr > 0.08 ? "Above-average growth creating compounding value." : incomeCagr > 0 ? "Modest growth near inflation levels." : "Income contracting in real terms."}`);
             else if (_lb) _incomeBullets.push(`Low-base distortion: ${_first.year} income of ${_fmtD(_first.summary?.totalIncome)} suppresses percentage-based metrics.`);
             const incs = _sorted.map(r => r.summary?.totalIncome).filter(v => v != null);
-            if (incs.length >= 3) { const yoy = incs.slice(1).map((v, i) => `${_sorted[i].year}→${_sorted[i+1].year}: ${((v - incs[i]) / incs[i] * 100).toFixed(0)}%`).join("; "); _incomeBullets.push(`Year-over-year: ${yoy}.`); }
+            // A prior-year income <= 0 has no meaningful % change (NaN/Infinity or flipped sign) — show "—" for that step.
+            if (incs.length >= 3) { const yoy = incs.slice(1).map((v, i) => `${_sorted[i].year}→${_sorted[i+1].year}: ${incs[i] > 0 ? ((v - incs[i]) / incs[i] * 100).toFixed(0) + "%" : "—"}`).join("; "); _incomeBullets.push(`Year-over-year: ${yoy}.`); }
           } else if (_first.summary?.totalIncome) _incomeBullets.push(`Single-year total income: ${_fmtD(_first.summary.totalIncome)}.`);
 
           // Tax trend (condensed: range + delta, not per-year)
